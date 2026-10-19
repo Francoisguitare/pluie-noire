@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pluie Noire · Confidentialité</title>
+<style>
+@font-face{font-family:"Saira Condensed";font-weight:600;font-display:swap;src:url(assets/fonts/saira-condensed-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:400;font-display:swap;src:url(assets/fonts/ibm-plex-mono-latin-400-normal.woff2) format("woff2")}
+:root{--void:#07080d;--ink:#ece5d6;--ink-dim:#a39b8b;--amber:#f0a53a;color-scheme:dark}
+body{margin:0;background:var(--void);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;padding:32px 16px}
+main{max-width:680px;margin:0 auto}
+h1,h2{font-family:"Saira Condensed","Arial Narrow",sans-serif;font-weight:600;line-height:1.1}
+h1{font-size:40px;margin:0 0 6px}
+h2{font-size:24px;margin:32px 0 8px;color:var(--amber)}
+.k{font:13px/1 "IBM Plex Mono",monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--amber)}
+p,li{color:var(--ink-dim)}
+a{color:var(--amber)}
+</style>
+</head>
+<body>
+<main>
+  <div class="k">Pluie Noire</div>
+  <h1>Données personnelles et confidentialité</h1>
+  <p>Pluie Noire est un jeu gratuit qui se joue dans le navigateur. Cette page explique ce qui est enregistré, où, et comment l'effacer.</p>
+
+  <h2>Sans compte</h2>
+  <p>Ta partie est enregistrée uniquement dans ton navigateur, sur ton appareil. Rien n'est envoyé ailleurs. Le jeu n'utilise ni cookie publicitaire, ni mesure d'audience.</p>
+  <p>Le code de transfert et le QR code contiennent ta sauvegarde (progression, choix, statistiques de jeu), sans aucune donnée personnelle.</p>
+
+  <h2>Avec un compte</h2>
+  <ul>
+    <li><b>Ce qui est enregistré :</b> ton adresse e-mail (et ton nom si tu te connectes avec Google), un identifiant technique, et ta sauvegarde de partie.</li>
+    <li><b>Pourquoi :</b> uniquement pour retrouver ta partie sur tous tes appareils. Ces données ne sont ni vendues, ni utilisées pour de la publicité.</li>
+    <li><b>Où :</b> chez Google Firebase (Authentication et Cloud Firestore). Les sauvegardes sont stockées dans l'Union européenne ; le service de connexion de Google peut traiter des données hors de l'Union européenne, dans le cadre des garanties contractuelles de Google.</li>
+    <li><b>Combien de temps :</b> jusqu'à ce que tu supprimes ton compte.</li>
+  </ul>
+
+  <h2>Tes droits</h2>
+  <p>Tu peux à tout moment supprimer ton compte et ta sauvegarde en ligne depuis l'écran « Mon compte » du jeu (bouton « Supprimer mon compte »). Le code de transfert te donne une copie complète de ta sauvegarde.</p>
+  <p>Pour toute autre demande (accès, rectification, question), écris à l'auteur du jeu via la page du projet. Tu peux aussi adresser une réclamation à la <a href="https://www.cnil.fr/fr/plaintes" rel="noopener">CNIL</a>.</p>
+  <!-- Contact : ajouter ici une adresse de contact avant d'activer les comptes (voir docs/comptes-firebase.md). -->
+
+  <p><a href="./">Retour au jeu</a></p>
+</main>
+</body>
+</html>

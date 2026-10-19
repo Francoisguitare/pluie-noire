@@ -29,7 +29,9 @@ Modules ES sans compilation. `index.html` contient le HTML et le CSS (HUD, dialo
 Repères :
 - Les modèles regardent vers +Z, sauf `soldier` (Kovac) qui regarde vers −Z, d'où `flip:true` pour lui seul.
 - Dialogues : nœuds `t` (texte), `c` (choix), `act` (action) ; `SHAKE` liste les nœuds où le personnage secoue la tête.
-- Sauvegarde : `localStorage`, clé `pluie-noire-save-v1`, toutes les 4 s et à chaque étape (`emit('save')`).
+- Sauvegarde (`src/sauvegarde.js`) : `localStorage`, clé `pluie-noire-v2` = `{v:2, partie, saisons}` ; l'ancien format v1 est converti. Écrite toutes les 4 s et à chaque étape (`emit('save')`) ; `emit('saveNow')` force l'envoi en ligne. `finSaison(n, rec)` garde la fin de saison pour la suivante.
+- Transfert sans compte (`src/transfert.js`) : code `PN2z-…` (JSON compressé + somme de contrôle) et QR code vers `…#import=<code>`.
+- Comptes (`src/compte.js`) : Firebase, inactif tant que `src/config.js` contient `FIREBASE=null`. Mise en route : `docs/comptes-firebase.md`, règles `firestore.rules`, page `confidentialite.html`.
 - Son : tout est synthétisé (Web Audio). Les pas sont calés au niveau du fond de pluie (mesuré hors ligne) ; accroupi, aucun pas.
 - Sur ordinateur, Échap ou P ouvre la pause.
 
@@ -38,6 +40,7 @@ Repères :
 ```
 NODE_PATH=$(npm root -g) node tools/test/parcours.mjs /chemin/captures   # chapitres 1-2, deux branches, captures
 NODE_PATH=$(npm root -g) node tools/test/mobile.mjs /chemin/captures     # démarrage en mode téléphone
+NODE_PATH=$(npm root -g) node tools/test/sauvegardes.mjs /chemin/captures # conversion v1, code de transfert, QR code, import
 ```
 
 L'environnement cloud n'a pas de GPU : Chromium rend en logiciel (SwiftShader), environ une image toutes les 3 s en 1280×720. Donc :
@@ -57,7 +60,7 @@ L'environnement cloud n'a pas de GPU : Chromium rend en logiciel (SwiftShader), 
 1. ~~Corrections rapides : Sid, pas, refus de la puce~~ (fait)
 2. ~~Mémoire du projet et bible de l'histoire~~ (fait)
 3. ~~Réorganiser le code en modules ES, dépendances hébergées dans le dépôt, modèles en `.glb`, harnais de test~~ (fait)
-4. Sauvegardes v2 : chapitres et points de reprise, code de transfert, comptes Firebase, page de confidentialité
+4. ~~Sauvegardes v2 : code de transfert, QR code, comptes Firebase (en attente du projet Firebase de François), page de confidentialité~~ (fait)
 5. Réalisme : ombres, flammes, façades, pluie, sons spatialisés
 6. Chapitres 3 à 5 (voir `docs/histoire.md`), fin de saison et sauvegarde pour la saison 2
 

@@ -174,6 +174,20 @@ body.touch #cross{display:none}
   .screen{padding-block:14px}
 }
 @media (prefers-reduced-motion:reduce){#toast,#fade{transition:none}}
+/* Liens, champs, QR code (transfert de partie, compte) */
+.lien{all:unset;cursor:pointer;font:500 13px/1.3 var(--f-mono);letter-spacing:.06em;color:var(--amber);text-decoration:underline;text-underline-offset:3px}
+.lien:hover{color:#ffbb55}
+.lien:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.liens{display:flex;flex-wrap:wrap;gap:8px 22px}
+textarea,input{font:400 13px/1.4 var(--f-mono);color:var(--ink);background:rgba(255,255,255,.06);border:1px solid rgba(240,165,58,.4);padding:8px 10px;border-radius:0;width:100%;box-sizing:border-box;user-select:text;-webkit-user-select:text}
+textarea{resize:vertical;word-break:break-all}
+textarea:focus,input:focus{outline:none;border-color:var(--amber)}
+.qr{background:#fff;padding:6px;justify-self:start;line-height:0}
+.qr img{width:min(210px,46vw);height:auto;image-rendering:pixelated}
+.form{display:grid;gap:8px}
+.card a{color:var(--amber)}
+#ask{z-index:10;background:rgba(5,6,10,.9)}
+body.paused #hud{display:none}
 </style>
 </head>
 <body>
@@ -229,6 +243,7 @@ body.touch #cross{display:none}
       <button class="go" id="play">Entrer dans la nuit</button>
     </div>
     <div class="savehint" id="saveInfo" hidden></div>
+    <div class="liens"><button class="lien" id="transferBtn">Transférer ma partie</button><button class="lien" id="compteBtn" hidden>Mon compte</button></div>
     <div class="note" id="note">Environ 3 minutes. Clavier et souris, ou téléphone en mode paysage. Ta partie est sauvegardée automatiquement.</div>
   </div>
 </div>
@@ -247,6 +262,7 @@ body.touch #cross{display:none}
     <h2>Partie sauvegardée</h2>
     <p class="pitch">Ta progression est enregistrée automatiquement sur cet appareil.</p>
     <div class="btns"><button class="go" id="resume">Reprendre</button><button class="go alt" id="toTitle">Écran titre</button></div>
+    <div class="liens"><button class="lien" id="pauseTransfer">Transférer ma partie</button><button class="lien" id="pauseCompte" hidden>Mon compte</button></div>
   </div>
 </div>
 <div id="rotate">Tourne ton téléphone en mode paysage</div>
@@ -259,6 +275,52 @@ body.touch #cross{display:none}
     <p class="pitch" id="endText"></p>
     <div class="statsline" id="endStats"></div>
     <button class="go" id="again">Rejouer</button>
+  </div>
+</div>
+<div id="transfer" class="screen" hidden>
+  <div class="card">
+    <div class="kicker">Sauvegarde</div>
+    <h2>Transférer ma partie</h2>
+    <div id="transferNone" class="pitch" hidden>Pas encore de partie à transférer sur cet appareil.</div>
+    <div id="transferOut" class="card" style="padding:0;gap:12px">
+      <p class="pitch">Sur ton autre appareil, scanne ce QR code avec l'appareil photo. Ou copie le code et colle-le là-bas.</p>
+      <div class="qr"><img id="qrImg" alt="QR code de ta partie" hidden></div>
+      <textarea id="codeOut" readonly rows="3" aria-label="Code de ta partie"></textarea>
+      <div class="btns"><button class="go alt" id="copyCode">Copier le code</button></div>
+    </div>
+    <label class="lbl" for="codeIn">Tu as un code ? Colle-le ici</label>
+    <textarea id="codeIn" rows="3" placeholder="PN2z-…"></textarea>
+    <div class="btns"><button class="go" id="importCode">Importer</button><button class="go alt" id="closeTransfer">Retour</button></div>
+    <div class="note" id="transferMsg" role="status"></div>
+  </div>
+</div>
+<div id="compte" class="screen" hidden>
+  <div class="card">
+    <div class="kicker">Sauvegarde en ligne</div>
+    <h2>Mon compte</h2>
+    <div id="cOut" class="card" style="padding:0;gap:12px">
+      <p class="pitch">Connecte-toi pour retrouver ta partie sur tous tes appareils, ordinateur comme téléphone.</p>
+      <div class="btns"><button class="go" id="cGoogle">Continuer avec Google</button></div>
+      <div class="form"><input id="cMail" type="email" placeholder="Adresse e-mail" autocomplete="email" aria-label="Adresse e-mail"><input id="cPass" type="password" placeholder="Mot de passe (6 caractères minimum)" autocomplete="current-password" aria-label="Mot de passe"></div>
+      <div class="btns"><button class="go alt" id="cLogin">Se connecter</button><button class="go alt" id="cSignup">Créer un compte</button></div>
+      <div class="liens"><button class="lien" id="cReset">Mot de passe oublié</button></div>
+    </div>
+    <div id="cIn" class="card" style="padding:0;gap:12px" hidden>
+      <p class="pitch">Session ouverte avec <b id="cWho"></b>. Ta partie se synchronise toute seule.</p>
+      <div class="note" id="cSync"></div>
+      <div class="btns"><button class="go alt" id="cLogout">Se déconnecter</button></div>
+      <div class="liens"><button class="lien" id="cDelete">Supprimer mon compte</button></div>
+    </div>
+    <div class="note" id="cMsg" role="status"></div>
+    <div class="note"><a href="confidentialite.html" target="_blank" rel="noopener">Données personnelles et confidentialité</a></div>
+    <div class="btns"><button class="go alt" id="cClose">Retour</button></div>
+  </div>
+</div>
+<div id="ask" class="screen" hidden>
+  <div class="card">
+    <h2 id="askTitle"></h2>
+    <p class="pitch" id="askText"></p>
+    <div class="btns"><button class="go" id="askYes"></button><button class="go alt" id="askNo"></button></div>
   </div>
 </div>
 <div id="fade"></div>

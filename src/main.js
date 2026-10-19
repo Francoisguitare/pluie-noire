@@ -10,12 +10,14 @@ import {buildEnv,render} from './rendu.js';
 import {DLG,openDialog,pickChoice} from './histoire/dialogue.js';
 import {ACTIONS} from './histoire/chapitre1.js';
 import {S,chap,newGame,applySave} from './histoire/partie.js';
-import {saveGame,readSave,clearSave,showSaveInfo} from './sauvegarde.js';
+import {saveGame,readSave,clearSave,showSaveInfo,lire,exportCode,importCode} from './sauvegarde.js';
 import {toast,detectionHud,fade} from './interface.js';
 import {initAudio,toggleMute,setIndoor} from './son.js';
 import {keys,lock} from './controles.js';
 import {enterZone,zone} from './zones.js';
 import {poseSid} from './personnages.js';
+import {ouvrirTransfert,importDepuisAdresse} from './transfert.js';
+import {ouvrirCompte,initComptes} from './compte.js';
 window.__pnBoot=true;
 
 /* ---------- Écrans ---------- */
@@ -27,10 +29,15 @@ function enterGame(){$('title').hidden=true;$('end').hidden=true;$('pauseMenu').
 $('play').onclick=()=>{initAudio();clearSave();newGame();enterGame();saveGame();toast('Mara t\'attend sous l\'enseigne violette, à gauche')};
 $('cont').onclick=()=>{const d=readSave();if(!d)return;initAudio();applySave(d);enterGame();toast('Partie reprise')};
 $('again').onclick=()=>{clearSave();newGame();enterGame();saveGame()};
-function pause(){if(state!=='play')return;saveGame();setState('paused');document.body.classList.add('paused');$('pauseMenu').hidden=false;if(document.pointerLockElement)document.exitPointerLock()}
+function pause(){if(state!=='play')return;saveGame();emit('saveNow');setState('paused');document.body.classList.add('paused');$('pauseMenu').hidden=false;if(document.pointerLockElement)document.exitPointerLock()}
 $('resume').onclick=()=>{$('pauseMenu').hidden=true;document.body.classList.remove('paused');setState('play');if(!MOBILE)lock()};
-$('toTitle').onclick=()=>{saveGame();document.body.classList.remove('paused');$('pauseMenu').hidden=true;$('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');setState('title');showSaveInfo();$('title').hidden=false;
-  try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}};
+function toTitle(save){if(save){saveGame();emit('saveNow')}document.body.classList.remove('paused');$('pauseMenu').hidden=true;$('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');setState('title');showSaveInfo();$('title').hidden=false;
+  try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}}
+$('toTitle').onclick=()=>toTitle(true);
+// Partie importée (code, QR code, compte) pendant une pause : retour à l'écran titre sans écraser l'import.
+on('partieImportee',()=>{if(state!=='title')toTitle(false)});
+$('transferBtn').onclick=()=>ouvrirTransfert('title');$('pauseTransfer').onclick=()=>ouvrirTransfert('pauseMenu');
+$('compteBtn').onclick=()=>ouvrirCompte('title');$('pauseCompte').onclick=()=>ouvrirCompte('pauseMenu');
 on('pause',pause);
 // Sur ordinateur, perdre le pointeur (touche Échap) ouvre la pause.
 document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&state==='play'&&!MOBILE)pause()});
@@ -70,7 +77,7 @@ const clock=new THREE.Clock();
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);frame(dt);render(dt,fx)}
 
 /* ---------- Mode debug (?debug) : accès pour les tests automatiques ---------- */
-if(/[?&]debug\b/.test(location.search))window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,newGame,applySave,saveGame,readSave,killDrone,zone,handLocked,
+if(/[?&]debug\b/.test(location.search))window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,newGame,applySave,saveGame,readSave,killDrone,zone,handLocked,lire,exportCode,importCode,
   get S(){return S},get state(){return state},
   step:(n,dt=1/30)=>{for(let i=0;i<n;i++)frame(dt)}};
 
@@ -79,7 +86,7 @@ const fonts=document.fonts&&document.fonts.load?Promise.race([Promise.all(['500'
 fonts.catch(()=>{}).then(()=>{
   buildWorld();newGame();
   scene.environment=buildEnv(new THREE.Vector3(0,2.5,-6),[H.reflector,rain]);
-  showSaveInfo();
+  showSaveInfo();initComptes();importDepuisAdresse();
   loadRueCharacters().then(ready,e=>{console.warn('Personnages :',e);rueFallback();ready()});
   loop();
 });

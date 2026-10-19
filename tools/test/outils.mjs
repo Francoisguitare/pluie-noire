@@ -10,8 +10,8 @@ export function servir(port=0){return new Promise(res=>{
     const f=path.join(RACINE,p);if(!f.startsWith(RACINE)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){rep.writeHead(404);rep.end();return}
     rep.writeHead(200,{'content-type':TYPES[path.extname(f)]||'application/octet-stream'});fs.createReadStream(f).pipe(rep)});
   srv.listen(port,'127.0.0.1',()=>res(srv))})}
-export async function ouvrir({largeur=960,hauteur=540,page='index.html',mobile=false}={}){
-  const srv=await servir();const url=`http://127.0.0.1:${srv.address().port}/${page}?debug`;
+export async function ouvrir({largeur=960,hauteur=540,page='index.html',mobile=false,hash=''}={}){
+  const srv=await servir();const url=`http://127.0.0.1:${srv.address().port}/${page}?debug${hash}`;
   const b=await chromium.launch({args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--autoplay-policy=no-user-gesture-required']});
   const p=await b.newPage(mobile?{viewport:{width:largeur,height:hauteur},hasTouch:true,isMobile:true,deviceScaleFactor:2}:{viewport:{width:largeur,height:hauteur}});
   const erreurs=[],externes=[];

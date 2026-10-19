@@ -3,6 +3,7 @@ import {$,clamp,state,P,MOBILE,G,renderer,emit} from './core.js';
 
 export const keys={};
 addEventListener('keydown',e=>{
+  if(e.target.closest&&e.target.closest('input,textarea'))return; // saisie dans un champ (code, e-mail)
   keys[e.code]=true;
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
   if(e.code==='KeyM')emit('mute');

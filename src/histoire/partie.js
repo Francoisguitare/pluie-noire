@@ -15,7 +15,7 @@ export let S=S0();
 /* Un chapitre : {zone, objectives(S,L), checkpoint(S) → [x,z,yaw], reset(), apply(S), describe(S), ends} */
 const chapters={};
 export function defineChapter(n,c){chapters[n]=c}
-export const chap=()=>chapters[S.chapter]||chapters[1];
+export const chap=n=>chapters[n??S.chapter]||chapters[1];
 const ENDS={};
 export const defineEnds=e=>Object.assign(ENDS,e);
 

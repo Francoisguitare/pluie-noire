@@ -16,3 +16,11 @@ export function detectionHud(dt,maxS){
   beepT-=dt;if(maxS>.12&&beepT<=0){tone(760+maxS*700,.07,'square',.025);beepT=.6-maxS*.45}
 }
 export function fade(on){$('fade').classList.toggle('on',on)}
+// Question à deux réponses, par-dessus tout le reste. Renvoie une promesse : true si l'on accepte.
+export function ask(titre,texte,oui='Oui',non='Annuler'){return new Promise(res=>{
+  $('askTitle').textContent=titre;$('askText').textContent=texte;$('askYes').textContent=oui;$('askNo').textContent=non;$('askNo').hidden=!non;$('ask').hidden=false;
+  const fin=v=>{$('ask').hidden=true;$('askYes').onclick=$('askNo').onclick=null;res(v)};$('askYes').onclick=()=>fin(true);$('askNo').onclick=()=>fin(false);$('askYes').focus()})}
+// Ouvre un écran par-dessus un autre, qu'on retrouve en le fermant.
+const pile=[];
+export function ouvrirEcran(id,depuis){if(depuis){$(depuis).hidden=true;pile.push(depuis)}$(id).hidden=false}
+export function fermerEcran(id){$(id).hidden=true;const r=pile.pop();if(r)$(r).hidden=false}
