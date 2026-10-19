@@ -19,7 +19,7 @@ export async function ouvrir({largeur=960,hauteur=540,page='index.html',mobile=f
   // Pas de verrouillage du pointeur : sinon Chromium sans écran envoie des petits mouvements qui tournent la caméra.
   await p.addInitScript(()=>{Element.prototype.requestPointerLock=function(){return Promise.resolve()}});
   await p.route(/^https?:\/\/(?!127\.0\.0\.1)/,r=>{externes.push(r.request().url());r.abort()}); // le jeu ne doit rien charger d'extérieur
-  await p.goto(url);await p.waitForSelector('#play:not([disabled])',{timeout:180000});
+  await p.goto(url);await p.waitForSelector('#play:not([disabled])',{timeout:180000});await p.waitForSelector('#chargement',{state:'hidden',timeout:30000});
   return{b,p,srv,erreurs,externes,
     jouer:()=>mobile?p.tap('#play'):p.click('#play'),
     pn:(fn,arg)=>p.evaluate(fn,arg),

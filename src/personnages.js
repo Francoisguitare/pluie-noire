@@ -6,7 +6,8 @@ import {glow,M} from './construire.js';
 import {canvasTex,mk} from './textures.js';
 
 const loader=new THREE.GLTFLoader();loader.setMeshoptDecoder(THREE.MeshoptDecoder);
-export const loadGLB=name=>new Promise((res,rej)=>loader.load('assets/models/'+name+'.glb',res,undefined,rej));
+// prog(fraction) : avancement du téléchargement, pour l'écran de chargement.
+export const loadGLB=(name,prog)=>new Promise((res,rej)=>loader.load('assets/models/'+name+'.glb',g=>{prog&&prog(1);res(g)},e=>{if(prog&&e.lengthComputable&&e.total)prog(e.loaded/e.total)},rej));
 export function prepClip(c,stripPrefix){const k=c.clone();k.tracks=k.tracks.filter(t=>!/\.(position|scale)$/.test(t.name));
   if(stripPrefix)k.tracks.forEach(t=>{t.name=t.name.replace(/^mixamorig/,'')});return k}
 export function findBone(root,names){let b=null;root.traverse(o=>{if(!b&&o.isBone&&names.includes(o.name))b=o});return b}
@@ -24,7 +25,9 @@ export function mountChar(n,root,clips,opt){
   n.g.add(root);n.root=root;
   const mx=new THREE.AnimationMixer(root);n.mixer=mx;
   if(!clips.idle){n.bones={};root.traverse(o=>{if(o.isBone)n.bones[o.name.replace(/^mixamorig/,'')]=o});n.rest={};for(const k in n.bones)n.rest[k]=n.bones[k].quaternion.clone();n.warm=1;return}
-  const idle=mx.clipAction(clips.idle);idle.play();idle.time=rnd()*clips.idle.duration;idle.timeScale=.85+rnd()*.3;
+  const idle=mx.clipAction(clips.idle);idle.play();idle.time=rnd()*clips.idle.duration;idle.timeScale=.85+rnd()*.3;n.idle=idle;
+  // Marche sur place, mélangée à l'immobilité quand le personnage pivote (voir pivoter)
+  if(clips.marche){const m=mx.clipAction(clips.marche);m.play();m.setEffectiveWeight(0);m.timeScale=.8;n.pas=m}
   n.gest={};for(const k of['agree','shake']){if(!clips[k])continue;const a=mx.clipAction(clips[k]);a.blendMode=THREE.AdditiveAnimationBlendMode;a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=false;n.gest[k]=a}
 }
 // Modèles prêts à cloner (gardiens, figurants) : scène intacte, animations, échelle et décalage pour une taille donnée.
@@ -34,6 +37,18 @@ export function preparerModele(nom,gltf,h){
   sc.traverse(o=>{if(o.isBone&&/(Toe_End|ToeBase|Foot)$/.test(o.name))feet.push(o)});
   sc.updateMatrixWorld(true);const v=new V3();top.getWorldPosition(v);const ty=v.y;let fy=1e9;for(const f of feet){f.getWorldPosition(v);fy=Math.min(fy,v.y)}
   const echelle=h/Math.max(.01,ty-fy);MODELES[nom]={scene:sc,animations:gltf.animations,echelle,decalage:-fy*echelle+.03};
+}
+/* Pivoter vers une direction comme un humain : le corps tourne par à-coups de pas, les jambes suivent.
+   Un personnage animé mélange sa marche sur place à son attente ; ceux posés à la main (Sid, Saal) plient les jambes. */
+export function pivoter(n,cible,vitesse,dt){
+  const avant=n.g.rotation.y;let d=((cible-avant+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
+  // pas de rotation pour un écart minuscule : on ne piétine pas pour deux degrés
+  const tourne=Math.abs(d)>.12||(n.pasW||0)>.15;
+  if(tourne)n.g.rotation.y=avant+d*Math.min(1,dt*vitesse);
+  const w=Math.abs(n.g.rotation.y-avant)/Math.max(dt,1e-4);
+  n.pasW=(n.pasW||0)+((tourne?Math.min(1,w/1.1):0)-(n.pasW||0))*Math.min(1,dt*7);
+  n.pasPh=(n.pasPh||0)+dt*7*Math.min(1,n.pasW*1.6);
+  if(n.pas){n.pas.setEffectiveWeight(n.pasW*.85);if(n.idle)n.idle.setEffectiveWeight(1-n.pasW*.6)}
 }
 export function gesture(n,kind){if(!n||!n.gest)return;const a=n.gest[kind]||n.gest.agree;if(!a)return;a.reset();a.setEffectiveWeight(.9);a.play()}
 export function restInfo(root){root.updateMatrixWorld(true);const m={};root.traverse(o=>{if(o.isBone){const pw=new THREE.Quaternion();o.parent.getWorldQuaternion(pw);m[o.name.replace(/^mixamorig/,'')]={local:o.quaternion.clone(),pw}}});return m}
@@ -100,6 +115,9 @@ export function poseSid(n){
     if(a){_q4.setFromAxisAngle(fwd,-sg*(.5-.05*w));boneWorldQ(a,R[s+'Arm'],_q2.setFromAxisAngle(left,-(.1+.45*w)).multiply(_q4))}
     if(f){_q4.setFromAxisAngle(up,-sg*.45*w);boneWorldQ(f,R[s+'ForeArm'],_q4.multiply(_q2.setFromAxisAngle(left,-(.25+1.05*w))))}
   }
+  // pas sur place quand il pivote : une cuisse se lève, le genou plie, puis l'autre
+  const st=n.pasW||0;if(st>.01)for(const[s,sg]of[['Left',1],['Right',-1]]){const k=Math.max(0,Math.sin((n.pasPh||0)+(sg>0?0:Math.PI)))*st;
+    if(B[s+'UpLeg'])boneWorldRot(B[s+'UpLeg'],R[s+'UpLeg'],left,-.45*k);if(B[s+'Leg'])boneWorldRot(B[s+'Leg'],R[s+'Leg'],left,.8*k)}
   if(B.Head){B.Neck&&B.Neck.updateMatrixWorld(true);_q4.setFromAxisAngle(up,Math.sin(T*.35)*.3*(1-.7*w));boneWorldQ(B.Head,R.Head,_q4.multiply(_q2.setFromAxisAngle(left,.25*w)))}
 }
 
