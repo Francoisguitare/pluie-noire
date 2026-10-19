@@ -22,7 +22,12 @@ export const S0=()=>({chapter:1,heure:192,quest:false,code:false,credits:80,vent
   // chapitre 4 (Traboules) ; boitier : qui tient la copie du kill-switch de Mara (null, 'mara' ou 'ash')
   sidTrab:false,canuts:false,rosaVue:false,vargaVue:false,atelierOuvert:false,carte:false,badge:false,galerie:false,maraTrab:false,boitier:null,temoignage:false,vargaTestifies:null,
   // chapitre 5 (Confluence) ; cams : caméras abattues (« zone:numéro »)
-  tour:false,ascenseur:false,couloir:false,lasersCoupes:false,cle:false,sommet:false,finale:false,cams:[],fin:null});
+  tour:false,ascenseur:false,couloir:false,lasersCoupes:false,cle:false,sommet:false,finale:false,cams:[],fin:null,
+  // pouvoirs (voir pouvoirs.js) : XP, améliorations achetées, Gardiens neutralisés {k:'zone:num',x,z,yaw,sens}, archives trouvées,
+  // dernière étape de l'histoire déjà payée en XP, tutoriel de la Coupure vu
+  xp:0,ameli:{portee:0,recharge:0,discretion:0,arc:0,echo:0},neutres:[],archives:[],xpChap:1,coupureVue:false});
+// Un point de pouvoir tous les XP_NIVEAU points d'expérience.
+export const XP_NIVEAU=150;
 export let S=S0();
 
 /* Un chapitre : {zone, objectives(S,L), checkpoint(S) → [x,z,yaw], reset(), apply(S), describe(S), ends} */
@@ -34,7 +39,7 @@ const zoneDe=c=>typeof c.zone==='function'?c.zone(S):c.zone;
 const ENDS={};
 export const defineEnds=e=>Object.assign(ENDS,e);
 
-export function refreshHud(){setCredits(S.credits);$('heure').textContent=fmtHeure(S.heure);const L=[];chap().objectives(S,L);setObjectives(L)}
+export function refreshHud(){setCredits(S.credits);$('heure').textContent=fmtHeure(S.heure);const L=[];chap().objectives(S,L);setObjectives(L);emit('hudRafraichi')}
 on('hud',refreshHud);
 
 export function caught(){
@@ -49,7 +54,7 @@ export function finish(k,o={}){
   const sec=Math.round((performance.now()-S.t0)/1000),e=ENDS[k];
   $('endKicker').textContent=o.kicker||'Fin de mission';$('endSaison').textContent=o.saison||'';$('endSaison').hidden=!o.saison;
   $('endTitle').textContent=e[0];$('endText').textContent=typeof e[1]==='function'?e[1]():e[1];
-  $('endStats').textContent=`Temps ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}  ·  Repérages : ${S.spotted}  ·  ${S.credits} crédits restants`;
+  $('endStats').textContent=`Temps ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}  ·  Repérages : ${S.spotted}  ·  ${S.credits} crédits restants  ·  Niveau ${Math.floor(S.xp/XP_NIVEAU)}  ·  Archives : ${S.archives.length}`;
   $('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');emit('clearSave');$('end').hidden=false;tone(220,1.2,'sine',.05,330);
 }
 
@@ -67,6 +72,7 @@ export function applySave(d){
   allerZone(d.zone||zoneDe(chap()),null,{fondu:false});
   P.pos.set(d.p[0],0,d.p[1]);P.yaw=d.p[2];collide(P.pos,.38);
   for(const k in chapters)chapters[k].apply&&chapters[k].apply(S);
+  emit('partieAppliquee'); // les chapitres ont pu ajouter des Gardiens : pouvoirs.js remet à terre les neutralisés
   if(S.armed)setArmed(true);
   G.grace=2.5;refreshHud();
 }

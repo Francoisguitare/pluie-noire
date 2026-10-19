@@ -34,7 +34,7 @@ function installerRue(){
 // Présence des ennemis du chapitre 3 dans la rue (absents aux chapitres 1 et 2).
 function activerRue(on){
   const Z=RUE.Z;if(!rue3)return;
-  for(const k of['gardiens','faucheuses'])for(const e of rue3.liste[k]){const i=Z[k].indexOf(e);if(on&&i<0)Z[k].push(e);if(!on&&i>=0)Z[k].splice(i,1);e.g.visible=on;if(e.cone)e.cone.visible=on}
+  for(const k of['gardiens','faucheuses'])for(const e of rue3.liste[k]){const i=Z[k].indexOf(e);if(on&&i<0)Z[k].push(e);if(!on&&i>=0)Z[k].splice(i,1);e.g.visible=on;if(e.cone)e.cone.visible=on&&!e.neutre}
   Z.couverts.length=0;if(on)Z.couverts.push({x0:6,x1:9.4,z0:0,z1:10},{x0:-6.2,x1:-4.4,z0:16.4,z1:18.6},{x0:-6.2,x1:-4.6,z0:3.4,z1:6.6},{x0:-6.2,x1:-4.7,z0:24.6,z1:30.4},{x0:-14,x1:-9,z0:-30,z1:-12});
 }
 // Mara et Sid quittent la rue après le black-out.
@@ -79,8 +79,11 @@ function lancer(){
     {t:19.9,sub:{qui:'Mara',texte:'Kovac a un escalier qui monte sur les toits, derrière son bar. Passe par là.',dur:3.4}},
     {t:23.4,sub:{qui:'Mara',texte:'Moi, j\'emporte le décodeur chez les Canuts, à la Croix-Rousse. Sid connaît le chemin : il t\'attendra de l\'autre côté des toits.',dur:4.4}},
   ];
-  let fin=28;
-  if(forced){steps.push({t:27.9,sub:{qui:'Mara',texte:'Et si l\'envie te reprend de me fausser compagnie, souviens-toi de qui tient ta main.',dur:3.4}});fin=31.4}
+  // La Coupure (voir pouvoirs.js) : la main d'Ash a gardé les codes de la puce
+  steps.push({t:27.9,sub:{qui:'Mara',texte:"(Elle attrape ta main K7 et la retourne.) Quand tu as tenu la puce, ta main l'a lue. Les codes de coupure d'Helix sont dedans, maintenant.",dur:4.6}});
+  steps.push({t:32.6,sub:{qui:'Mara',texte:"Les armures des Gardiens, c'est des K7 comme les autres. Vise, et coupe. Ils tombent comme des planches.",dur:4}});
+  let fin=36.7;
+  if(forced){steps.push({t:36.7,sub:{qui:'Mara',texte:'Et si l\'envie te reprend de me fausser compagnie, souviens-toi de qui tient ta main.',dur:3.4}});fin=40.2}
   steps.push({t:fin,fn:()=>{anim.descente=1e9;anim.rappel=1e9;majAnim(0);fau.hCur=fau.h;fau.actif=true;S.blackout=true;heure(4*60+8);activerRue(true);absents(true);RUE.blackout(0);G.grace=3;emit('save');refreshHud()}});
   steps.push({t:fin+.05,fn:()=>{}});
   cine(steps).then(()=>{toast('Rejoins Kovac sans croiser le projecteur. Les abris te cachent.')});

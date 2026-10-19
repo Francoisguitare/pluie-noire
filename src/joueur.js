@@ -55,7 +55,7 @@ on('shoot',shoot);
 /* ---------- Main prothétique K7 d'Ash (scène où Mara la verrouille) ---------- */
 const kHand=new THREE.Group();kHand.visible=false;camera.add(kHand);
 const kSeam=glow(0xf0a53a,1.6),kFingers=[];
-let kShow=0,kLock=0,kLockT=0;
+let kShow=0,kLock=0,kLockT=0,kPulse=0;
 export const handLocked=()=>!!kLock;
 (function(){
   const hm=new THREE.MeshStandardMaterial({color:0x8a919b,roughness:.32,metalness:.9,envMapIntensity:1.1});
@@ -65,7 +65,7 @@ export const handLocked=()=>!!kLock;
   for(const x of[-.027,-.009,.009,.027]){const s=new THREE.Mesh(new THREE.BoxGeometry(.0025,.06,.002),kSeam);s.position.set(x,.046,.0175);kHand.add(s)}
   // Dos de la main vers la caméra : le pouce est à gauche, les doigts se replient vers -Z.
   const jointG=new THREE.SphereGeometry(1,12,8);
-  const finger=(x,y,k,rz)=>{let j=new THREE.Group();j.position.set(x,y,0);j.rotation.z=rz;kHand.add(j);const js=[j];
+  const finger=(x,y,k,rz)=>{let j=new THREE.Group();j.position.set(x,y,0);j.rotation.z=rz;j.userData.rz=rz;kHand.add(j);const js=[j];
     [.032,.026,.02].forEach((L,i)=>{const r=.0088-i*.0012,seg=new THREE.Mesh(new THREE.CylinderGeometry(r*.9,r,L*k,12),i===1?gm:hm);seg.position.y=L*k/2;j.add(seg);
       const kn=new THREE.Mesh(jointG,i?gm:hm);kn.scale.setScalar(r*1.15);j.add(kn);
       if(i<2){const nj=new THREE.Group();nj.position.y=L*k;j.add(nj);js.push(nj);j=nj}
@@ -82,18 +82,24 @@ export function lockHand(on){
   if(on){kLock=1;kLockT=0;lockSound();try{navigator.vibrate&&navigator.vibrate([90,50,220])}catch(e){}toast('Prothèse K7 · verrouillage à distance')}
   else{kLock=0;unlockSound();$('vig').style.opacity=0}
 }
-export function resetHand(){kLock=0;kShow=0;kHand.visible=false}
+export function resetHand(){kLock=0;kShow=0;kPulse=0;kHand.visible=false}
+// La Coupure : la main K7 se lève, doigts ouverts, et le signal part (voir pouvoirs.js).
+export function gesteCoupure(){kPulse=1}
+// Position du bout des doigts, d'où part l'arc.
+export function boutDesDoigts(v){return v.set(.1,-.07,-.5).applyMatrix4(camera.matrixWorld)}
 // Renvoie l'intensité du glitch d'écran à appliquer.
 export function updateHand(dt){
-  gun.visible=armed&&state!=='cine'; // pas d'arme à l'écran pendant les cinématiques
-  kShow+=((kLock?1:0)-kShow)*Math.min(1,dt*(kLock?4:3));kHand.visible=kShow>.01;kLockT+=dt;
+  kPulse=Math.max(0,kPulse-dt*1.5);
+  gun.visible=armed&&state!=='cine'&&kPulse<=0; // pas d'arme à l'écran pendant les cinématiques ni pendant la Coupure
+  const kVeut=kLock||kPulse>0;kShow+=((kVeut?1:0)-kShow)*Math.min(1,dt*(kLock?4:kPulse>0?9:5));kHand.visible=kShow>.03;kLockT+=dt;
   const spasm=kLock?Math.max(0,1-kLockT/1.1):0;
   if(kLock)$('vig').style.opacity=(.35+spasm*.4).toFixed(2);
   if(kHand.visible){
-    kHand.position.set(.15+Math.sin(T*41)*.003*spasm,-.36+kShow*.27,-.42);kHand.rotation.set(-.12,.3,-.22+Math.sin(T*29)*.04*spasm);
+    const pz=kLock?0:kPulse,vib=pz>.6?Math.sin(T*90)*.004:0;
+    kHand.position.set(.15-pz*.05+Math.sin(T*41)*.003*spasm+vib,-.36+kShow*.27+pz*.03,-.42-pz*.06);kHand.rotation.set(-.12-pz*.5,.3-pz*.2,-.22+Math.sin(T*29)*.04*spasm);
     const curl=kLock?Math.min(1,kLockT*1.4):0;
-    kFingers.forEach((js,fi)=>js.forEach((j,ji)=>{j.rotation.x=-curl*(ji?.75:.45)-.06-spasm*.25*Math.sin(T*37+fi*2.1+ji*1.3)}));
-    if(kLock)kSeam.color.setHex(0xff2a2a).multiplyScalar(Math.sin(T*18)>-.2?2.4:.6);else kSeam.color.setHex(0xf0a53a).multiplyScalar(1.6);
+    kFingers.forEach((js,fi)=>js.forEach((j,ji)=>{j.rotation.x=-curl*(ji?.75:.45)-.06+pz*.05-spasm*.25*Math.sin(T*37+fi*2.1+ji*1.3);if(!ji)j.rotation.z=j.userData.rz+pz*(fi-1.5)*.09}));
+    if(kLock)kSeam.color.setHex(0xff2a2a).multiplyScalar(Math.sin(T*18)>-.2?2.4:.6);else if(pz>0)kSeam.color.setHex(0x58e6ff).multiplyScalar(1.6+pz*3);else kSeam.color.setHex(0xf0a53a).multiplyScalar(1.6);
   }
   return kLock?.22+spasm*.9:0;
 }

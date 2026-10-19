@@ -132,3 +132,16 @@ export function annonce(){if(!AC)return;tone(880,.35,'sine',.05,660);setTimeout(
 export function frapper(){if(!AC)return;const t=AC.currentTime;for(let i=0;i<3;i++){const k=t+i*.28;nz(k,'lowpass',240,.9,.55,.002,.08);nz(k+.002,'bandpass',750,2,.12,.002,.035)}}
 // Porte métallique qui coulisse (badge accepté).
 export function porteMetal(){if(!AC)return;const t=AC.currentTime;click(t,2400,.04);click(t+.08,3000,.04);const f=nz(t+.15,'bandpass',300,1.5,.12,.08,1.1);f.frequency.setValueAtTime(220,t+.15);f.frequency.linearRampToValueAtTime(520,t+1.2);nz(t+1.25,'lowpass',180,.8,.25,.004,.2)}
+/* ---------- La Coupure, l'XP, les archives ---------- */
+// L'arc : un claquement électrique, une montée aiguë et un grésillement (k : 1 = coup plein, moins = geste à vide).
+export function arcSound(k=1){
+  if(!AC)return;const t=AC.currentTime;
+  const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(1900*k+200,t+.12);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.06*k+.01,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+.3);o.connect(g);g.connect(out);o.start(t);o.stop(t+.32);
+  nz(t,'highpass',3000,.7,.22*k,.001,.06);
+  for(let i=0;i<Math.round(9*k);i++)nz(t+.02+i*.025+Math.random()*.02,'bandpass',3000+Math.random()*4000,6,.1*k,.001,.015);
+}
+// Une armure qui tombe d'un bloc sur le sol : choc sourd et cliquetis de plaques.
+export function chuteArmure(){if(!AC)return;const t=AC.currentTime;nz(t,'lowpass',260,.8,.6,.004,.35);nz(t,'bandpass',900,2,.12,.002,.12);click(t+.03,1400,.06);click(t+.1,900,.05);click(t+.19,1700,.03)}
+export function niveauSound(){if(!AC)return;[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.28,'triangle',.045),i*90))}
+export function archiveSound(){if(!AC)return;tone(1320,.5,'sine',.04,1760);setTimeout(()=>tone(1980,.6,'sine',.025),110)}

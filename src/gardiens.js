@@ -1,6 +1,7 @@
 // Gardiens d'Helix : rondes à pied, lampe-torche. Ils voient (cône, ligne de vue, moins loin dans le noir ou si l'on est accroupi),
 // ils entendent (courir s'entend de loin, marcher de près, accroupi pas du tout), vont voir, fouillent, puis reprennent leur ronde.
-// Le blindage arrête les balles du P-9 : on les évite, on ne les combat pas.
+// Le blindage arrête les balles du P-9. Mais l'armure est une K7 comme les autres : la Coupure de la main d'Ash la verrouille,
+// et le Gardien tombe raide (neutraliser). Il reste à terre, même après une capture ou une reprise de sauvegarde.
 import {THREE,V3,P,G,T,clamp,lerpAng,emit,on} from './core.js';
 import {los} from './physique.js';
 import {add,glow,shaftMat} from './construire.js';
@@ -24,8 +25,9 @@ export function makeGardien(z,path,o={}){
   const torch=new THREE.Mesh(new THREE.CylinderGeometry(.03,.035,.22,10),new THREE.MeshStandardMaterial({color:0x1b1d22,metalness:.8,roughness:.4}));torch.rotation.x=Math.PI/2;torch.position.set(.22,1.38,.18);g.add(torch);
   const lens=new THREE.Mesh(new THREE.CircleGeometry(.03,12),glow(0xffffff,3));lens.position.set(.22,1.38,.295);g.add(lens);
   Object.assign(d,{light,cone,coneMat,lensMat:lens.material});
-  habiller(d);
-  z.gardiens.push(d);placer(d);return d;
+  habiller(d);d.g.rotation.order='YXZ';
+  // num : rang du Gardien dans la zone, stable même quand l'histoire en retire ou en ajoute (sauvegarde des neutralisés)
+  const tous=z.tousGardiens||(z.tousGardiens=[]);d.num=tous.length;tous.push(d);z.gardiens.push(d);placer(d);return d;
 }
 // Un Gardien immobile, pour les scènes (escorte de Saal) : même allure, lampe allumée, ne voit ni n'entend rien.
 export function gardienImmobile(z,x,zz,yaw){
@@ -44,14 +46,15 @@ function habiller(d){
   m.scale.setScalar(M.echelle);m.position.y=M.decalage;m.rotation.y=Math.PI;d.g.add(m);d.model=m;
   const head=findBone(m,['mixamorigHead']);
   if(head){const cas=new THREE.Mesh(new THREE.SphereGeometry(.15,18,12,0,Math.PI*2,0,Math.PI*.6),new THREE.MeshStandardMaterial({color:0x15171c,roughness:.35,metalness:.7,envMapIntensity:1.3}));attachTo(head,cas,0,.1,0);
-    const vis=new THREE.Mesh(new THREE.BoxGeometry(.2,.035,.05),glow(0xff2a2a,2.6));attachTo(head,vis,0,.09,.11)}
+    const vis=new THREE.Mesh(new THREE.BoxGeometry(.2,.035,.05),glow(0xff2a2a,2.6));attachTo(head,vis,0,.09,.11);d.visMat=vis.material}
   d.mixer=new THREE.AnimationMixer(m);d.acts={};
   for(const n of['Idle','Walk','Run']){const c=M.animations.find(a=>a.name===n);if(c){const a=d.mixer.clipAction(prepClip(c,false));a.play();a.setEffectiveWeight(n==='Idle'?1:0);d.acts[n]=a}}
   d.anim='Idle';
 }
 function anim(d,n){if(!d.acts||d.anim===n||!d.acts[n])return;for(const k in d.acts)d.acts[k].setEffectiveWeight(k===n?1:0);d.acts[n].time=0;d.anim=n}
 function placer(d){d.g.position.copy(d.pos);d.g.rotation.y=d.yaw}
-export function resetGardiens(z){for(const d of z.gardiens){d.pos.set(d.depart.p[0],0,d.depart.p[1]);d.yaw=d.depart.yaw;d.i=1;d.dir=1;d.wait=0;d.s=0;d.etat='ronde';placer(d)}}
+export function remettre(d){d.pos.set(d.depart.p[0],0,d.depart.p[1]);d.yaw=d.depart.yaw;d.i=1;d.dir=1;d.wait=0;d.s=0;d.etat='ronde';placer(d)}
+export function resetGardiens(z){for(const d of z.gardiens)if(!d.neutre)remettre(d)}
 on('apresCapture',()=>{const z=zone();if(z&&z.gardiens)resetGardiens(z)});
 
 // Va vers (x,z) à la vitesse v ; renvoie true une fois arrivé.
@@ -63,6 +66,7 @@ function marcher(d,x,z,v,dt){
 export function updateGardiens(dt,active,z){
   let maxS=0;
   for(const d of z.gardiens){
+    if(d.neutre){if(d.chute)tomber(d,dt);else if(d.mixer&&d.spasme>0){d.spasme-=dt;d.mixer.update(dt*.2)}continue}
     if(d.mixer)d.mixer.update(dt);
     if(active){
       const dx=P.pos.x-d.pos.x,dz=P.pos.z-d.pos.z,dist=Math.hypot(dx,dz);
@@ -98,3 +102,26 @@ export function updateGardiens(dt,active,z){
 }
 // Un tir qui touche un gardien : la balle ricoche sur le blindage, et lui fonce voir d'où ça vient.
 export function toucheGardien(d){d.cible.copy(P.pos);d.etat='enquete';d.wait=.2;d.s=Math.max(d.s,.55);emit('toast','Le blindage arrête la balle. Et maintenant, il sait où tu es.')}
+
+/* ---------- La Coupure : l'armure se verrouille, le Gardien tombe raide ---------- */
+// sens : 1 tombe en avant, -1 en arrière. instant : déjà à terre (reprise d'une sauvegarde).
+export function neutraliser(d,sens=1,instant=false){
+  if(d.neutre)return;d.neutre=true;d.s=0;d.etat='neutre';d.sens=sens;
+  d.light.intensity=0;d.cone.visible=false;d.lensMat.color.setHex(0x111111);if(d.visMat)d.visMat.color.setHex(0x1a0505);
+  if(instant){d.chute=null;d.g.rotation.x=1.5*sens;d.g.position.y=.06;placer2(d);if(d.mixer)d.mixer.update(1/30);return} // une image d'animation : pas de pose de référence figée
+  d.chute={t:0,v:0,a:0};d.spasme=.5;
+}
+const placer2=d=>{d.g.position.x=d.pos.x;d.g.position.z=d.pos.z;d.g.rotation.y=d.yaw};
+// Chute d'une planche : l'angle accélère comme un corps rigide, un petit rebond au sol.
+function tomber(d,dt){
+  const c=d.chute;c.t+=dt;if(c.t<.35){d.g.rotation.x=Math.sin(c.t*60)*.02*d.sens;if(d.mixer)d.mixer.update(dt*.3);return} // l'armure grésille, se fige
+  c.v+=dt*(2.2+Math.sin(c.a)*14);c.a+=c.v*dt;
+  if(c.a>=1.5){c.a=1.5;if(c.v>1.2){c.v*=-.25;emit('gardienAuSol',d)}else{c.v=0;d.chute=null}}
+  d.g.rotation.x=c.a*d.sens;d.g.position.y=.06*c.a/1.5;
+}
+export function relever(d){
+  if(!d.neutre)return;d.neutre=false;d.chute=null;d.etat='ronde';d.g.rotation.x=0;d.g.position.y=0;d.light.intensity=2.4;d.cone.visible=true;
+  if(d.visMat)d.visMat.color.setHex(0xff2a2a).multiplyScalar(2.6);
+}
+// Les Gardiens qui entendent l'armure tomber (rayon r) vont voir le corps, pas Ash.
+export function bruitDeChute(z,d,r){if(r<=0)return;for(const o of z.gardiens){if(o===d||o.neutre)continue;if(Math.hypot(o.pos.x-d.pos.x,o.pos.z-d.pos.z)<r){o.cible.copy(d.pos);if(o.etat!=='enquete'){o.etat='enquete';o.wait=.8}}}}

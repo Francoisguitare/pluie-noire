@@ -82,6 +82,13 @@ Ash donne la puce à Mara (ou refuse : Mara verrouille sa main K7 avec son boît
   - **Laisser la main à Mara** (si elle est libre) : la K7.2 part, mais la clé du kill-switch passe aux Nouveaux Canuts. Fin « La main de Mara ».
 - **L'aube** : l'orage se retire, le ciel s'éclaire à l'est et, pour la première fois de la saison, la pluie s'arrête. Écran de fin de saison.
 
+## La Coupure et l'expérience
+
+- **La Coupure** : quand Ash a tenu la puce, sa main K7 l'a lue. Elle garde les codes de coupure d'Helix et peut les renvoyer à l'envoyeur. Les armures des Gardiens sont des K7 comme les autres : l'armure se verrouille et le Gardien tombe raide, « comme une planche ». Il n'est pas tué : il reste à terre, bloqué dans sa coquille. La Coupure éteint aussi les drones et les caméras. Mara l'explique dans la cinématique du black-out (chapitre 3) ; avant, la main ne sait pas encore s'en servir. Le P-9 reste utile pour les lampes, et ses balles ricochent toujours sur les armures.
+- Les **Gardiens neutralisés** restent à terre toute la partie (`neutres`). Une armure qui tombe s'entend : les Gardiens proches vont voir le corps.
+- **XP** : Gardien neutralisé 30 (45 s'il n'a rien vu venir), drone 20, caméra 15, archive 50, étape de l'histoire 100. Un point de pouvoir tous les 150 XP, à dépenser dans l'écran « Pouvoirs » : **portée** (12 à 30 m), **recharge** (6 s à 1,5 s), **discrétion** (la chute s'entend de 9 m à rien), **arc** (la Coupure saute sur une ou deux cibles proches), **écho** (repérer les signaux Helix à travers les murs).
+- **Archives Helix** : dix-huit cartes mémoire cachées, trois par lieu (fiches de paie, notes de service, la lettre jamais envoyée de Varga, le rapport sur le « Gardien 12 » dont l'armure s'est verrouillée toute seule, la liste des K7 à griller où figure le matricule d'Ash…). Textes dans `src/pouvoirs.js`.
+
 ## Choix qui comptent
 
 | Drapeau | Où | Effet |

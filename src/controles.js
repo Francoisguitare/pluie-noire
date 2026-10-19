@@ -9,6 +9,8 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyM')emit('mute');
   if(e.code==='KeyG'&&!e.repeat&&state!=='puzzle')emit('cycleQuality'); // G est aussi une carte du métier Jacquard
   if(state==='play'&&e.code==='KeyF'&&!e.repeat)emit('shoot');
+  if(state==='play'&&e.code==='KeyR'&&!e.repeat)emit('couper');
+  if(e.code==='Tab'){e.preventDefault();if(state==='play'&&!e.repeat)emit('ouvrirPouvoirs')}
   if(state==='play'&&(e.code==='KeyP'||e.code==='Escape')&&!e.repeat)emit('pause');
   if(state==='play'&&e.code==='KeyE'&&G.curInter&&!e.repeat){G.curInter.act()}
   else if(state==='dialogue'&&!e.repeat){
@@ -22,7 +24,8 @@ addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 const cvs=renderer.domElement;let dragging=false;
 export function lookBy(dx,dy){P.yaw-=dx*.0022;P.pitch=clamp(P.pitch-dy*.0022,-1.4,1.4)}
 export function lock(){try{const r=cvs.requestPointerLock();if(r&&r.catch)r.catch(()=>{})}catch(err){}}
-cvs.addEventListener('mousedown',e=>{if(state!=='play')return;if(document.pointerLockElement===cvs){if(e.button===0)emit('shoot');return}dragging=true;lock()});
+cvs.addEventListener('mousedown',e=>{if(state!=='play')return;if(document.pointerLockElement===cvs){if(e.button===0)emit('shoot');else if(e.button===2)emit('couper');return}dragging=true;lock()});
+cvs.addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('mouseup',()=>{dragging=false});
 addEventListener('mousemove',e=>{if(state!=='play')return;if(document.pointerLockElement===cvs||dragging)lookBy(e.movementX||0,e.movementY||0)});
 document.addEventListener('pointerlockerror',()=>emit('toast','Maintiens le clic gauche et bouge la souris pour regarder'));
@@ -62,5 +65,6 @@ if(MOBILE){
   tap($('tCrouch'),()=>{TC.crouch=!TC.crouch;$('tCrouch').classList.toggle('on',TC.crouch);if(TC.crouch){TC.run=false;$('tRun').classList.remove('on')}});
   tap($('tRun'),()=>{TC.run=!TC.run;$('tRun').classList.toggle('on',TC.run);if(TC.run){TC.crouch=false;$('tCrouch').classList.remove('on')}});
   tap($('tFire'),()=>emit('shoot'));
+  tap($('tCoupe'),()=>emit('couper'));
   tap($('tMenu'),()=>{if(state==='play')emit('pause')});
 }
