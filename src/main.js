@@ -1,5 +1,5 @@
 // Chef d'orchestre : construit le monde dans l'ordre, branche les écrans et les événements, fait tourner la boucle.
-import {THREE,$,P,G,T,tick,state,setState,quality,setQuality,MOBILE,camera,scene,on,emit,lerpAng,clamp} from './core.js';
+import {THREE,$,P,G,T,tick,state,setState,quality,setQuality,MOBILE,camera,scene,renderer,on,emit,lerpAng,clamp} from './core.js';
 import {into,updateFx} from './construire.js';
 import {buildSky,buildCars,updateSky} from './ciel.js';
 import {buildRain,updateRain,rain} from './pluie.js';
@@ -28,7 +28,7 @@ import {toast,detectionHud,fade} from './interface.js';
 import {initAudio,toggleMute,setIndoor} from './son.js';
 import {keys,lock} from './controles.js';
 import {enterZone,zone,zones} from './zones.js';
-import {poseSid} from './personnages.js';
+import {poseSid,pivoter} from './personnages.js';
 import {ouvrirTransfert,importDepuisAdresse} from './transfert.js';
 import {ouvrirCompte,initComptes} from './compte.js';
 import {updateAmbiance} from './ambiance.js';
@@ -68,7 +68,7 @@ function buildWorld(){into(null);buildSky();buildRue();zones.rue.construite=true
 function updateNpcs(dt){
   const pp=state==='title'||state==='end'?camera.position:P.pos;
   for(const n of zone().npcs){const dx=pp.x-n.x,dz=pp.z-n.z,d=Math.hypot(dx,dz),near=d<6&&state!=='title';
-    n.g.rotation.y=near?lerpAng(n.g.rotation.y,Math.atan2(dx,dz),dt*3):lerpAng(n.g.rotation.y,n.yaw,dt*1.2);
+    pivoter(n,near?Math.atan2(dx,dz):n.yaw,near?3:1.6,dt);
     if(n.warm!==undefined)n.warm+=((near?0:1)-n.warm)*Math.min(1,dt*2);
     if(n.mixer)n.mixer.update(dt);if(n.bones)poseSid(n);n.tag.material.opacity=state==='cine'?0:clamp(1-(d-5)/4,0,1);
     if(n.cig)n.cig.material.color.setRGB(3,.6+Math.sin(T*.8)*.3,.15)}
@@ -103,9 +103,18 @@ if(DEBUG)window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,ne
 
 /* ---------- Démarrage : polices, monde, personnages, boucle ---------- */
 const fonts=document.fonts&&document.fonts.load?Promise.race([Promise.all(['500','600','700'].map(w=>document.fonts.load(`${w} 40px "Saira Condensed"`))),new Promise(r=>setTimeout(r,1500))]):Promise.resolve();
-fonts.catch(()=>{}).then(()=>{
+// Écran de chargement : on laisse le navigateur l'afficher entre deux étapes lourdes.
+const etape=(texte,k)=>{$('lstep').textContent=texte;$('lbar').style.width=(k*100).toFixed(1)+'%'};
+const souffle=()=>new Promise(r=>setTimeout(r,30));
+fonts.catch(()=>{}).then(async()=>{
+  etape('Construction de la ville…',.08);await souffle();
   buildWorld();newGame();
   showSaveInfo();initComptes();importDepuisAdresse();
-  loadRueCharacters().then(ready,e=>{console.warn('Personnages :',e);rueFallback();ready()});
-  loop();
-});
+  etape('Arrivée des personnages…',.3);
+  await loadRueCharacters(v=>etape('Arrivée des personnages…',.3+v*.6)).catch(e=>{console.warn('Personnages :',e);rueFallback()});
+  etape('Préparation des lumières…',.94);await souffle();
+  try{renderer.compile(scene,camera)}catch(e){}
+  // la boucle ne démarre qu'ici : pendant le chargement, rien ne se dessine derrière l'écran
+  loop();etape('Prêt.',1);ready();
+  setTimeout(()=>{$('chargement').classList.add('fini');setTimeout(()=>{$('chargement').hidden=true},700)},250);
+}).catch(e=>{console.error(e);window.pnEchec&&window.pnEchec("Le jeu n'a pas pu se charger. Recharge la page.")});

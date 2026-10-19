@@ -108,7 +108,7 @@ h2{margin:0;font:700 clamp(44px,7vw,72px)/.9 var(--f-display);text-transform:upp
 #caught div{text-align:center;display:grid;gap:10px}
 #caught b{font:700 clamp(64px,12vw,140px)/.85 var(--f-display);color:var(--alert);letter-spacing:.04em}
 #caught span{font:500 13px/1 var(--f-mono);letter-spacing:.2em;color:var(--ink)}
-#err{color:var(--alert)}
+#err,#lerr{color:var(--alert)}
 @media (max-width:600px){
   #objs li{font-size:16px} #objs li.sub{font-size:14px}
   #dtxt{font-size:18px} #dch button{font-size:17px}
@@ -197,6 +197,15 @@ body.paused #hud{display:none}
 #cineSkip{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(3vh + env(safe-area-inset-bottom,0px));z-index:4;font:500 12px/1 var(--f-mono);letter-spacing:.12em;color:var(--ink-dim);background:none;border:1px solid rgba(236,229,214,.3);padding:8px 12px;cursor:pointer}
 body.cine #hud,body.cine #touch,body.cine #prompt{display:none}
 .clock b{font:500 22px/1 var(--f-mono);color:var(--ink);font-variant-numeric:tabular-nums}
+/* Écran de chargement */
+#chargement{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:radial-gradient(ellipse at 30% 40%,#141225 0%,var(--void) 70%);transition:opacity .6s}
+#chargement.fini{opacity:0;pointer-events:none}
+#chargement .card{padding:0;justify-items:start;width:min(520px,calc(100% - 48px))}
+#chargement .lbar{width:100%;height:4px;background:rgba(240,165,58,.15);overflow:hidden}
+#chargement .lbar i{display:block;height:100%;width:0;background:var(--amber);box-shadow:0 0 12px rgba(240,165,58,.6);transition:width .3s}
+#chargement .pluie{position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:.35;background:repeating-linear-gradient(100deg,transparent 0 22px,rgba(160,180,230,.18) 22px 23px);background-size:200px 200px;animation:averse .5s linear infinite}
+@keyframes averse{to{background-position:-40px 200px}}
+@media (prefers-reduced-motion:reduce){#chargement .pluie{animation:none}}
 /* Énigme du métier Jacquard (chapitre 4) */
 #metier{z-index:5;background:rgba(5,6,10,.93)}
 body.puzzle #hud,body.puzzle #touch,body.puzzle #prompt{display:none}
@@ -249,6 +258,15 @@ body.touch .carte{min-height:36px;padding:4px 10px}
   <ol id="dch"></ol>
 </div>
 
+<div id="chargement" role="status" aria-live="polite">
+  <div class="pluie"></div>
+  <div class="card">
+    <div class="kicker">Lyon-Basse · 2041 · 03 h 12</div>
+    <h1>Pluie<br><em>Noire</em></h1>
+    <div class="lbar"><i id="lbar"></i></div>
+    <div class="note" id="lstep">Chargement…</div>
+  </div>
+</div>
 <div id="title" class="screen">
   <div class="card">
     <div class="kicker">Lyon-Basse · 2041 · 03 h 12</div>
@@ -384,10 +402,12 @@ body.touch .carte{min-height:36px;padding:4px 10px}
 
 <script>
 // Si le jeu ne démarre pas (fichier manquant, WebGL indisponible), on le dit au lieu d'afficher un écran figé.
-addEventListener('error',function(){if(window.__pnBoot)return;var n=document.getElementById('note');if(n){n.innerHTML='<span id="err">Le jeu n\'a pas pu se charger. Recharge la page.</span>';document.getElementById('play').hidden=true}},true);
+function pnEchec(m){var n=document.getElementById('note');if(n){n.innerHTML='<span id="err">'+m+'</span>';document.getElementById('play').hidden=true}
+  var l=document.getElementById('lstep');if(l){l.innerHTML='<span id="lerr">'+m+'</span>';document.getElementById('lbar').parentNode.hidden=true}}
+addEventListener('error',function(){if(window.__pnBoot)return;pnEchec('Le jeu n\'a pas pu se charger. Recharge la page.')},true);
 </script>
 <script type="module" src="src/main.js"></script>
-<script nomodule>document.getElementById('note').innerHTML='<span id="err">Ce navigateur est trop ancien pour lancer le jeu.</span>';document.getElementById('play').hidden=true</script>
+<script nomodule>pnEchec('Ce navigateur est trop ancien pour lancer le jeu.')</script>
 
 </body>
 </html>

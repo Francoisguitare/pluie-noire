@@ -282,15 +282,17 @@ export const NPCS=[
 const npcBy=k=>NPCS.find(n=>n.key===k);
 
 /* Chargement des vrais personnages (glTF animés) */
-export async function loadRueCharacters(){
-  const[xbot,mich,sold,rpm]=await Promise.all(['xbot','michelle','soldier','sid'].map(loadGLB));
+// prog(fraction) : avancement global du téléchargement des quatre modèles.
+export async function loadRueCharacters(prog){
+  const f=[0,0,0,0],maj=()=>prog&&prog(f.reduce((a,b)=>a+b,0)/4);
+  const[xbot,mich,sold,rpm]=await Promise.all(['xbot','michelle','soldier','sid'].map((n,i)=>loadGLB(n,v=>{f[i]=v;maj()})));
   // Copies intactes pour les autres zones (gardiens, figurants), avant que la rue ne modifie les originaux.
   preparerModele('soldier',sold,1.86);preparerModele('michelle',mich,1.72);preparerModele('xbot',xbot,1.76);preparerModele('sid',rpm,1.76);
   const X=nm=>xbot.animations.find(a=>a.name===nm);
   const RX=restInfo(xbot.scene),RM=restInfo(mich.scene),RS=restInfo(sold.scene);
   const addv=c=>THREE.AnimationUtils.makeClipAdditive(c);
-  const forRig=R=>({idle:retarget(X('idle'),RX,R,'mixamorig'),agree:addv(retarget(X('agree'),RX,R,'mixamorig')),shake:addv(retarget(X('headShake'),RX,R,'mixamorig'))});
-  const base={idle:prepClip(X('idle'),false),agree:addv(prepClip(X('agree'),false)),shake:addv(prepClip(X('headShake'),false))};
+  const forRig=R=>({idle:retarget(X('idle'),RX,R,'mixamorig'),agree:addv(retarget(X('agree'),RX,R,'mixamorig')),shake:addv(retarget(X('headShake'),RX,R,'mixamorig')),marche:retarget(X('walk'),RX,R,'mixamorig')});
+  const base={idle:prepClip(X('idle'),false),agree:addv(prepClip(X('agree'),false)),shake:addv(prepClip(X('headShake'),false)),marche:prepClip(X('walk'),false)};
   // Animations prêtes pour les clones des autres zones (Rosa, Varga, Mara, Nox, figurants)
   MODELES.michelle.clips=forRig(RM);MODELES.xbot.clips=base;MODELES.xbot.marche=prepClip(X('walk'),false);
   // Mara
@@ -298,8 +300,8 @@ export async function loadRueCharacters(){
     {vec3 c=diffuseColor.rgb;float y=smoothstep(.12,.3,min(c.r,c.g)-c.b)*step(c.b*1.6,c.g);diffuseColor.rgb=mix(c,vec3(c.r*.42+.05,c.g*.06,c.g*.1),y);}`)}}});
   { const n=npcBy('mara'),hand=findBone(n.root,['mixamorigRightHand']);if(hand){const c=new THREE.Mesh(new THREE.SphereGeometry(.014,6,6),glow(0xff5a20,3));attachTo(hand,c,0,.09,.02);n.cig=c} }
   // Kovac
-  const sIdle=sold.animations.find(a=>a.name==='Idle'),rs=forRig(RS);
-  mountChar(npcBy('kovac'),sold.scene,{idle:sIdle?prepClip(sIdle,false):rs.idle,agree:rs.agree,shake:rs.shake},{env:1.1,flip:true});
+  const sIdle=sold.animations.find(a=>a.name==='Idle'),sWalk=sold.animations.find(a=>a.name==='Walk'),rs=forRig(RS);
+  mountChar(npcBy('kovac'),sold.scene,{idle:sIdle?prepClip(sIdle,false):rs.idle,agree:rs.agree,shake:rs.shake,marche:sWalk?prepClip(sWalk,false):rs.marche},{env:1.1,flip:true});
   // Sid (pose procédurale ; ce modèle regarde déjà vers +Z, pas de demi-tour)
   mountChar(npcBy('sid'),rpm.scene,{},{env:.7});
   habillerSid(npcBy('sid'));

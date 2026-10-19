@@ -30,12 +30,14 @@ Repères :
 - Les modèles regardent vers +Z, sauf `soldier` (Kovac) qui regarde vers −Z, d'où `flip:true` pour lui seul.
 - Personnages des zones construites à la demande : `habiller(n, look)` avec `LOOKS` (`personnages.js`) clone un modèle de `MODELES` (préparé au chargement de la rue). Le modèle michelle sert à plusieurs femmes : `teinte({cheveux, pantalon, haut, rouge})` recolore dans le shader (avec `customProgramCacheKey`, sinon Three.js réutilise le premier shader pour tous), `coiffer(n, {chignon, foulard})` rabat les chignons contre le crâne, `vetir(n, {col, long, sauf})` accroche veste ou blouse au squelette. Saal est le modèle de Sid avec son costume et son chapeau d'origine.
 - Figurants animés : `zone.figurants` (mixers mis à jour par `main.js`) ; `gardienImmobile` pour les Gardiens des scènes.
+- PNJ qui se tournent vers Ash : `pivoter(n, cible, vitesse, dt)` (`personnages.js`) mélange la marche sur place (`clips.marche`, action `n.pas`) à l'attente (`n.idle`) selon la vitesse de rotation (`n.pasW`) ; Sid et Saal, posés à la main, plient les jambes dans `poseSid`.
 - Dialogues : nœuds `t` (texte), `c` (choix), `act` (action) ; `SHAKE` liste les nœuds où le personnage secoue la tête.
 - Sauvegarde (`src/sauvegarde.js`) : `localStorage`, clé `pluie-noire-v2` = `{v:2, partie, saisons}` ; l'ancien format v1 est converti. Écrite toutes les 4 s et à chaque étape (`emit('save')`) ; `emit('saveNow')` force l'envoi en ligne. `finSaison(n, rec)` garde la fin de saison pour la suivante.
 - Transfert sans compte (`src/transfert.js`) : code `PN2z-…` (JSON compressé + somme de contrôle) et QR code vers `…#import=<code>`.
 - Comptes (`src/compte.js`) : Firebase, inactif tant que `src/config.js` contient `FIREBASE=null`. Mise en route : `docs/comptes-firebase.md`, règles `firestore.rules`, page `confidentialite.html`.
 - Son : tout est synthétisé (Web Audio). Les pas sont calés au niveau du fond de pluie (mesuré hors ligne) ; accroupi, aucun pas.
 - Sur ordinateur, Échap ou P ouvre la pause.
+- Écran de chargement (`#chargement` dans `index.html`) : `etape(texte, fraction)` dans `main.js` (ville, téléchargement des modèles via `loadRueCharacters(prog)`, compilation des shaders) ; la boucle de rendu ne démarre qu'après. Une erreur au démarrage s'y affiche (`pnEchec`).
 - Cinématiques (`src/cinema.js`) : `cine([{t,cam:{p,l,p2,l2,dur,fov,suivre}},{t,fn},{t,sub:{qui,texte,dur}}])`. Passer exécute tous les `fn` restants : chaque `fn` doit laisser le monde dans un état cohérent.
 - Ennemis : drones (`drones.js`), Gardiens (`gardiens.js` : vue, ouïe via `P.noise`, lampe-torche, blindage), Faucheuse (`faucheuse.js` : projecteur, `zone.couverts` = abris vus d'en haut), caméras (`cameras.js` : balayage, vue sans ouïe, abattues au P-9, gardées dans `S.cams`), grilles laser de la tour (`majLasers` dans `lieux/tour.js`, cycles, boîtier à abattre). Lampes à abattre : `lampeCassable` (inscrites dans `zone.lumieres` ; dans le noir, les Gardiens et les caméras voient moins loin ; `cassable:false` pour un éclairage qui compte sans pouvoir être abattu). Événement `apresCapture` pour remettre les ennemis en place.
 - Zones construites à la demande : `constructeurs[id]=fn` puis `allerZone(id,[x,z,yaw])` (fondu, ambiance, reflets, sauvegarde). Chaque zone a son propre `mulberry32(seed)`. Réglages de zone : `fog`, `fogD`, `hemi`, `ciel`, `cielY` (la ville au loin abaissée, au sommet de la tour), `pluie`, `indoor(p)`, `surfaceAt(p)`, `envPos` et `cacherEnv` (objets trop lumineux exclus de la capture des reflets, sinon ils éclairent tout).
@@ -50,6 +52,7 @@ Repères :
 ```
 NODE_PATH=$(npm root -g) node tools/test/parcours.mjs /chemin/captures   # chapitres 1-2, deux branches, captures
 NODE_PATH=$(npm root -g) node tools/test/mobile.mjs /chemin/captures     # démarrage en mode téléphone
+NODE_PATH=$(npm root -g) node tools/test/pivot.mjs /chemin/captures      # écran de chargement, PNJ qui pivotent en faisant des pas
 NODE_PATH=$(npm root -g) node tools/test/sauvegardes.mjs /chemin/captures # conversion v1, code de transfert, QR code, import
 NODE_PATH=$(npm root -g) node tools/test/chapitre3.mjs /chemin/captures  # black-out, Kovac, toits, Mara
 NODE_PATH=$(npm root -g) node tools/test/chapitre4.mjs /chemin/captures  # traboules, énigme, choix de Varga
