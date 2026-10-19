@@ -1,0 +1,54 @@
+// Textures dessinées au canvas : façades, flaques, asphalte. PUD est le premier tirage de rnd : ne pas déplacer.
+import {THREE,rnd,mulberry32} from './core.js';
+
+export function canvasTex(c,rep,linear){const t=new THREE.CanvasTexture(c);if(!linear)t.encoding=THREE.sRGBEncoding;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping}t.anisotropy=8;return t}
+export function mk(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return[c,c.getContext('2d')]}
+function facade(seed,density){
+  const r=mulberry32(seed),S=512,cell=64;
+  const[ce,ge]=mk(S,S),[cd,gd]=mk(S,S);
+  ge.fillStyle='#000';ge.fillRect(0,0,S,S);
+  gd.fillStyle='#34363e';gd.fillRect(0,0,S,S);
+  for(let i=0;i<9000;i++){const v=40+Math.floor(r()*40);gd.fillStyle=`rgba(${v},${v+2},${v+8},.5)`;gd.fillRect(r()*S,r()*S,2,2)}
+  const warm=['#ffd59a','#ffc47a','#ffe2b8','#ffb060'],cool=['#9fd8ff','#c8f0ff','#8ab4ff'],odd=['#ff8fd0','#b48cff','#7dffc8'];
+  for(let y=0;y<8;y++){
+    gd.fillStyle='rgba(0,0,0,.45)';gd.fillRect(0,y*cell+58,S,4);
+    gd.fillStyle='rgba(255,255,255,.05)';gd.fillRect(0,y*cell+62,S,2);
+    for(let x=0;x<8;x++){
+      const wx=x*cell+12,wy=y*cell+12,ww=40,wh=36;
+      gd.fillStyle='#0b0c10';gd.fillRect(wx-3,wy-3,ww+6,wh+6);
+      gd.fillStyle='#14171e';gd.fillRect(wx,wy,ww,wh);
+      if(r()<density){
+        const pal=r()<.62?warm:r()<.8?cool:odd,col=pal[Math.floor(r()*pal.length)];
+        const gr=ge.createLinearGradient(0,wy,0,wy+wh);gr.addColorStop(0,col);gr.addColorStop(1,'rgba(40,20,10,1)');
+        ge.globalAlpha=.55+r()*.45;ge.fillStyle=gr;ge.fillRect(wx,wy,ww,wh);ge.globalAlpha=1;
+        if(r()<.35){ge.fillStyle='rgba(0,0,0,.55)';for(let k=0;k<wh;k+=4)ge.fillRect(wx,wy+k,ww,2)}
+        if(r()<.18){ge.fillStyle='rgba(0,0,0,.85)';const px=wx+6+r()*22;ge.fillRect(px,wy+wh-20,9,20);ge.beginPath();ge.arc(px+4.5,wy+wh-23,5,0,7);ge.fill()}
+        if(r()<.3){ge.fillStyle='rgba(0,0,0,.7)';ge.fillRect(wx,wy,ww*(.2+r()*.3),wh)}
+      }else if(r()<.25){ge.fillStyle='rgba(30,40,70,.35)';ge.fillRect(wx,wy,ww,wh)}
+      ge.fillStyle='#000';ge.fillRect(wx+ww/2-1,wy,2,wh);
+    }
+  }
+  for(let i=0;i<90;i++){const x=r()*S,y=r()*S,l=40+r()*180;const gr=gd.createLinearGradient(0,y,0,y+l);gr.addColorStop(0,'rgba(0,0,0,.28)');gr.addColorStop(1,'rgba(0,0,0,0)');gd.fillStyle=gr;gd.fillRect(x,y,1+r()*3,l)}
+  return{em:canvasTex(ce,true),df:canvasTex(cd,true)};
+}
+export const FAC=[facade(11,.32),facade(23,.22),facade(37,.4),facade(51,.28)];
+function puddleCanvas(){
+  const[c,g]=mk(512,512);g.fillStyle='#000';g.fillRect(0,0,512,512);
+  const blob=(x,y,r,a)=>{for(const[dx,dy]of[[0,0],[512,0],[-512,0],[0,512],[0,-512]]){const gr=g.createRadialGradient(x+dx,y+dy,0,x+dx,y+dy,r);gr.addColorStop(0,`rgba(255,255,255,${a})`);gr.addColorStop(.55,`rgba(255,255,255,${a*.8})`);gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.beginPath();g.arc(x+dx,y+dy,r,0,7);g.fill()}};
+  for(let i=0;i<34;i++){const x=rnd()*512,y=rnd()*512;for(let k=0;k<4;k++)blob(x+(rnd()-.5)*60,y+(rnd()-.5)*40,18+rnd()*46,.9)}
+  for(let i=0;i<400;i++)blob(rnd()*512,rnd()*512,2+rnd()*6,.5);
+  return c;
+}
+export const PUD=puddleCanvas();
+// Masque des flaques lu côté processeur (sons de pas), même échantillonnage que le shader du sol.
+export const PUDD=(()=>{const d=PUD.getContext('2d').getImageData(0,0,512,512).data,a=new Uint8Array(512*512);for(let i=0;i<a.length;i++)a[i]=d[i*4];return a})();
+export function asphaltCanvas(){
+  const[c,g]=mk(512,512);g.fillStyle='#24252b';g.fillRect(0,0,512,512);
+  for(let i=0;i<26000;i++){const v=20+Math.floor(rnd()*40);g.fillStyle=`rgb(${v},${v},${v+4})`;g.fillRect(rnd()*512,rnd()*512,1+rnd()*2,1+rnd()*2)}
+  g.strokeStyle='rgba(8,8,10,.8)';g.lineWidth=2;
+  for(let i=0;i<14;i++){g.beginPath();let x=rnd()*512,y=rnd()*512;g.moveTo(x,y);for(let k=0;k<8;k++){x+=(rnd()-.5)*50;y+=(rnd()-.5)*50;g.lineTo(x,y)}g.stroke()}
+  return c;
+}
+export function roughCanvas(){const[c,g]=mk(512,512);g.fillStyle='#b4b4b4';g.fillRect(0,0,512,512);g.globalCompositeOperation='difference';g.drawImage(PUD,0,0);g.globalCompositeOperation='source-over';
+  const d=g.getImageData(0,0,512,512),a=d.data;for(let i=0;i<a.length;i+=4){const v=Math.max(30,a[i]*.9);a[i]=a[i+1]=a[i+2]=v}g.putImageData(d,0,0);return c}
+export const softDot=(()=>{const[c,g]=mk(64,64);const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.4,'rgba(255,255,255,.5)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c)})();

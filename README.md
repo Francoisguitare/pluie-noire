@@ -10,6 +10,13 @@ Ouvre la page GitHub Pages du dépôt. La partie est sauvegardée automatiquemen
 
 ## Technique
 
-- JavaScript, [Three.js r128](https://threejs.org) (WebGL) et shaders GLSL
+- JavaScript en modules ES, sans étape de compilation : le dépôt est servi tel quel
+- [Three.js r128](https://threejs.org) (WebGL) et shaders GLSL, hébergé dans `lib/`
 - Sons générés en direct avec Web Audio
-- Personnages glTF issus des exemples de Three.js (`models/*.js`)
+- Tests automatiques avec Playwright (`tools/test/`)
+
+## Crédits
+
+- Personnages : modèles des exemples de Three.js (`Xbot`, `Michelle`, `Soldier` issus de Mixamo ; avatar Ready Player Me), optimisés dans `assets/models/`
+- Polices : Saira Condensed et IBM Plex Mono, sous licence SIL Open Font License (`assets/fonts/`)
+- Three.js : licence MIT (`lib/three/LICENSE`)

@@ -14,24 +14,37 @@ Jeu d'infiltration à la première personne, cyberpunk, dans le navigateur (ordi
 
 ## Architecture
 
-État au moment de l'écriture : tout le jeu tient dans `index.html` (HTML, CSS et un script), avec Three.js r128 chargé depuis des CDN et les personnages glTF encodés en base64 dans `models/*.js`. Une réorganisation en modules ES est en cours (voir la feuille de route) ; cette section sera réécrite quand elle sera faite.
+Modules ES sans compilation. `index.html` contient le HTML et le CSS (HUD, dialogues, écrans) et charge `src/main.js`. Three.js r128 et ses modules complémentaires sont hébergés dans `lib/three/` (imports réécrits en chemins relatifs, pas d'import map : ça marche aussi sur les vieux iPhone). Rien n'est chargé depuis l'extérieur.
 
-Repères dans le code actuel :
-- Monde : textures dessinées au canvas (`facade`, `asphaltCanvas`, `puddleCanvas`), boîtes à collisions (`addBox`, `building`), néons (`neon`), lumières (`plight`), faisceaux (`shaft`), particules (`Particles`, `steam`).
-- Collisions en 2D sur le plan XZ (rectangles `colliders`, `collide`, `los`).
-- Personnages : `loadCharacters` (retargeting des animations de Xbot), `poseSid` (pose procédurale de Sid). Les modèles regardent vers +Z, sauf `soldier` (Kovac) qui regarde vers −Z, d'où `flip:true` pour lui seul.
-- Histoire : état `S` (drapeaux), dialogues `DLG` (nœuds `t` texte, `c` choix, `act` action), objectifs dans `updHud`, fins dans `ENDS`.
-- Sauvegarde : `localStorage` clé `pluie-noire-save-v1`, toutes les 4 s et à la fermeture.
-- Son : tout est synthétisé en Web Audio (`tone`, `nz`, `click`, `footstep`…). Les pas sont calés pour sonner à peu près au niveau du fond de pluie (mesuré hors ligne) ; accroupi, aucun pas.
+- `src/core.js` — utilitaires, bus d'événements (`on`/`emit`), état courant (`state` + `setState`, temps `T`, `G`, joueur `P`), moteur de rendu, scène, caméra, qualité.
+- `src/textures.js` — textures dessinées au canvas. `src/construire.js` — briques du décor (`addBox`, `building`, `neon`, `plight`, `shaft`, `Particles`, `steam`, `cable`…). Ce qui est construit entre `into(zone)` et `into(null)` appartient à la zone.
+- `src/zones.js` — les lieux : une zone = groupe 3D + collisions + interactions + personnages + drones + effets. Une seule affichée à la fois (`enterZone`).
+- `src/lieux/rue.js` — la rue des chapitres 1 et 2 ; `H` regroupe les objets que l'histoire modifie.
+- `src/ciel.js`, `src/pluie.js` — ciel, silhouette de la ville, orage, pluie : communs aux zones extérieures.
+- `src/personnages.js` — chargement glTF (`assets/models/*.glb`, compressés meshopt + WebP), retargeting, implants, pose de Sid, silhouettes de secours.
+- `src/drones.js`, `src/joueur.js` (déplacement, pas, arme, main K7), `src/controles.js` (clavier, souris, tactile), `src/son.js`, `src/interface.js`, `src/rendu.js` (post-traitement, reflets), `src/physique.js` (collisions 2D sur XZ), `src/sauvegarde.js`.
+- `src/histoire/partie.js` — état de l'histoire `S`, chapitres (`defineChapter`), objectifs, captures, fins, nouvelle partie, reprise. `src/histoire/dialogue.js` — moteur de dialogue. `src/histoire/chapitre1.js` — chapitres 1 et 2 (dialogues, actions, interactions).
+- `src/main.js` — construit le monde **dans l'ordre** (ciel, rue, pluie, voitures : la suite aléatoire `rnd` en dépend, ne pas réordonner), branche les écrans et fait tourner la boucle. Avec `?debug` dans l'adresse, `window.__pn` expose l'état et `step(n, dt)` pour les tests.
+
+Repères :
+- Les modèles regardent vers +Z, sauf `soldier` (Kovac) qui regarde vers −Z, d'où `flip:true` pour lui seul.
+- Dialogues : nœuds `t` (texte), `c` (choix), `act` (action) ; `SHAKE` liste les nœuds où le personnage secoue la tête.
+- Sauvegarde : `localStorage`, clé `pluie-noire-save-v1`, toutes les 4 s et à chaque étape (`emit('save')`).
+- Son : tout est synthétisé (Web Audio). Les pas sont calés au niveau du fond de pluie (mesuré hors ligne) ; accroupi, aucun pas.
+- Sur ordinateur, Échap ou P ouvre la pause.
 
 ## Tester
 
-L'environnement cloud n'a pas de GPU : Chromium rend en logiciel (SwiftShader), environ une image toutes les 3 s en 1280×720. Donc :
-- avancer la simulation sans rendre (fonction `step(n, dt)` exposée en mode debug), puis faire une seule capture ;
-- capturer en 960×540 ou moins ;
-- les CDN (cdnjs, jsdelivr) sont bloqués par le proxy de l'environnement ; le registre npm est accessible (`npm pack three@0.128.0`).
+```
+NODE_PATH=$(npm root -g) node tools/test/parcours.mjs /chemin/captures   # chapitres 1-2, deux branches, captures
+NODE_PATH=$(npm root -g) node tools/test/mobile.mjs /chemin/captures     # démarrage en mode téléphone
+```
 
-Playwright est installé globalement (`NODE_PATH=/opt/node22/lib/node_modules`).
+L'environnement cloud n'a pas de GPU : Chromium rend en logiciel (SwiftShader), environ une image toutes les 3 s en 1280×720. Donc :
+- avancer la simulation sans rendre (`avancer(n)` dans `tools/test/outils.mjs`, qui appelle `__pn.step`), puis faire une seule capture ;
+- capturer en 960×540 ou moins ;
+- le verrouillage du pointeur est désactivé dans les tests (sinon Chromium sans écran fait tourner la caméra) ;
+- les CDN (cdnjs, jsdelivr) sont bloqués par le proxy de l'environnement ; le registre npm et GitHub (git) sont accessibles.
 
 ## Décisions prises
 
@@ -43,7 +56,7 @@ Playwright est installé globalement (`NODE_PATH=/opt/node22/lib/node_modules`).
 
 1. ~~Corrections rapides : Sid, pas, refus de la puce~~ (fait)
 2. ~~Mémoire du projet et bible de l'histoire~~ (fait)
-3. Réorganiser le code en modules ES, dépendances hébergées dans le dépôt, modèles en `.glb`, harnais de test
+3. ~~Réorganiser le code en modules ES, dépendances hébergées dans le dépôt, modèles en `.glb`, harnais de test~~ (fait)
 4. Sauvegardes v2 : chapitres et points de reprise, code de transfert, comptes Firebase, page de confidentialité
 5. Réalisme : ombres, flammes, façades, pluie, sons spatialisés
 6. Chapitres 3 à 5 (voir `docs/histoire.md`), fin de saison et sauvegarde pour la saison 2
