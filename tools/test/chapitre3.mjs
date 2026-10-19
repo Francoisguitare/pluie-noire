@@ -16,8 +16,9 @@ await g.avancer(75);if(sortie)await g.capture(sortie+'/c3-blackout.png');
 await g.avancer(150);if(sortie)await g.capture(sortie+'/c3-faucheuse.png');
 await g.avancer(170);if(sortie)await g.capture(sortie+'/c3-gardiens.png');
 await g.avancer(160);if(sortie)await g.capture(sortie+'/c3-mara.png');
-await g.avancer(400);
+await g.avancer(670); // la cinématique dure environ 37 s (Mara explique la Coupure)
 let s=await S();verifier(await g.pn(()=>window.__pn.state==='play')&&s.blackout&&s.chapter===3,'retour au jeu, rue dans le noir, chapitre 3');
+verifier(await g.pn(()=>window.__pn.pouvoirs.coupureDispo()),'la main d\'Ash sait couper les armures (Coupure)');
 verifier(await g.pn(()=>window.__pn.zone().gardiens.length===2&&window.__pn.zone().faucheuses.length===1),'deux Gardiens et la Faucheuse dans la rue');
 // Kovac
 await g.pn(()=>window.__pn.openDialog('kovac'));await g.avancer(2);

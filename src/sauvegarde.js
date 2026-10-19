@@ -16,7 +16,7 @@ export function lire(){
   return vide();
 }
 function ecrire(d,silent){try{localStorage.setItem(KEY,JSON.stringify(d))}catch(e){}if(!silent)emit('saved',d)}
-export function saveGame(){if(state!=='play'&&state!=='dialogue')return;
+export function saveGame(){if(state!=='play'&&state!=='dialogue'&&state!=='paused')return; // en pause : points de pouvoir dépensés
   const d=lire(),s=Object.assign({},S,{elapsed:Math.round(performance.now()-S.t0)});delete s.t0;
   d.partie={S:s,p:[+P.pos.x.toFixed(2),+P.pos.z.toFixed(2),+P.yaw.toFixed(3)],zone:zone().id,at:Date.now()};ecrire(d)}
 export function readSave(){return lire().partie}

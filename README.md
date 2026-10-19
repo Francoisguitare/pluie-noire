@@ -2,7 +2,7 @@
 
 Jeu d'infiltration cyberpunk à la première personne, jouable dans le navigateur, sur ordinateur (clavier + souris) ou sur téléphone (en mode paysage).
 
-Lyon-Basse, 2041, de 3 h 12 à l'aube. Vole une puce dans le labo Helix, survis au black-out, traverse les toits puis les traboules de la Croix-Rousse, et monte jusqu'au sommet de la tour Helix avant que la mise à jour K7.2 ne grille toutes les prothèses de la ville. Cinq chapitres, environ une heure et demie, des choix qui comptent et quatre fins (saison 1 : « Avant l'aube »).
+Lyon-Basse, 2041, de 3 h 12 à l'aube. Vole une puce dans le labo Helix, survis au black-out, traverse les toits puis les traboules de la Croix-Rousse, et monte jusqu'au sommet de la tour Helix avant que la mise à jour K7.2 ne grille toutes les prothèses de la ville. Cinq chapitres, environ une heure et demie, des choix qui comptent et quatre fins (saison 1 : « Avant l'aube »). Ta main K7 apprend à couper les armures d'Helix : chaque Gardien neutralisé, chaque archive cachée rapporte de l'expérience pour améliorer ce pouvoir.
 
 ## Jouer
 
