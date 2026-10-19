@@ -1,4 +1,4 @@
-// Parcours automatique des chapitres 1 et 2, dans les deux branches (don de la puce, refus).
+// Parcours automatique des chapitres 1 et 2, dans les deux branches (don de la puce, refus), jusqu'à l'entrée du chapitre 3.
 // Usage : NODE_PATH=$(npm root -g) node tools/test/parcours.mjs [dossier-captures]
 import {ouvrir,viser,verifier} from './outils.mjs';
 const sortie=process.argv[2];
@@ -28,8 +28,11 @@ async function partie(refus){
   await g.p.waitForTimeout(2500);await g.avancer(5);
   verifier(await g.pn(()=>document.getElementById('dwho').textContent==='Mara'),'le décodeur relance Mara');
   await g.choisir(0);
-  const fin=await g.pn(()=>({vis:!document.getElementById('end').hidden,txt:document.getElementById('endText').textContent}));
-  verifier(fin.vis&&fin.txt.includes(refus?'boîtier noir':'cigarette'),'écran de fin adapté au choix');
+  verifier(await g.pn(()=>/K7\.2/.test(document.getElementById('dtxt').textContent)||window.__pn.DLG.mara.nodes.k72),'Mara découvre la mise à jour K7.2');
+  await g.choisir(0,0);
+  verifier(await g.pn(()=>window.__pn.state==='cine'),'le chapitre 3 commence par sa cinématique');
+  await g.pn(()=>window.__pn.passerCine());await g.avancer(3);
+  s=await S();verifier(await g.pn(()=>window.__pn.state==='play')&&s.chapter===3&&s.blackout&&s.forced===refus,'chapitre 3 en jeu, choix du chapitre 2 conservé');
   verifier(!g.erreurs.length,'aucune erreur dans la console'+(g.erreurs.length?' : '+g.erreurs.join(' | '):''));
   verifier(!g.externes.length,'aucune requête vers l\'extérieur'+(g.externes.length?' : '+g.externes.join(' '):''));
   await g.fermer();

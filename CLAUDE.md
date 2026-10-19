@@ -34,6 +34,10 @@ Repères :
 - Comptes (`src/compte.js`) : Firebase, inactif tant que `src/config.js` contient `FIREBASE=null`. Mise en route : `docs/comptes-firebase.md`, règles `firestore.rules`, page `confidentialite.html`.
 - Son : tout est synthétisé (Web Audio). Les pas sont calés au niveau du fond de pluie (mesuré hors ligne) ; accroupi, aucun pas.
 - Sur ordinateur, Échap ou P ouvre la pause.
+- Cinématiques (`src/cinema.js`) : `cine([{t,cam:{p,l,p2,l2,dur,fov,suivre}},{t,fn},{t,sub:{qui,texte,dur}}])`. Passer exécute tous les `fn` restants : chaque `fn` doit laisser le monde dans un état cohérent.
+- Ennemis : drones (`drones.js`), Gardiens (`gardiens.js` : vue, ouïe via `P.noise`, lampe-torche, blindage), Faucheuse (`faucheuse.js` : projecteur, `zone.couverts` = abris vus d'en haut). Lampes à abattre : `lampeCassable` (inscrites dans `zone.lumieres` ; dans le noir, les Gardiens voient moins loin). Événement `apresCapture` pour remettre les ennemis en place.
+- Zones construites à la demande : `constructeurs[id]=fn` puis `allerZone(id,[x,z,yaw])` (fondu, ambiance, reflets, sauvegarde). Chaque zone a son propre `mulberry32(seed)`.
+- Horloge du HUD : `S.heure` en minutes (192 = 03:12), `heure(min)` aux moments clés, plafonnée à 05:58 avant la fin.
 - Réalisme : ombres dynamiques en qualité ultra seulement (`spot`, `shadowPoint`, `ombre` dans `construire.js` ; carte d'ombre mise à jour une fois par image). Flammes : `flamme(x,y,z,w,h)`. Corniches automatiques sur les immeubles (`building` + `flushLedges` en fin de zone). Pas de tirage `rnd` dans le nouveau décor de la rue (sinon la ville change d'aspect).
 - Sons placés (`src/ambiance.js`) : la zone déclare `Z.sons=[{type:'feu'|'vapeur'|'neon',pos,vol}]` ; chaque drone a son moteur. Niveaux mesurés hors ligne par rapport au fond de pluie.
 
@@ -64,7 +68,7 @@ L'environnement cloud n'a pas de GPU : Chromium rend en logiciel (SwiftShader), 
 3. ~~Réorganiser le code en modules ES, dépendances hébergées dans le dépôt, modèles en `.glb`, harnais de test~~ (fait)
 4. ~~Sauvegardes v2 : code de transfert, QR code, comptes Firebase (en attente du projet Firebase de François), page de confidentialité~~ (fait)
 5. ~~Réalisme : ombres, flammes, façades, pluie, sons spatialisés, labo, look de Sid~~ (fait ; pistes suivantes : fenêtres avec intérieurs, passants, gouttes sur l'écran)
-6. Chapitres 3 à 5 (voir `docs/histoire.md`), fin de saison et sauvegarde pour la saison 2
+6. Chapitres 3 à 5 (voir `docs/histoire.md`), fin de saison et sauvegarde pour la saison 2 — chapitre 3 fait (`histoire/chapitre3.js`, `lieux/toits.js`, test `tools/test/chapitre3.mjs`)
 
 ## Git
 

@@ -7,7 +7,8 @@ import {thunder} from './son.js';
 export let skyMat=null,hemi=null,moon=null;
 const sky=new THREE.Group();scene.add(sky);
 const beacons=[],searchlights=[],cars=[];
-let nextBolt=12;
+let nextBolt=12,hemiBase=.32;
+export const setHemiBase=v=>{hemiBase=v};
 
 function tower(x,z,w,d,h,i,skyMats){
   const m=new THREE.Mesh(boxGeoWorldUV(w,h,d,24),skyMats[i%4]);m.position.set(x,h/2,z);sky.add(m);
@@ -69,5 +70,5 @@ export function updateSky(dt){
   for(const c of cars){c.g.position.x+=c.v*dt;if(c.g.position.x>180)c.g.position.x=-180;if(c.g.position.x<-180)c.g.position.x=180}
   // orage
   nextBolt-=dt;if(nextBolt<=0){nextBolt=22+rnd()*30;G.flash=1;thunder()}
-  if(G.flash>0){G.flash=Math.max(0,G.flash-dt*2.2);const f=G.flash*(.6+.4*Math.sin(T*60));hemi.intensity=.32+f*2.5;skyMat.color.setScalar(1+f*2)}else{hemi.intensity=.32;skyMat.color.setScalar(1)}
+  if(G.flash>0){G.flash=Math.max(0,G.flash-dt*2.2);const f=G.flash*(.6+.4*Math.sin(T*60));hemi.intensity=hemiBase+f*2.5;skyMat.color.setScalar(1+f*2)}else{hemi.intensity=hemiBase;skyMat.color.setScalar(1)}
 }

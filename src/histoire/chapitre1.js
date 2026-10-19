@@ -3,7 +3,7 @@ import {V3,P,MOBILE,state,on,emit} from '../core.js';
 import {tone} from '../son.js';
 import {toast,showHit} from '../interface.js';
 import {DLG,SHAKE,openDialog} from './dialogue.js';
-import {S,defineChapter,defineEnds,finish,refreshHud} from './partie.js';
+import {S,defineChapter,defineEnds,finish,refreshHud,heure} from './partie.js';
 import {Z,H,insideLab} from '../lieux/rue.js';
 import {reviveDrone,killDrone} from '../drones.js';
 import {setArmed,lockHand} from '../joueur.js';
@@ -14,11 +14,11 @@ Z.talk=key=>openDialog(key);
 /* ---------- Actions ---------- */
 function openDoor(){S.door=true;H.doorCol.off=true;H.keyLed.material.color.setHex(0x4dff9a).multiplyScalar(2);H.doorStrip.material.color.setHex(0x4dff9a).multiplyScalar(2);
   tone(880,.08,'square',.04);setTimeout(()=>tone(1320,.12,'square',.04),90);toast('Code 0451 accepté. La porte s\'ouvre.');emit('save')}
-function takeChip(){S.chip=true;H.chip.visible=false;H.chipShaft.visible=false;tone(1500,.1,'triangle',.06);setTimeout(()=>tone(400,.5,'sawtooth',.05,160),180);
+function takeChip(){S.chip=true;heure(3*60+40);H.chip.visible=false;H.chipShaft.visible=false;tone(1500,.1,'triangle',.06);setTimeout(()=>tone(400,.5,'sawtooth',.05,160),180);
   for(const p of H.ceilPanels)p.material.color.setHex(0xff2020).multiplyScalar(2);
   toast('Puce récupérée. Alerte silencieuse : les drones accélèrent.');refreshHud();emit('save')}
 function takeBattery(){S.battery=true;H.battery.visible=false;H.batLight.intensity=0;tone(500,.1,'triangle',.05);setTimeout(()=>tone(750,.12,'triangle',.05),90);toast('Batterie récupérée. Rapporte-la au décodeur de Mara.');refreshHud();emit('save')}
-function plugBattery(){S.decoded=true;H.decLed.material.color.setHex(0x4dff9a).multiplyScalar(2.2);H.decScreen.material.color.setHex(0x58e6ff).multiplyScalar(1.6);
+function plugBattery(){S.decoded=true;H.decLumiere.intensity=1.1;H.decLed.material.color.setHex(0x4dff9a).multiplyScalar(2.2);H.decScreen.material.color.setHex(0x58e6ff).multiplyScalar(1.6);
   tone(200,1.2,'sawtooth',.04,900);setTimeout(()=>tone(1200,.15,'triangle',.05),1100);setTimeout(()=>{if(state==='play')openDialog('mara','end2')},1500)}
 function giveWeapon(){if(S.armed)return;S.ch2=true;S.armed=true;setArmed(true);tone(600,.08,'square',.03);setTimeout(()=>tone(900,.06,'square',.03),70);refreshHud()}
 function openGate(silent){S.gate=true;H.gateCol.off=true;for(const l of H.gateLasers)l.visible=false;H.gateLight.intensity=0;
@@ -71,18 +71,21 @@ Object.assign(DLG,{
   gift3:{t:()=>MOBILE?"Celui en maintenance, au-dessus de la rue, devant toi. Il est en veille, il ne te verra pas : parfait pour te faire la main. Vise avec le réticule et touche « Tirer ». Les deux autres patrouillent au nord, eux ont les yeux ouverts.":"Celui en maintenance, au-dessus de la rue, devant toi. Il est en veille, il ne te verra pas : parfait pour te faire la main. Vise et clique, ou appuie sur F. Les deux autres patrouillent au nord, eux ont les yeux ouverts.",c:()=>[{l:"Compris. (Partir)",go:null}]},
   ch2:{t:()=>{const k=kills();return k<3?`Encore ${3-k} drone${3-k>1?'s':''}. Tant qu'ils volent, la grille du dépôt reste sous tension. Reste dans leur dos et vise le capteur.`:"La grille est tombée. File au dépôt, au fond du parvis à droite, et ramène-moi cette batterie."},c:()=>[{l:'(Partir)',go:null}]},
   batReady:{t:"Tu l'as. Branche-la sur le décodeur, là, contre le mur à côté de moi.",c:()=>[{l:'(Partir)',go:null}]},
-  end2:{t:"(La batterie ronronne. Sur l'écran, la puce s'éveille et la liste des prothèses K7 se met à défiler.) Regarde. Elles décrochent une par une. Le kill-switch d'Helix ne répond plus nulle part.",c:()=>[{l:"Et maintenant ?",go:()=>finish('decode')}]},
+  end2:{t:"(La batterie ronronne. Sur l'écran, la puce s'éveille et la liste des prothèses K7 se met à défiler.) Regarde. Elles décrochent une par une. Le kill-switch d'Helix ne répond plus nulle part.",act:()=>heure(4*60+5),c:()=>[{l:"Et maintenant ?",go:'k72'}]},
+  // La révélation qui lance le chapitre 3 (Black-out)
+  k72:{t:"(Une ligne rouge s'inscrit en bas de l'écran. Mara se penche, lit à voix basse.) « Mise à jour K7.2. Diffusion à six heures. Tour Helix, Confluence. » (Elle se redresse, livide.) Ils avaient prévu le coup. À six heures, ils réarment toutes les K7. Et celles qui leur ont échappé cette nuit, ils les grillent.",c:()=>[{l:"Grillées ? Avec les mains, les jambes, les yeux qui vont avec ?",go:'k72b'}]},
+  k72b:{t:"Avec tout ce qui est branché dessus. Kovac. Sid. La moitié du quartier. Toi. (Elle regarde l'heure.) Il nous reste moins de deux heures.",c:()=>[{l:"Alors on y va. Maintenant.",go:()=>emit('chapitre3')}]},
   who:{t:"Un collectif de mécanos augmentés. Ils veulent comprendre le kill-switch pour le neutraliser. Pas de corpo, pas de flic. C'est assez propre pour toi ?",c:()=>[{l:"Ça me va. (Donner la puce)",go:'gift'},{l:"Je la garde quand même.",go:'keep1'}]},
  }},
  kovac:{name:'Kovac',entry:()=>S.code?'after':'start',nodes:{
   start:{t:"(Sa main droite, entièrement mécanique, essuie un verre qui n'en a pas besoin.) Kovac. Nouilles, bière, informations. Qu'est-ce que je te sers ?",c:()=>[{l:"Le code de la porte d'Helix.",go:'code'},{l:"Un bol de nouilles.",go:'noodle'},{l:"Rien. (Partir)",go:null}]},
   noodle:{t:"Synthétiques, mais la sauce est vraie. Enfin, presque. Cadeau de la maison, t'as une tête à avoir faim.",c:()=>[{l:"Merci. Et le code d'Helix ?",go:'code'},{l:"(Partir)",go:null}]},
   code:{t:"Ça, ça se paie. Soixante crédits.",c:kovacPrice},
-  paid:{t:"Plaisir de faire affaire. Le code, c'est 0451. Un classique : ils ne l'ont jamais changé.",act:()=>{if(!S.code){S.credits-=60;S.code=true;tone(1200,.08,'triangle',.05);toast('Code obtenu : 0451  ·  −60 crédits')}},c:()=>[{l:'(Partir)',go:null}]},
+  paid:{t:"Plaisir de faire affaire. Le code, c'est 0451. Un classique : ils ne l'ont jamais changé.",act:()=>{S.kovacPaye=true;if(!S.code){S.credits-=60;S.code=true;tone(1200,.08,'triangle',.05);toast('Code obtenu : 0451  ·  −60 crédits')}},c:()=>[{l:'(Partir)',go:null}]},
   p1:{t:"Mara me doit déjà trois services. Pourquoi je lui ferais crédit ?",c:()=>[{l:"Cette puce permet à Helix de couper une prothèse à distance. Ta main, par exemple.",go:'pOk'},{l:"Parce que je te le demande gentiment.",go:'pNo'}]},
-  pOk:{t:"(Il regarde sa main un long moment.) ...Ils peuvent faire ça ? Bon. 0451. Et tu ne m'as jamais vu.",act:()=>{if(!S.code){S.code=true;tone(1200,.08,'triangle',.05);toast('Code obtenu : 0451  ·  persuasion réussie')}},c:()=>[{l:'(Partir)',go:null}]},
+  pOk:{t:"(Il regarde sa main un long moment.) ...Ils peuvent faire ça ? Bon. 0451. Et tu ne m'as jamais vu.",act:()=>{S.kovacVerite=true;if(!S.code){S.code=true;tone(1200,.08,'triangle',.05);toast('Code obtenu : 0451  ·  persuasion réussie')}},c:()=>[{l:'(Partir)',go:null}]},
   pNo:{t:"Gentiment, ça ne paie pas le loyer.",c:kovacPrice},
-  threat:{t:"(Il pose sa main mécanique sur le comptoir. Le bois craque.) Essaie. ...Non ? Alors c'est soixante. Ou va voir le vieux Sid, dans la ruelle en face. Il paraît qu'il connaît un autre chemin.",c:kovacPrice},
+  threat:{act:()=>{S.kovacMenace=true},t:"(Il pose sa main mécanique sur le comptoir. Le bois craque.) Essaie. ...Non ? Alors c'est soixante. Ou va voir le vieux Sid, dans la ruelle en face. Il paraît qu'il connaît un autre chemin.",c:kovacPrice},
   after:{t:"Tu as le code. Le reste, c'est ton problème. Et ne reviens pas avec un drone collé aux fesses.",c:()=>[{l:'(Partir)',go:null}]},
  }},
  sid:{name:'Sid',entry:()=>'start',nodes:{
@@ -96,7 +99,7 @@ Object.assign(DLG,{
   paid:{t:"Transaction acceptée. Un vrai secret, alors : la porte d'Helix, c'est 0451. J'ai vu un vigile le taper. J'enregistre tout, c'est mon défaut de fabrication.",act:()=>{if(!S.noxPaid){S.noxPaid=true;S.credits-=10;if(!S.code){S.code=true;toast('Code obtenu : 0451  ·  −10 crédits')}}},c:()=>[{l:"(Partir)",go:null}]},
  }},
  terminal:{name:'Terminal Helix · messagerie interne',entry:()=>'start',nodes:{
-  start:{t:"De : Dr Ilse Varga\nÀ : Direction sécurité\nObjet : K7, désactivation à distance\n\nLa fonction est opérationnelle sur 100 % des prothèses de série. Comme demandé, elle n'apparaît dans aucune documentation client. Je ne signerai pas le prochain rapport.",c:()=>[{l:'(Fermer)',go:null}]},
+  start:{act:()=>{S.readMail=true},t:"De : Dr Ilse Varga\nÀ : Direction sécurité\nObjet : K7, désactivation à distance\n\nLa fonction est opérationnelle sur 100 % des prothèses de série. Comme demandé, elle n'apparaît dans aucune documentation client. Je ne signerai pas le prochain rapport.",c:()=>[{l:'(Fermer)',go:null}]},
  }},
 });
 for(const id of['code','pNo','threat','after','final','keep3','keep3b'])SHAKE.add(id);
@@ -123,13 +126,14 @@ const chapitre={zone:'rue',
     H.chip.visible=true;H.chipShaft.visible=true;for(const p of H.ceilPanels)p.material.color.setHex(0xe8f8ff).multiplyScalar(1.6);
     H.labLight.color.setHex(0xd9f4ff);
     for(const d of Z.drones)reviveDrone(d);closeGate();H.battery.visible=true;H.batLight.intensity=1.8;
-    H.decLed.material.color.setHex(0xff3030).multiplyScalar(2.2);H.decScreen.material.color.setHex(0x150a06);
+    H.decLed.material.color.setHex(0xff3030).multiplyScalar(2.2);H.decScreen.material.color.setHex(0x150a06);H.decLumiere.intensity=0;
   },
   apply(S){
     if(S.door){H.doorCol.off=true;H.door.position.y=4.8;H.keyLed.material.color.setHex(0x4dff9a).multiplyScalar(2);H.doorStrip.material.color.setHex(0x4dff9a).multiplyScalar(2)}
     if(S.chip){H.chip.visible=false;H.chipShaft.visible=false;for(const p of H.ceilPanels)p.material.color.setHex(0xff2020).multiplyScalar(2)}
     S.dd=(S.dd||[false,false,false]).slice();S.dd.forEach((v,i)=>{if(v&&Z.drones[i]){Z.drones[i].dead=false;killDrone(Z.drones[i],true)}});
     if(S.gate)openGate(true);if(S.battery){H.battery.visible=false;H.batLight.intensity=0}
+    if(S.decoded){H.decLed.material.color.setHex(0x4dff9a).multiplyScalar(2.2);H.decScreen.material.color.setHex(0x58e6ff).multiplyScalar(1.6);H.decLumiere.intensity=1.1}
   },
   describe(S){return S.battery?'batterie récupérée':S.ch2?`chapitre 2 · ${(S.dd||[]).filter(Boolean).length}/3 drones`:S.chip?'puce récupérée':S.door?'porte du labo ouverte':S.code?'code obtenu':S.quest?'mission acceptée':'début de la nuit'},
   // Réglages des drones selon l'histoire : alerte silencieuse après le vol, drone d'entraînement visible au chapitre 2.

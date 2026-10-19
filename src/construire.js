@@ -6,7 +6,7 @@ import {FAC,canvasTex,mk,softDot} from './textures.js';
 let Z=null;
 export const into=z=>{Z=z};
 export const add=o=>{(Z?Z.root:scene).add(o);return o};
-export const GLOBAL={colliders:[],particles:[],shafts:[],flickers:[],lanterns:[],flames:[]};
+export const GLOBAL={colliders:[],particles:[],shafts:[],flickers:[],lanterns:[],flames:[],lumieres:[]};
 const L=k=>(Z||GLOBAL)[k];
 export const pushCol=c=>{L('colliders').push(c);return c};
 
@@ -138,8 +138,8 @@ export function ombre(o,cast,receive){o.traverse(m=>{if(m.isMesh){if(cast)m.cast
 
 /* ---------- Corniches des façades : une barre au niveau de chaque étage (alignée sur les bandes sombres de la texture) ---------- */
 const LEDGES=[];
-function ledgesFor(x0,x1,z0,z1,h){
-  for(let y=3.28;y<h-1;y+=3){
+export function ledgesFor(x0,x1,z0,z1,h,base=0){
+  for(let y=base+3.28;y<base+h-1;y+=3){
     LEDGES.push([x1+.08,y,(z0+z1)/2,.16,.12,z1-z0+.3],[x0-.08,y,(z0+z1)/2,.16,.12,z1-z0+.3],[(x0+x1)/2,y,z1+.08,x1-x0+.3,.12,.16],[(x0+x1)/2,y,z0-.08,x1-x0+.3,.12,.16]);
   }
 }
@@ -167,7 +167,7 @@ const flameMat=ph=>new THREE.ShaderMaterial({uniforms:{time:{value:0},ph:{value:
       gl_FragColor=vec4(c*2.4,body);}`,
   transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,toneMapped:false});
 export function flamme(x,y,z,w,h){
-  const g=new THREE.Group();g.position.set(x,y,z);add(g);
+  const g=new THREE.Group();g.position.set(x,y,z);g.userData.flamme=true;add(g);
   for(const[k,ph]of[[1,0],[.62,4.7]]){const m=new THREE.Mesh(new THREE.PlaneGeometry(w*k,h*k),flameMat(ph));m.position.y=h*k/2;g.add(m)}
   const bed=new THREE.Mesh(new THREE.CircleGeometry(w*.42,20),glow(0xff5a1a,1.5));bed.rotation.x=-Math.PI/2;bed.position.y=.01;g.add(bed);
   L('flames').push(g);return g;
@@ -183,3 +183,16 @@ export function updateFx(dt,z){
     for(const f of s.flames){f.rotation.y=Math.atan2(camera.position.x-f.position.x,camera.position.z-f.position.z);for(const c of f.children)if(c.material.uniforms)c.material.uniforms.time.value=T}
   }
 }
+
+/* ---------- Lampes qu'on peut abattre au P-9 ----------
+   Inscrites dans zone.lumieres : sous une lampe allumée, les Gardiens voient de plus loin. */
+export function lampeCassable(x,y,z,color,o={}){
+  const int=o.int??1.8,dist=o.dist??9;
+  const boitier=new THREE.Mesh(new THREE.BoxGeometry(.3,.14,.24),M.darkMetal);boitier.position.set(x,y+.12,z);add(boitier);
+  const bulbe=new THREE.Mesh(new THREE.SphereGeometry(.11,12,8),glow(color,2.4));bulbe.position.set(x,y,z);add(bulbe);
+  const l=new THREE.PointLight(color,int,dist,1.7);l.position.set(x,y-.15,z);add(l);
+  const lum={x,z,r:o.r??dist*.5,on:true,cassable:o.cassable!==false,light:l,head:bulbe,coul:bulbe.material.color.clone(),hx:x,hy:y,hz:z,int};
+  L('lumieres').push(lum);return lum;
+}
+export function eteindre(l){l.on=false;l.light.intensity=0;if(l.head.material===l.mat0||!l.mat0){l.mat0=l.head.material;l.head.material=l.head.material.clone()}l.head.material.color.setHex(0x161616)}
+export function rallumer(z){for(const l of z.lumieres){l.on=true;l.light.intensity=l.int;if(l.mat0)l.head.material=l.mat0}}

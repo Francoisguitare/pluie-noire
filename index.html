@@ -188,6 +188,15 @@ textarea:focus,input:focus{outline:none;border-color:var(--amber)}
 .card a{color:var(--amber)}
 #ask{z-index:10;background:rgba(5,6,10,.9)}
 body.paused #hud{display:none}
+/* Cinématiques : bandes noires, sous-titres, bouton pour passer */
+#cineBars::before,#cineBars::after{content:"";position:fixed;left:0;right:0;height:11vh;background:#000;z-index:3}
+#cineBars::before{top:0}#cineBars::after{bottom:0}
+#cineSub{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(13vh + env(safe-area-inset-bottom,0px));z-index:4;width:min(820px,calc(100% - 32px));text-align:center;text-wrap:balance}
+#cineWho{display:block;font:600 14px/1 var(--f-display);letter-spacing:.24em;color:var(--amber);text-transform:uppercase;margin-bottom:6px}
+#cineTxt{font:500 clamp(18px,2.4vw,24px)/1.35 var(--f-display);color:var(--ink);text-shadow:0 2px 10px #000,0 0 3px #000}
+#cineSkip{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(3vh + env(safe-area-inset-bottom,0px));z-index:4;font:500 12px/1 var(--f-mono);letter-spacing:.12em;color:var(--ink-dim);background:none;border:1px solid rgba(236,229,214,.3);padding:8px 12px;cursor:pointer}
+body.cine #hud,body.cine #touch,body.cine #prompt{display:none}
+.clock b{font:500 22px/1 var(--f-mono);color:var(--ink);font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -198,6 +207,7 @@ body.paused #hud{display:none}
 <div id="hud" hidden>
   <div class="obj"><div class="lbl">Objectifs</div><ul id="objs"></ul></div>
   <div class="stats">
+    <div class="cred clock"><span class="lbl">Heure</span><b id="heure">03:12</b></div>
     <div class="cred"><span class="lbl">Crédits</span><b id="cred">80</b></div>
     <div class="det" id="det"><div class="lbl">Détection</div><div class="bar"><i id="detbar"></i></div></div>
   </div>
@@ -323,6 +333,9 @@ body.paused #hud{display:none}
     <div class="btns"><button class="go" id="askYes"></button><button class="go alt" id="askNo"></button></div>
   </div>
 </div>
+<div id="cineBars" hidden></div>
+<div id="cineSub" hidden><span id="cineWho"></span><span id="cineTxt"></span></div>
+<button id="cineSkip" hidden>Passer ›</button>
 <div id="fade"></div>
 
 <script>

@@ -22,7 +22,7 @@ export function makeDrone(z,pts,yaw,o={}){
   const coneMat=shaftMat(0x8fe9ff,.35);
   const cone=new THREE.Mesh(geo,coneMat);cone.rotation.x=.4;g.add(cone);
   const light=new THREE.PointLight(0x8fe9ff,1.6,9,1.6);light.position.set(0,-.4,.4);g.add(light);
-  add(g);
+  g.userData.drone=true;add(g);
   const d={g,pts,i:1,dir:1,wait:0,waitMax:1.9,yaw,baseYaw:yaw,s:0,speed:o.speed||2.1,range:10,fov:.55,eyeMat,coneMat,cone,light,rotors,ph:rnd()*6,passive:!!o.passive,tut:!!o.tut,h:o.h||3.3,dead:false,fall:null,idx:z.drones.length,zone:z};
   if(d.passive){cone.visible=false;light.intensity=.7}
   z.drones.push(d);return d;

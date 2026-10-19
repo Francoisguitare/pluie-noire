@@ -25,6 +25,14 @@ export function mountChar(n,root,clips,opt){
   const idle=mx.clipAction(clips.idle);idle.play();idle.time=rnd()*clips.idle.duration;idle.timeScale=.85+rnd()*.3;
   n.gest={};for(const k of['agree','shake']){if(!clips[k])continue;const a=mx.clipAction(clips[k]);a.blendMode=THREE.AdditiveAnimationBlendMode;a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=false;n.gest[k]=a}
 }
+// Modèles prêts à cloner (gardiens, figurants) : scène intacte, animations, échelle et décalage pour une taille donnée.
+export const MODELES={};
+export function preparerModele(nom,gltf,h){
+  const sc=THREE.SkeletonUtils.clone(gltf.scene),top=findBone(sc,['mixamorigHeadTop_End','HeadTop_End','mixamorigHead','Head']),feet=[];
+  sc.traverse(o=>{if(o.isBone&&/(Toe_End|ToeBase|Foot)$/.test(o.name))feet.push(o)});
+  sc.updateMatrixWorld(true);const v=new V3();top.getWorldPosition(v);const ty=v.y;let fy=1e9;for(const f of feet){f.getWorldPosition(v);fy=Math.min(fy,v.y)}
+  const echelle=h/Math.max(.01,ty-fy);MODELES[nom]={scene:sc,animations:gltf.animations,echelle,decalage:-fy*echelle+.03};
+}
 export function gesture(n,kind){if(!n||!n.gest)return;const a=n.gest[kind]||n.gest.agree;if(!a)return;a.reset();a.setEffectiveWeight(.9);a.play()}
 export function restInfo(root){root.updateMatrixWorld(true);const m={};root.traverse(o=>{if(o.isBone){const pw=new THREE.Quaternion();o.parent.getWorldQuaternion(pw);m[o.name.replace(/^mixamorig/,'')]={local:o.quaternion.clone(),pw}}});return m}
 export function retarget(clip,src,dst,prefix){
@@ -131,3 +139,16 @@ export function nameTag(text){
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:canvasTex(c),transparent:true,depthWrite:false,fog:false}));s.scale.set(1.5,.34,1);return s;
 }
 export function fallbackChars(npcs){for(const n of npcs){if(n.root)continue;const f=figure(n.o);n.g.add(f);n.root=f;if(f.userData.cig)n.cig=f.userData.cig}}
+
+// Le vieux Sid : manteau usé, barbe grise, bonnet et écharpe à la place du costume et du chapeau du modèle d'origine.
+export function habillerSid(n){
+  n.root.traverse(o=>{if(!o.isMesh)return;const nm=o.name;
+    if(/Headwear/.test(nm)){o.visible=false;return}
+    if(/Outfit_Top|Outfit_Bottom|Beard/.test(nm))o.material=o.material.clone();const m=o.material;
+    if(/Outfit_Top/.test(nm)){m.color.setHex(0x5e554b);m.roughness=.95}
+    else if(/Outfit_Bottom/.test(nm)){m.color.setHex(0x4a463f);m.roughness=.95}
+    else if(/Beard/.test(nm))m.color.setHex(0xc4beb4)});
+  const wool=c=>new THREE.MeshStandardMaterial({color:c,roughness:1});
+  const head=findBone(n.root,['Head']);if(head){const b=new THREE.Mesh(new THREE.SphereGeometry(.122,20,12,0,Math.PI*2,0,Math.PI*.52),wool(0x6a2a1a));attachTo(head,b,0,.135,-.018);b.scale.y*=.9;b.castShadow=true}
+  const neck=findBone(n.root,['Neck']);if(neck){const sc=new THREE.Mesh(new THREE.TorusGeometry(.068,.032,8,20),wool(0x39402c));sc.rotation.x=Math.PI/2;attachTo(neck,sc,0,.035,.005)}
+}

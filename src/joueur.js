@@ -1,13 +1,14 @@
 // Le joueur : déplacement, balancement de la tête et pas, interactions à portée, arme P-9 et main prothétique K7.
 import {THREE,$,V3,P,G,T,camera,MOBILE,state,on,emit,rnd} from './core.js';
-import {glow} from './construire.js';
+import {glow,eteindre} from './construire.js';
 import {softDot} from './textures.js';
 import {keys,TC} from './controles.js';
 import {collide,los} from './physique.js';
 import {zone} from './zones.js';
-import {footstep,shotSound,lockSound,unlockSound} from './son.js';
+import {footstep,shotSound,lockSound,unlockSound,verreSound} from './son.js';
 import {toast} from './interface.js';
-import {killDrone} from './drones.js';
+import {killDrone,burst} from './drones.js';
+import {toucheGardien} from './gardiens.js';
 
 /* ---------- Arme (P-9 silencieux) ---------- */
 const gun=new THREE.Group();gun.visible=false;camera.add(gun);
@@ -38,10 +39,14 @@ const _dir=new V3(),_o=new V3(),_v=new V3();
 export function shoot(){
   if(!armed||state!=='play'||fireCD>0)return;fireCD=.38;gunKick=1;flashT=.045;muzzle.visible=true;muzzle.rotation.z=rnd()*3;shotSound();
   camera.getWorldDirection(_dir);camera.getWorldPosition(_o);
-  let best=null,bt=1e9;
-  for(const d of zone().drones){if(d.dead||!d.g.visible)continue;_v.copy(d.g.position).sub(_o);const t=_v.dot(_dir);if(t<.5||t>50)continue;
-    const perp=_v.addScaledVector(_dir,-t).length();if(perp<.6+t*.025&&t<bt&&los(_o.x,_o.z,d.g.position.x,d.g.position.z)){best=d;bt=t}}
-  if(best){const d=best;setTimeout(()=>killDrone(d),40+bt*6)}
+  let best=null,bt=1e9,kind='';const Z=zone();
+  // Distance le long du tir jusqu'au point (x,y,z), ou 1e9 si le tir passe à côté (tolérance r, plus large au loin).
+  const vise=(x,y,z,r)=>{_v.set(x,y,z).sub(_o);const t=_v.dot(_dir);if(t<.5||t>50)return 1e9;return _v.addScaledVector(_dir,-t).length()<r+t*.02?t:1e9};
+  for(const d of Z.drones){if(d.dead||!d.g.visible)continue;const t=vise(d.g.position.x,d.g.position.y,d.g.position.z,.6);if(t<bt&&los(_o.x,_o.z,d.g.position.x,d.g.position.z)){best=d;bt=t;kind='drone'}}
+  for(const l of Z.lumieres){if(!l.on||!l.cassable)continue;const t=vise(l.hx,l.hy,l.hz,.3);if(t<bt){best=l;bt=t;kind='lampe'}}
+  for(const g of Z.gardiens){const t=vise(g.pos.x,1.2,g.pos.z,.42);if(t<bt&&los(_o.x,_o.z,g.pos.x,g.pos.z)){best=g;bt=t;kind='gardien'}}
+  if(!best)return;const b=best;
+  setTimeout(()=>{if(kind==='drone')killDrone(b);else if(kind==='lampe'){eteindre(b);_v.set(b.hx,b.hy,b.hz);burst(_v,40);verreSound();emit('lampeCassee',b)}else toucheGardien(b)},40+bt*6);
 }
 on('shoot',shoot);
 

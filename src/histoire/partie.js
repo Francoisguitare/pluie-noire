@@ -3,28 +3,41 @@ import {$,P,G,state,setState,on,emit} from '../core.js';
 import {setCredits,setObjectives} from '../interface.js';
 import {tone} from '../son.js';
 import {stopDialog} from './dialogue.js';
-import {zone,enterZone} from '../zones.js';
+import {zone,enterZone,assurerZone} from '../zones.js';
+import {THREE,scene,V3} from '../core.js';
+import {buildEnv} from '../rendu.js';
+import {showSky,setHemiBase} from '../ciel.js';
+import {rain} from '../pluie.js';
+import {fade} from '../interface.js';
 import {resetDrones} from '../drones.js';
 import {collide} from '../physique.js';
 import {setArmed,resetHand} from '../joueur.js';
 
 // Tous les drapeaux de l'histoire (voir docs/histoire.md). Ajouter les nouveaux ici, avec leur valeur de départ.
-export const S0=()=>({chapter:1,quest:false,code:false,credits:80,ventTip:false,chip:false,door:false,spotted:0,t0:0,noxPaid:false,ch2:false,armed:false,dd:[false,false,false],gate:false,battery:false,decoded:false,forced:false});
+export const S0=()=>({chapter:1,heure:192,quest:false,code:false,credits:80,ventTip:false,chip:false,door:false,spotted:0,t0:0,noxPaid:false,ch2:false,armed:false,dd:[false,false,false],gate:false,battery:false,decoded:false,forced:false,
+  // relations du chapitre 1, utiles plus tard
+  kovacVerite:false,kovacPaye:false,kovacMenace:false,readMail:false,
+  // chapitre 3 (Black-out)
+  blackout:false,kovacAide:false,escalier:false,dd3:[false,false],maraVue:false,maraFree:null,trappe:false,
+  // chapitres 4 et 5
+  noxWith:false,vargaTestifies:null,fin:null});
 export let S=S0();
 
 /* Un chapitre : {zone, objectives(S,L), checkpoint(S) → [x,z,yaw], reset(), apply(S), describe(S), ends} */
 const chapters={};
 export function defineChapter(n,c){chapters[n]=c}
 export const chap=n=>chapters[n??S.chapter]||chapters[1];
+// La zone d'un chapitre peut dépendre de l'avancée (ex. chapitre 3 : la rue, puis les toits).
+const zoneDe=c=>typeof c.zone==='function'?c.zone(S):c.zone;
 const ENDS={};
 export const defineEnds=e=>Object.assign(ENDS,e);
 
-export function refreshHud(){setCredits(S.credits);const L=[];chap().objectives(S,L);setObjectives(L)}
+export function refreshHud(){setCredits(S.credits);$('heure').textContent=fmtHeure(S.heure);const L=[];chap().objectives(S,L);setObjectives(L)}
 on('hud',refreshHud);
 
 export function caught(){
   if(state!=='play')return;setState('caught');S.spotted++;$('caught').hidden=false;tone(300,.6,'sawtooth',.08,90);
-  setTimeout(()=>{const[x,z,y]=chap().checkpoint(S);P.pos.set(x,0,z);P.yaw=y;P.pitch=0;P.vx=P.vz=0;resetDrones(zone());G.grace=2.5;$('caught').hidden=true;if(state==='caught')setState('play')},1500);
+  setTimeout(()=>{const[x,z,y]=chap().checkpoint(S);P.pos.set(x,0,z);P.yaw=y;P.pitch=0;P.vx=P.vz=0;resetDrones(zone());emit('apresCapture');G.grace=2.5;$('caught').hidden=true;if(state==='caught')setState('play')},1500);
 }
 on('caught',caught);
 
@@ -40,15 +53,36 @@ export function finish(k){
 export function newGame(){
   S=S0();S.t0=performance.now();P.pos.set(0,0,26);P.yaw=0;P.pitch=0;P.vx=P.vz=0;
   for(const k in chapters)chapters[k].reset&&chapters[k].reset();
-  enterZone(chap().zone);setArmed(false);resetHand();
+  allerZone(zoneDe(chap()),null,{fondu:false});setArmed(false);resetHand();
   resetDrones(zone());G.grace=1;refreshHud();
 }
 // Reprise d'une sauvegarde : on repart d'une partie neuve puis on rejoue l'état enregistré.
 export function applySave(d){
   newGame();const el=d.S.elapsed||0;Object.assign(S,d.S);delete S.elapsed;S.t0=performance.now()-el;
-  enterZone(chap().zone);
+  for(const k in chapters)chapters[k].avantZone&&chapters[k].avantZone(S);
+  allerZone(d.zone||zoneDe(chap()),null,{fondu:false});
   P.pos.set(d.p[0],0,d.p[1]);P.yaw=d.p[2];collide(P.pos,.38);
   for(const k in chapters)chapters[k].apply&&chapters[k].apply(S);
   if(S.armed)setArmed(true);
   G.grace=2.5;refreshHud();
 }
+
+/* ---------- Changer de zone ---------- */
+// Construit la zone si besoin, applique son ambiance (brouillard, ciel, pluie, lumière, reflets) et place le joueur.
+// spawn : [x,z,yaw] ou null pour ne pas bouger le joueur. fondu : passage au noir.
+export function allerZone(id,spawn,{fondu=true,ensuite=null}={}){
+  const faire=()=>{
+    const z=assurerZone(id);enterZone(id);
+    scene.fog.color.setHex(z.fog);scene.background.setHex(z.fog);scene.fog.density=z.fogD;showSky(z.ciel);setHemiBase(z.hemi);
+    if(!z.env){const cach=[rain];z.root.traverse(o=>{if(o.type==='Reflector')cach.push(o)});z.env=buildEnv(new V3(...z.envPos),cach)}
+    scene.environment=z.env;
+    if(spawn){P.pos.set(spawn[0],0,spawn[1]);P.yaw=spawn[2]||0;P.pitch=0;P.vx=P.vz=0}
+    resetDrones(z);emit('apresCapture');G.grace=Math.max(G.grace,1.5);
+    if(ensuite)ensuite();
+  };
+  if(!fondu){faire();return}
+  fade(true);setTimeout(()=>{faire();emit('save');setTimeout(()=>fade(false),120)},350);
+}
+// L'heure du HUD avance avec le temps réel et saute aux moments clés de l'histoire (jamais au-delà de 5 h 58 avant la fin).
+export function heure(min){S.heure=Math.max(S.heure,min)}
+export const fmtHeure=m=>{m=Math.floor(m);return String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};

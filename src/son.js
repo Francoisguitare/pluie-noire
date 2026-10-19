@@ -36,6 +36,7 @@ export function footstep(surf,run){
   const pv=1+(R()-.5)*.16,toe=t+(run?.03:.055)+R()*.025;
   const n=(at,type,f,q,v,a,d)=>nz(at,type,f*pv,q,v,a,d,undefined,bus);
   if(surf==='tile'){n(t,'bandpass',2600,2.5,.12,.001,.025);n(t,'lowpass',650,.8,.1,.002,.04);n(toe,'bandpass',3800,3,.05,.001,.02);return}
+  if(surf==='bois'){n(t,'lowpass',320,.9,.12,.002,.06);n(t+.004,'bandpass',900,2.2,.05,.002,.05);n(toe,'bandpass',1500,2,.03,.002,.03);return}
   if(surf==='metal'){n(t,'bandpass',900,3,.045,.001,.04);n(toe,'bandpass',3200,4,.022,.001,.02);
     for(const[f,v]of[[470,.007],[1210,.0035]]){const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f*pv;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.35);o.connect(g);g.connect(bus);o.start(t);o.stop(t+.4)}
     return}
@@ -116,3 +117,11 @@ export function ronronnement(s,f,v){
 }
 // Une brindille qui claque dans le feu (à appeler au hasard).
 export function crepitement(s){if(!AC||!s)return;const t=AC.currentTime+Math.random()*.05;nz(t,'bandpass',1800+Math.random()*3500,4,.12+Math.random()*.25,.001,.012+Math.random()*.02,undefined,s.in)}
+
+// Verre qui éclate (lampe abattue) et étincelles.
+export function verreSound(){if(!AC)return;const t=AC.currentTime;nz(t,'highpass',3500,.7,.18,.001,.08);for(let i=0;i<7;i++){const k=t+.02+Math.random()*.25;nz(k,'bandpass',4000+Math.random()*4000,9,.05,.001,.02+Math.random()*.03)}click(t+.01,2400,.05)}
+// Grondement de la Faucheuse et coupure de courant.
+export function coupure(){if(!AC)return;const t=AC.currentTime;const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(30,t+.8);g.gain.setValueAtTime(.08,t);g.gain.exponentialRampToValueAtTime(.0001,t+.9);o.connect(g);g.connect(out);o.start(t);o.stop(t+1);nz(t,'lowpass',200,.7,.35,.004,.5)}
+export function clac(){if(!AC)return;const t=AC.currentTime;click(t,900+Math.random()*600,.05);nz(t,'bandpass',2500,3,.06,.001,.03)}
+// Haut-parleurs d'Helix : un « ding » descendant avant l'annonce.
+export function annonce(){if(!AC)return;tone(880,.35,'sine',.05,660);setTimeout(()=>tone(660,.5,'sine',.05,440),300)}

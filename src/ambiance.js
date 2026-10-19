@@ -13,8 +13,15 @@ function creer(def){
 export function updateAmbiance(dt,z){
   if(!AC)return;
   updateListener(camera);
-  if(zoneSons!==z){for(const s of actifs)s&&s.stop();actifs=(z.sons||[]).map(creer);zoneSons=z;for(const d of z.drones)d.son=null}
+  if(zoneSons!==z){for(const s of actifs)s&&s.stop();if(zoneSons)for(const e of[...zoneSons.drones,...zoneSons.faucheuses])if(e.son){e.son.stop();e.son=null}
+    actifs=(z.sons||[]).map(creer);zoneSons=z}
   for(const s of actifs)if(s&&s.feu&&Math.random()<dt*9)crepitement(s);
+  // Faucheuse : grondement grave des rotors, qui suit l'appareil.
+  for(const f of z.faucheuses){
+    if(!f.son&&f.g.visible){f.son=source3d(f.g.position.x,f.g.position.y,f.g.position.z,{ref:8,rolloff:1});bruitBoucle(f.son,'lowpass',140,.8,.9);f.son.rot=ronronnement(f.son,52,.12);f.son.vol(1,1.5)}
+    if(!f.son)continue;if(!f.g.visible){f.son.stop();f.son=null;continue}
+    f.son.set(f.g.position.x,f.g.position.y,f.g.position.z);
+  }
   // Drones : un moteur chacun, qui suit sa position et monte dans les aigus quand il s'alarme.
   for(const d of z.drones){
     const on=!d.dead&&d.g.visible;

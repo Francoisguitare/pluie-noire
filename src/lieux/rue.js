@@ -5,7 +5,7 @@ import {PUD,PUDD,canvasTex,mk,asphaltCanvas,roughCanvas} from '../textures.js';
 import {into,add,pushCol,M,glow,addBox,building,neon,plight,shaft,Particles,steam,cable,acUnit,lamp,bmats,boxGeoWorldUV,spot,shadowPoint,ombre,flushLedges,flamme} from '../construire.js';
 import {makeZone} from '../zones.js';
 import {makeDrone} from '../drones.js';
-import {nameTag,loadGLB,restInfo,retarget,prepClip,mountChar,findBone,attachTo,cyberize,fallbackChars} from '../personnages.js';
+import {nameTag,loadGLB,restInfo,retarget,prepClip,mountChar,findBone,attachTo,cyberize,fallbackChars,preparerModele,habillerSid} from '../personnages.js';
 
 export const Z=makeZone('rue',{
   indoor:p=>p.x>-7.5&&p.x<7.5&&p.z>-51.5&&p.z<-40.5,
@@ -52,7 +52,7 @@ const pudTex=canvasTex(PUD,true,true);
   reflector=new THREE.Reflector(new THREE.PlaneGeometry(260,260),{shader:RS,color:0xffffff,clipBias:.003,textureWidth:Math.round(innerWidth*.5),textureHeight:Math.round(innerHeight*.5)});
   reflector.material.uniforms.tMask.value=pudTex;
   reflector.material.transparent=true;reflector.material.blending=THREE.AdditiveBlending;reflector.material.depthWrite=false;
-  reflector.rotation.x=-Math.PI/2;reflector.position.y=.006;reflector.renderOrder=-1;add(reflector);
+  reflector.rotation.x=-Math.PI/2;reflector.position.y=.006;reflector.renderOrder=-1;reflector.userData.garde=true;add(reflector);
 }
 H.reflector=reflector;
 addBox(-6,-4.7,-30,34,0,.13,M.curb,{collide:false});
@@ -236,17 +236,20 @@ steam(-4,22.6,-43,0xa8d8ff,{n:30,rate:4,a:.12,s1:4,up:1.2,life:5});
 /* ---------- Personnages ---------- */
 const blobTex=(()=>{const[c,g]=mk(128,128);const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,'rgba(0,0,0,.85)');gr.addColorStop(.5,'rgba(0,0,0,.45)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,128,128);return new THREE.CanvasTexture(c)})();
 for(const n of NPCS){
-  n.g=new THREE.Group();n.g.position.set(n.x,0,n.z);n.g.rotation.y=n.yaw;add(n.g);
+  n.g=new THREE.Group();n.g.position.set(n.x,0,n.z);n.g.rotation.y=n.yaw;n.g.userData.pnj=true;add(n.g);
   const blob=new THREE.Mesh(new THREE.PlaneGeometry(1.3,1.3),new THREE.MeshBasicMaterial({map:blobTex,transparent:true,depthWrite:false}));blob.rotation.x=-Math.PI/2;blob.position.y=.02;n.g.add(blob);
-  n.tag=nameTag(n.name);n.tag.position.set(n.x,n.h+.55,n.z);add(n.tag);
+  n.tag=nameTag(n.name);n.tag.position.set(n.x,n.h+.55,n.z);n.tag.userData.pnj=true;add(n.tag);
   if(n.key!=='kovac')pushCol({x0:n.x-.32,x1:n.x+.32,z0:n.z-.32,z1:n.z+.32,los:false,off:false});
-  Z.inter.push({p:new V3(n.x,0,n.z),r:2.7,label:()=>'Parler à '+n.name.charAt(0)+n.name.slice(1).toLowerCase(),act:()=>Z.talk(n.key)});
+  Z.inter.push({p:new V3(n.x,0,n.z),r:2.7,on:()=>!n.absent,label:()=>'Parler à '+n.name.charAt(0)+n.name.slice(1).toLowerCase(),act:()=>Z.talk(n.key)});
   Z.npcs.push(n);
 }
 // Décodeur de Mara
 addBox(-6,-5.25,16.9,18.3,0,1.25,M.darkMetal);
 H.decScreen=new THREE.Mesh(new THREE.PlaneGeometry(.6,.42),new THREE.MeshBasicMaterial({color:new THREE.Color(0x150a06),toneMapped:false}));H.decScreen.rotation.y=Math.PI/2;H.decScreen.position.set(-5.24,.85,17.6);add(H.decScreen);
 H.decLed=addBox(-5.75,-5.45,17.35,17.85,1.25,1.31,glow(0xff3030,2.2),{collide:false});
+H.decScreen.userData.garde=true;H.decLed.userData.garde=true;
+// L'écran du décodeur (sur batterie) éclaire l'alcôve de Mara, même dans le noir.
+H.decLumiere=new THREE.PointLight(0x58e6ff,0,4.5,1.7);H.decLumiere.position.set(-4.7,1.1,17.6);H.decLumiere.userData.garde=true;add(H.decLumiere);
 addBox(-5.9,-5.35,17.0,17.25,1.25,1.6,M.metal,{collide:false});
 // Distributeur près de Nox
 addBox(5.15,6,12.3,13.7,0,2.1,M.darkMetal);
@@ -260,6 +263,10 @@ plight(0x4fe0ff,1.6,6,4.6,1.6,13);
 makeDrone(Z,[[-5,-34],[5,-34]],Math.PI/2);
 makeDrone(Z,[[1,-24],[1,-3]],0);
 makeDrone(Z,[[-1.8,10],[2.2,10]],Math.PI/2,{passive:true,tut:true,speed:.6,h:3.0});
+// Lumières de secours rouges, allumées seulement pendant le black-out
+H.secours=[];for(const[x,z,side]of[[-5.9,9,1],[5.9,-3,-1],[-5.9,-19,1],[5.9,-33,-1]]){const b=new THREE.Mesh(new THREE.BoxGeometry(.12,.18,.3),glow(0xff2a1a,2.4));b.position.set(x+side*.06,3.1,z);b.visible=false;b.userData.garde=true;add(b);const l=new THREE.PointLight(0xff2a1a,0,7,1.7);l.position.set(x+side*.4,3,z);l.userData.garde=true;add(l);H.secours.push({b,l})}
+// Porte de l'arrière-boutique de Kovac (chapitre 3)
+H.porteKovac=new THREE.Mesh(new THREE.PlaneGeometry(1,2.1),new THREE.MeshStandardMaterial({color:0x2a2622,roughness:.7,metalness:.2}));H.porteKovac.position.set(8.99,1.05,9.1);H.porteKovac.rotation.y=-Math.PI/2;add(H.porteKovac);
 flushLedges();
 // Ombres : tout le décor les reçoit ; les objets bas posés au sol en projettent.
 Z.root.traverse(o=>{if(o.isMesh&&o.material&&o.material.isMeshStandardMaterial){o.receiveShadow=true;const b=o.geometry.boundingSphere||(o.geometry.computeBoundingSphere(),o.geometry.boundingSphere);if(o.position.y<1.2&&b.radius<1.6&&!o.isInstancedMesh)o.castShadow=true}});
@@ -277,6 +284,8 @@ const npcBy=k=>NPCS.find(n=>n.key===k);
 /* Chargement des vrais personnages (glTF animés) */
 export async function loadRueCharacters(){
   const[xbot,mich,sold,rpm]=await Promise.all(['xbot','michelle','soldier','sid'].map(loadGLB));
+  // Copies intactes pour les autres zones (gardiens, figurants), avant que la rue ne modifie les originaux.
+  preparerModele('soldier',sold,1.86);preparerModele('michelle',mich,1.72);preparerModele('xbot',xbot,1.76);preparerModele('sid',rpm,1.76);
   const X=nm=>xbot.animations.find(a=>a.name===nm);
   const RX=restInfo(xbot.scene),RM=restInfo(mich.scene),RS=restInfo(sold.scene);
   const addv=c=>THREE.AnimationUtils.makeClipAdditive(c);
@@ -291,16 +300,7 @@ export async function loadRueCharacters(){
   mountChar(npcBy('kovac'),sold.scene,{idle:sIdle?prepClip(sIdle,false):rs.idle,agree:rs.agree,shake:rs.shake},{env:1.1,flip:true});
   // Sid (pose procédurale ; ce modèle regarde déjà vers +Z, pas de demi-tour)
   mountChar(npcBy('sid'),rpm.scene,{},{env:.7});
-  // Le vieux Sid : manteau usé, barbe grise, bonnet et écharpe à la place du costume et du chapeau.
-  { const n=npcBy('sid');
-    n.root.traverse(o=>{if(!o.isMesh)return;const nm=o.name,m=o.material;
-      if(/Headwear/.test(nm))o.visible=false;
-      else if(/Outfit_Top/.test(nm)){m.color.setHex(0x5e554b);m.roughness=.95}
-      else if(/Outfit_Bottom/.test(nm)){m.color.setHex(0x4a463f);m.roughness=.95}
-      else if(/Beard/.test(nm))m.color.setHex(0xc4beb4)});
-    const wool=c=>new THREE.MeshStandardMaterial({color:c,roughness:1});
-    const head=findBone(n.root,['Head']);if(head){const b=new THREE.Mesh(new THREE.SphereGeometry(.122,20,12,0,Math.PI*2,0,Math.PI*.52),wool(0x6a2a1a));attachTo(head,b,0,.135,-.018);b.scale.y*=.9;b.castShadow=true}
-    const neck=findBone(n.root,['Neck']);if(neck){const sc=new THREE.Mesh(new THREE.TorusGeometry(.068,.032,8,20),wool(0x39402c));sc.rotation.x=Math.PI/2;attachTo(neck,sc,0,.035,.005)} }
+  habillerSid(npcBy('sid'));
   // Nox-7
   mountChar(npcBy('nox'),xbot.scene,base,{env:1.4,mat:(m)=>{
     if(/Joints/.test(m.name)){m.color.setHex(0x1c2a33);m.emissive=new THREE.Color(0x2ad8ff);m.emissiveIntensity=.55;m.metalness=.8;m.roughness=.3}
@@ -321,6 +321,7 @@ on('quality',sizeReflector);on('resize',sizeReflector);
 
 /* Animation propre à la rue */
 Z.update=(dt,S)=>{
+  majBlackout(dt);
   H.holoMat.uniforms.time.value=T;
   H.helix.rotation.y+=dt*.5;
   H.fireLight.intensity=2.2+Math.sin(T*17)*.45+Math.sin(T*7.3)*.35;
@@ -331,3 +332,26 @@ Z.update=(dt,S)=>{
   for(const l of H.rackLeds)if(rnd()<.02)l.visible=!l.visible;
   if(H.reflector){H.reflector.material.uniforms.time.value=T;H.reflector.material.uniforms.camPos.value.copy(camera.position)}
 };
+
+/* ---------- Black-out (chapitre 3) ----------
+   On recense une fois tout ce qui brille dans la rue (néons, bandes lumineuses, lanternes, hologramme, lumières),
+   sauf ce qui a son propre courant (décodeur, feu, drones, personnages). L'extinction se fait du nord vers le sud. */
+let unites=null;
+function recenser(){
+  unites=[];const v=new V3();
+  Z.root.traverse(o=>{
+    for(let p=o;p&&p!==Z.root;p=p.parent)if(p.userData.garde||p.userData.flamme||p.userData.drone||p.userData.pnj)return;
+    if(o.isLight&&o!==H.fireLight){o.getWorldPosition(v);unites.push({o,z:v.z,lum:true,i0:o.intensity});return}
+    if(o.isMesh&&o.material&&o.material.isMeshBasicMaterial&&o.material.toneMapped===false){o.getWorldPosition(v);unites.push({o,z:v.z,c0:o.material.color.clone()})}
+    else if(o.isMesh&&o.material&&o.material.isShaderMaterial&&o.material.blending===THREE.AdditiveBlending){o.getWorldPosition(v);unites.push({o,z:v.z,vis:true})}
+  });
+  unites.sort((a,b)=>a.z-b.z);
+}
+let ext=null;
+// Lance l'extinction progressive (durée en secondes), ou instantanée si dur vaut 0.
+export function blackout(dur){if(!unites)recenser();if(!dur){for(const u of unites)eteindreU(u);finBlackout();ext=null;return}ext={t:0,dur,n:0}}
+function eteindreU(u){if(u.off)return;u.off=true;if(u.lum)u.o.intensity=0;else if(u.vis)u.o.visible=false;else u.o.material.color.copy(u.c0).multiplyScalar(.04)}
+function finBlackout(){for(const m of bmats)m.emissiveIntensity=.12;for(const s of H.secours){s.b.visible=true;s.l.intensity=.9}H.noir=true}
+export function rallumerRue(){if(unites)for(const u of unites){u.off=false;if(u.lum)u.o.intensity=u.i0;else if(u.vis)u.o.visible=true;else u.o.material.color.copy(u.c0)}for(const m of bmats)m.emissiveIntensity=1.05;for(const s of H.secours){s.b.visible=false;s.l.intensity=0}H.noir=false;ext=null}
+export function majBlackout(dt){if(!ext)return;ext.t+=dt;const k=Math.min(unites.length,Math.floor(unites.length*ext.t/ext.dur));for(;ext.n<k;ext.n++){eteindreU(unites[ext.n]);if(ext.n%6===0)emitClac()}if(ext.t>=ext.dur){for(const u of unites)eteindreU(u);finBlackout();ext=null}}
+let emitClac=()=>{};export const surClac=f=>{emitClac=f};
