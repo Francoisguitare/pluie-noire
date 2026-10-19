@@ -7,7 +7,7 @@ addEventListener('keydown',e=>{
   keys[e.code]=true;
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
   if(e.code==='KeyM')emit('mute');
-  if(e.code==='KeyG'&&!e.repeat)emit('cycleQuality');
+  if(e.code==='KeyG'&&!e.repeat&&state!=='puzzle')emit('cycleQuality'); // G est aussi une carte du métier Jacquard
   if(state==='play'&&e.code==='KeyF'&&!e.repeat)emit('shoot');
   if(state==='play'&&(e.code==='KeyP'||e.code==='Escape')&&!e.repeat)emit('pause');
   if(state==='play'&&e.code==='KeyE'&&G.curInter&&!e.repeat){G.curInter.act()}

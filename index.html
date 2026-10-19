@@ -197,6 +197,29 @@ body.paused #hud{display:none}
 #cineSkip{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(3vh + env(safe-area-inset-bottom,0px));z-index:4;font:500 12px/1 var(--f-mono);letter-spacing:.12em;color:var(--ink-dim);background:none;border:1px solid rgba(236,229,214,.3);padding:8px 12px;cursor:pointer}
 body.cine #hud,body.cine #touch,body.cine #prompt{display:none}
 .clock b{font:500 22px/1 var(--f-mono);color:var(--ink);font-variant-numeric:tabular-nums}
+/* Énigme du métier Jacquard (chapitre 4) */
+#metier{z-index:5;background:rgba(5,6,10,.93)}
+body.puzzle #hud,body.puzzle #touch,body.puzzle #prompt{display:none}
+.card.metier{max-width:900px;gap:12px}
+.metierJeu{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px 28px;align-items:start}
+.metierJeu figure{margin:0 0 12px;display:grid;gap:6px;justify-items:start}
+.tissu{display:grid;grid-template-columns:repeat(var(--n,8),16px);gap:2px;padding:8px;background:#2a080c;box-shadow:inset 0 0 0 1px rgba(240,165,58,.35)}
+.tissu i{width:16px;height:16px;background:#4a1218}
+.tissu i.or{background:linear-gradient(135deg,#ffd27a,#c98a2a)}
+.cartes{display:grid;gap:5px;margin:6px 0 12px}
+.cartes.tiroir{grid-template-columns:repeat(2,minmax(0,max-content));gap:5px 8px}
+.carte{all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:10px;align-items:center;padding:5px 10px;background:#cbb68a;color:#2a1a0a;font:600 15px/1 var(--f-mono);min-height:30px;touch-action:manipulation}
+.carte .trous{display:flex;gap:5px}
+.carte .trous i{width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(60,40,20,.25)}
+.carte .trous i.trou{background:#140c06;box-shadow:inset 0 1px 2px #000}
+.carte.vide{background:transparent;color:var(--ink-dim);outline:1px dashed rgba(240,165,58,.45);outline-offset:-1px}
+.carte.vide .trous i{box-shadow:none}
+.carte:disabled{opacity:.28;cursor:default}
+.carte:hover:not(:disabled){filter:brightness(1.12)}
+.carte:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#metierMsg{min-height:1.4em;color:var(--amber)}
+@media (max-height:660px){#metier .pitch{display:none}#metier h2{font-size:36px}}
+@media (max-height:520px){#metier h2,#metier .pitch{display:none}.tissu{grid-template-columns:repeat(var(--n,8),12px)}.tissu i{width:12px;height:12px}.carte{min-height:25px;padding:3px 8px;font-size:13px}.cartes{margin:4px 0 8px}.metierJeu figure{margin-bottom:6px}}
 </style>
 </head>
 <body>
@@ -331,6 +354,25 @@ body.cine #hud,body.cine #touch,body.cine #prompt{display:none}
     <h2 id="askTitle"></h2>
     <p class="pitch" id="askText"></p>
     <div class="btns"><button class="go" id="askYes"></button><button class="go alt" id="askNo"></button></div>
+  </div>
+</div>
+<div id="metier" class="screen" hidden>
+  <div class="card metier">
+    <div class="kicker">Atelier de Varga · grand métier Jacquard</div>
+    <h2>La clé tissée</h2>
+    <p class="pitch">Pose les cartes du tiroir dans l'ordre des rangs, puis tisse. Chaque trou laisse passer une aiguille, qui lève un fil d'or.</p>
+    <div class="metierJeu">
+      <div>
+        <figure><figcaption class="lbl">Le carnet de Varga</figcaption><div id="metierCible" class="tissu" role="img" aria-label="Le motif à obtenir : une clé"></div><span class="note">« Le métier lit les cartes de dos. »</span></figure>
+        <figure><figcaption class="lbl">Le tissu</figcaption><div id="metierTissu" class="tissu"></div></figure>
+      </div>
+      <div>
+        <div class="lbl">Les rangs</div><div id="metierSlots" class="cartes"></div>
+        <div class="lbl">Le tiroir</div><div id="metierCartes" class="cartes tiroir"></div>
+      </div>
+    </div>
+    <div class="btns"><button class="go" id="metierTisser">Tisser</button><button class="go alt" id="metierQuitter">Laisser</button></div>
+    <div class="note" id="metierMsg" role="status" aria-live="polite"></div>
   </div>
 </div>
 <div id="cineBars" hidden></div>

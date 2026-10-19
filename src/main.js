@@ -5,15 +5,19 @@ import {buildSky,buildCars,updateSky} from './ciel.js';
 import {buildRain,updateRain,rain} from './pluie.js';
 import {buildRue,loadRueCharacters,rueFallback,H} from './lieux/rue.js';
 import {H as HT} from './lieux/toits.js';
+import {H as HTB} from './lieux/traboules.js';
+import * as METIER from './metier.js';
 import {initSparks,updateDrones,killDrone} from './drones.js';
 import {updateGardiens} from './gardiens.js';
 import {updateFaucheuses} from './faucheuse.js';
+import {updateCameras} from './cameras.js';
 import {update as updateCine,passer as passerCine} from './cinema.js';
 import {updatePlayer,updateHand,handLocked} from './joueur.js';
 import {buildEnv,render} from './rendu.js';
 import {DLG,openDialog,pickChoice} from './histoire/dialogue.js';
 import {ACTIONS} from './histoire/chapitre1.js';
 import './histoire/chapitre3.js';
+import './histoire/chapitre4.js';
 import {S,chap,newGame,applySave,allerZone,fmtHeure} from './histoire/partie.js';
 import {saveGame,readSave,clearSave,showSaveInfo,lire,exportCode,importCode} from './sauvegarde.js';
 import {toast,detectionHud,fade} from './interface.js';
@@ -71,7 +75,7 @@ function frame(dt){
   if(state==='play')updatePlayer(dt);
   if(state==='cine')updateCine(dt);
   const z=zone(),actif=state==='play';
-  G.alertLvl=Math.max(updateDrones(dt,actif,z,chap().droneOpts?chap().droneOpts(S):{}),updateGardiens(dt,actif,z),updateFaucheuses(dt,actif,z));
+  G.alertLvl=Math.max(updateDrones(dt,actif,z,chap().droneOpts?chap().droneOpts(S):{}),updateGardiens(dt,actif,z),updateFaucheuses(dt,actif,z),updateCameras(dt,actif,z));
   if(actif){detectionHud(dt,G.alertLvl);
     // Horloge : une minute de jeu par minute réelle, sans dépasser 5 h 58 avant la fin
     const avant=Math.floor(S.heure);S.heure=Math.min(S.heure+dt/60,S.fin?24*60:5*60+58);if(Math.floor(S.heure)!==avant)$('heure').textContent=fmtHeure(S.heure)}
@@ -89,7 +93,7 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.
 
 /* ---------- Mode debug (?debug) : accès pour les tests automatiques ---------- */
 if(DEBUG)window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,newGame,applySave,saveGame,readSave,killDrone,zone,zones,handLocked,lire,exportCode,importCode,allerZone,passerCine,
-  get S(){return S},get state(){return state},emit,H:{rue:H,toits:HT},
+  get S(){return S},get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB},metier:METIER,
   step:(n,dt=1/30)=>{for(let i=0;i<n;i++)frame(dt)}};
 
 /* ---------- Démarrage : polices, monde, personnages, boucle ---------- */

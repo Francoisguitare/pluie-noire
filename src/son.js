@@ -18,7 +18,10 @@ export function initAudio(){
 }
 export function toggleMute(){muted=!muted;if(out)out.gain.value=muted?0:.7;return muted}
 // La pluie s'étouffe à l'intérieur.
-export function setIndoor(v){if(!rainG||v===rainIn)return;rainIn=v;const t=AC.currentTime;rainG.gain.setTargetAtTime(v?.035:.1,t,.3);rainLP.frequency.setTargetAtTime(v?800:2600,t,.3)}
+let pluieK=1;
+export function setIndoor(v){if(!rainG||v===rainIn)return;rainIn=v;const t=AC.currentTime;rainG.gain.setTargetAtTime((v?.035:.1)*pluieK,t,.3);rainLP.frequency.setTargetAtTime(v?800:2600,t,.3)}
+// La pluie s'arrête (k = 0) ou reprend (k = 1), en quelques secondes.
+export function setPluie(k){pluieK=k;if(!rainG)return;rainG.gain.setTargetAtTime((rainIn?.035:.1)*k,AC.currentTime,1.5)}
 export function tone(f,dur,type,vol,f2){
   if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t);
   if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(vol||.05,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
@@ -125,3 +128,7 @@ export function coupure(){if(!AC)return;const t=AC.currentTime;const o=AC.create
 export function clac(){if(!AC)return;const t=AC.currentTime;click(t,900+Math.random()*600,.05);nz(t,'bandpass',2500,3,.06,.001,.03)}
 // Haut-parleurs d'Helix : un « ding » descendant avant l'annonce.
 export function annonce(){if(!AC)return;tone(880,.35,'sine',.05,660);setTimeout(()=>tone(660,.5,'sine',.05,440),300)}
+// Trois coups contre une porte en bois.
+export function frapper(){if(!AC)return;const t=AC.currentTime;for(let i=0;i<3;i++){const k=t+i*.28;nz(k,'lowpass',240,.9,.55,.002,.08);nz(k+.002,'bandpass',750,2,.12,.002,.035)}}
+// Porte métallique qui coulisse (badge accepté).
+export function porteMetal(){if(!AC)return;const t=AC.currentTime;click(t,2400,.04);click(t+.08,3000,.04);const f=nz(t+.15,'bandpass',300,1.5,.12,.08,1.1);f.frequency.setValueAtTime(220,t+.15);f.frequency.linearRampToValueAtTime(520,t+1.2);nz(t+1.25,'lowpass',180,.8,.25,.004,.2)}

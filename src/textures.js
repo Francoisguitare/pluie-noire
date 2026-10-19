@@ -52,3 +52,14 @@ export function asphaltCanvas(){
 export function roughCanvas(){const[c,g]=mk(512,512);g.fillStyle='#b4b4b4';g.fillRect(0,0,512,512);g.globalCompositeOperation='difference';g.drawImage(PUD,0,0);g.globalCompositeOperation='source-over';
   const d=g.getImageData(0,0,512,512),a=d.data;for(let i=0;i<a.length;i+=4){const v=Math.max(30,a[i]*.9);a[i]=a[i+1]=a[i+2]=v}g.putImageData(d,0,0);return c}
 export const softDot=(()=>{const[c,g]=mk(64,64);const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.4,'rgba(255,255,255,.5)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c)})();
+
+/* ---------- Pierre de taille et pavés (traboules, quais) : r est la suite aléatoire de la zone ---------- */
+export function texPierre(r){const[c,g]=mk(512,512);g.fillStyle='#3e3a35';g.fillRect(0,0,512,512);
+  for(let y=0;y<512;){const h=34+Math.floor(r()*22);for(let x=-Math.floor(r()*80);x<512;){const w=70+Math.floor(r()*70),v=52+Math.floor(r()*28);g.fillStyle=`rgb(${v+6},${v+2},${v-4})`;g.fillRect(x+3,y+3,w-6,h-6);
+      for(let k=0;k<30;k++){const q=v-12+Math.floor(r()*24);g.fillStyle=`rgba(${q},${q},${q-6},.5)`;g.fillRect(x+3+r()*(w-8),y+3+r()*(h-8),2+r()*4,2+r()*3)}x+=w}y+=h}
+  for(let i=0;i<40;i++){const x=r()*512,l=60+r()*200;const gr=g.createLinearGradient(0,512-l,0,512);gr.addColorStop(0,'rgba(20,24,16,0)');gr.addColorStop(1,'rgba(20,28,14,.45)');g.fillStyle=gr;g.fillRect(x,512-l,8+r()*20,l)}
+  return c}
+export function texPaves(r){const[c,g]=mk(512,512);g.fillStyle='#16161a';g.fillRect(0,0,512,512);
+  for(let j=0;j<16;j++)for(let i=0;i<16;i++){const off=j%2?16:0,x=i*32+off+2,y=j*32+2,v=58+Math.floor(r()*30);g.fillStyle=`rgb(${v},${v-2},${v-6})`;g.beginPath();g.roundRect?g.roundRect(x,y,28,28,7):g.rect(x,y,28,28);g.fill();
+    g.fillStyle='rgba(255,255,255,.06)';g.fillRect(x+4,y+4,12,6)}
+  return c}

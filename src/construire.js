@@ -184,6 +184,17 @@ export function updateFx(dt,z){
   }
 }
 
+/* ---------- Fusion : plusieurs maillages d'un même matériau en un seul (un seul appel de dessin) ---------- */
+// Les maillages ne sont pas ajoutés à la scène : seule leur transformation (position, rotation, échelle) compte.
+export function fusion(meshes,mat){
+  const att={position:[],normal:[],uv:[]};
+  for(const m of meshes){m.updateMatrix();const g=(m.geometry.index?m.geometry.toNonIndexed():m.geometry.clone()).applyMatrix4(m.matrix);
+    att.position.push(g.attributes.position.array);att.normal.push(g.attributes.normal.array);att.uv.push(g.attributes.uv?g.attributes.uv.array:new Float32Array(g.attributes.position.count*2))}
+  const geo=new THREE.BufferGeometry();
+  for(const[k,n]of[['position',3],['normal',3],['uv',2]]){const a=att[k],r=new Float32Array(a.reduce((t,x)=>t+x.length,0));let o=0;for(const x of a){r.set(x,o);o+=x.length}geo.setAttribute(k,new THREE.BufferAttribute(r,n))}
+  return new THREE.Mesh(geo,mat||meshes[0].material);
+}
+
 /* ---------- Lampes qu'on peut abattre au P-9 ----------
    Inscrites dans zone.lumieres : sous une lampe allumée, les Gardiens voient de plus loin. */
 export function lampeCassable(x,y,z,color,o={}){

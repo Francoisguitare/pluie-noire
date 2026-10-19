@@ -14,7 +14,7 @@ const handlers={};
 export const on=(e,f)=>{(handlers[e]||(handlers[e]=[])).push(f)};
 export const emit=(e,...a)=>{for(const f of handlers[e]||[])f(...a)};
 
-/* État courant. state : title, play, dialogue, paused, caught, cine, end */
+/* État courant. state : title, play, dialogue, puzzle, paused, caught, cine, end */
 export let state='title';export const setState=v=>{state=v};
 export let T=0;export const tick=dt=>{T+=dt};
 export const G={grace:0,flash:0,alertLvl:0,curInter:null};

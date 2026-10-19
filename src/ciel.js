@@ -64,11 +64,15 @@ export function buildCars(){
   }
 }
 export const showSky=v=>{sky.visible=v};
+// Hauteur de la ville au loin : au sommet de la tour Helix, elle passe sous les pieds.
+export const placerCiel=y=>{sky.position.y=y};
+// L'aube (0 = nuit, 1 = jour levé) : le ciel se réchauffe, l'orage se tait.
+let aube=0;export const setAube=k=>{aube=k};
 export function updateSky(dt){
   for(const b of beacons)b.m.visible=Math.sin(T*2+b.ph)>.3;
   for(const s of searchlights){s.g.rotation.z=Math.sin(T*.13+s.ph)*.45;s.g.rotation.x=Math.cos(T*.11+s.ph)*.3;s.g.children[0].material.uniforms.time.value=T}
   for(const c of cars){c.g.position.x+=c.v*dt;if(c.g.position.x>180)c.g.position.x=-180;if(c.g.position.x<-180)c.g.position.x=180}
   // orage
-  nextBolt-=dt;if(nextBolt<=0){nextBolt=22+rnd()*30;G.flash=1;thunder()}
-  if(G.flash>0){G.flash=Math.max(0,G.flash-dt*2.2);const f=G.flash*(.6+.4*Math.sin(T*60));hemi.intensity=hemiBase+f*2.5;skyMat.color.setScalar(1+f*2)}else{hemi.intensity=hemiBase;skyMat.color.setScalar(1)}
+  if(aube<=0){nextBolt-=dt;if(nextBolt<=0){nextBolt=22+rnd()*30;G.flash=1;thunder()}}
+  if(G.flash>0){G.flash=Math.max(0,G.flash-dt*2.2);const f=G.flash*(.6+.4*Math.sin(T*60));hemi.intensity=hemiBase+f*2.5;skyMat.color.setScalar(1+f*2)}else{hemi.intensity=hemiBase+aube*.9;skyMat.color.setRGB(1+aube*2.2,1+aube*1.25,1+aube*.6)}
 }

@@ -12,7 +12,9 @@ export function prepClip(c,stripPrefix){const k=c.clone();k.tracks=k.tracks.filt
 export function findBone(root,names){let b=null;root.traverse(o=>{if(!b&&o.isBone&&names.includes(o.name))b=o});return b}
 export function attachTo(bone,mesh,x,y,z){const s=new V3();bone.getWorldScale(s);mesh.scale.multiplyScalar(1/s.x);mesh.position.set(x/s.x,y/s.x,z/s.x);bone.add(mesh)}
 export function mountChar(n,root,clips,opt){
-  root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.envMapIntensity=opt.env??.9;if(opt.mat)opt.mat(m,o)})}});
+  // Les matériaux sont copiés avant d'être retouchés : les clones d'un même modèle ne se contaminent pas.
+  root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=true;o.material=Array.isArray(o.material)?o.material.map(m=>m.clone()):o.material.clone();
+    const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.envMapIntensity=opt.env??.9;if(opt.mat)opt.mat(m,o)})}});
   const top=findBone(root,['mixamorigHeadTop_End','HeadTop_End','mixamorigHead','Head']),feet=[];
   root.traverse(o=>{if(o.isBone&&/(Toe_End|ToeBase|Foot)$/.test(o.name))feet.push(o)});
   const v=new V3();const meas=()=>{root.updateMatrixWorld(true);top.getWorldPosition(v);const ty=v.y;let fy=1e9;for(const f of feet){f.getWorldPosition(v);fy=Math.min(fy,v.y)}return[ty,fy]};
@@ -151,4 +153,81 @@ export function habillerSid(n){
   const wool=c=>new THREE.MeshStandardMaterial({color:c,roughness:1});
   const head=findBone(n.root,['Head']);if(head){const b=new THREE.Mesh(new THREE.SphereGeometry(.122,20,12,0,Math.PI*2,0,Math.PI*.52),wool(0x6a2a1a));attachTo(head,b,0,.135,-.018);b.scale.y*=.9;b.castShadow=true}
   const neck=findBone(n.root,['Neck']);if(neck){const sc=new THREE.Mesh(new THREE.TorusGeometry(.068,.032,8,20),wool(0x39402c));sc.rotation.x=Math.PI/2;attachTo(neck,sc,0,.035,.005)}
+}
+
+/* ---------- Les personnages récurrents, réutilisables d'une zone à l'autre ---------- */
+// La clé de cache du programme doit suivre le code ajouté : sinon Three.js réutilise le premier shader compilé pour tous.
+const recolor=glsl=>m=>{m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\n{vec3 c=diffuseColor.rgb;'+glsl+'}')};m.customProgramCacheKey=()=>glsl};
+// Retouche des couleurs du modèle michelle (valeurs linéaires mesurées sur sa texture) : cheveux (très sombres, gris neutre),
+// pantalon (jaune), haut (gris moyen). Chaque teinte garde le relief de la texture.
+const v3=a=>`vec3(${a.map(x=>(+x).toFixed(3)).join(',')})`;
+const teinte=o=>recolor(`float l=dot(c,vec3(.3,.59,.11)),s=max(c.r,max(c.g,c.b))-min(c.r,min(c.g,c.b));`+
+  (o.cheveux?`diffuseColor.rgb=mix(diffuseColor.rgb,${v3(o.cheveux)}*(.6+l*22.),step(l,.035)*step(s,.02));`:'')+
+  (o.pantalon?`diffuseColor.rgb=mix(diffuseColor.rgb,${v3(o.pantalon)}*(.35+c.g),smoothstep(.12,.3,min(c.r,c.g)-c.b)*step(c.b*1.6,c.g));`:'')+
+  (o.haut?`diffuseColor.rgb=mix(diffuseColor.rgb,${v3(o.haut)}*(.5+l*3.),step(.09,l)*step(l,.3)*step(s,.07));`:'')+
+  (o.rouge?`diffuseColor.rgb=mix(diffuseColor.rgb,${v3(o.rouge)}*(.4+c.r),step(.2,c.r)*step(c.g*4.,c.r)*step(c.b*4.,c.r));`:''));
+/* Vêtements simples accrochés aux os : veste ou blouse (buste ouvert devant, pans jusqu'aux genoux si long), manches.
+   sauf : le bras laissé nu (prothèse K7). */
+const tissus={};
+const tissu=c=>tissus[c]||(tissus[c]=new THREE.MeshStandardMaterial({color:c,roughness:.9,metalness:0,envMapIntensity:.45,side:THREE.DoubleSide}));
+function piece(bone,geo,mat,y){if(!bone)return;const g=new THREE.Group(),m=new THREE.Mesh(geo,mat);m.position.y=y;m.castShadow=true;g.add(m);mountOn(bone,g);return m}
+export function vetir(n,{col,long=false,ouvert=.38,sauf=null,prof=.8}){
+  const r=n.root,mat=tissu(col),k=n.h/1.72;
+  const buste=piece(boneEnd(r,'Spine1'),new THREE.CylinderGeometry(.142*k,.158*k,.46*k,20,1,true,ouvert,Math.PI*2-ouvert*2),mat,.05*k);if(buste)buste.scale.z=prof;
+  if(long){const pans=piece(boneEnd(r,'Hips'),new THREE.CylinderGeometry(.165*k,.235*k,.5*k,20,1,true,ouvert*.6,Math.PI*2-ouvert*1.2),mat,-.27*k);if(pans)pans.scale.z=.78}
+  for(const sd of['Left','Right']){if(sd===sauf)continue;
+    for(const[b,r1,r2]of[['Arm',.058,.05],['ForeArm',.05,.042]]){const os=boneEnd(r,sd+b);if(!os)continue;const L=segLen(os);piece(os,new THREE.CylinderGeometry(r2*k,r1*k,L*.96,12,1,true),mat,L*.48)}}
+}
+/* Coiffure : les deux gros chignons du modèle michelle sont ramenés contre le crâne (coupe courte), avant un chignon
+   ou un foulard éventuel. Les cheveux sont repérés par la couleur de la texture sous chaque sommet (très sombre,
+   gris neutre), au-dessus du cou. La géométrie est copiée : les autres clones gardent la leur. */
+const _m4=new THREE.Matrix4(),_m5=new THREE.Matrix4();
+export function coiffer(n,{rayon=1.08,chignon=null,foulard=null}={}){
+  let sk=null;n.root.traverse(o=>{if(o.isSkinnedMesh&&!sk)sk=o});const img=sk&&sk.material.map&&sk.material.map.image;if(!img)return;
+  const cv=document.createElement('canvas');cv.width=img.width;cv.height=img.height;const g2=cv.getContext('2d');g2.drawImage(img,0,0);const px=g2.getImageData(0,0,cv.width,cv.height).data;
+  const geo=sk.geometry.clone(),pos=geo.attributes.position,nor=geo.attributes.normal,uv=geo.attributes.uv;sk.geometry=geo;
+  const kp=pos.normalized?1/32767:1,kn=nor.normalized?1/32767:1,ku=uv.normalized?1/65535:1;
+  const f=new Float32Array(pos.count*3),fn=new Float32Array(pos.count*3);
+  for(let i=0;i<pos.count;i++){f[i*3]=pos.getX(i)*kp;f[i*3+1]=pos.getY(i)*kp;f[i*3+2]=pos.getZ(i)*kp;fn[i*3]=nor.getX(i)*kn;fn[i*3+1]=nor.getY(i)*kn;fn[i*3+2]=nor.getZ(i)*kn}
+  // La tête, dans le repère de la géométrie
+  const sq=sk.skeleton,iH=sq.bones.findIndex(b=>/Head$/.test(b.name)),iT=sq.bones.findIndex(b=>/HeadTop_End$/.test(b.name));if(iH<0||iT<0)return;
+  _m4.copy(sk.bindMatrix).invert();const os=i=>new V3().setFromMatrixPosition(_m5.copy(sq.boneInverses[i]).invert()).applyMatrix4(_m4);
+  const h=os(iH),t=os(iT),L0=h.distanceTo(t),c=h.clone().lerp(t,.5),R=L0*.5*rayon,cou=h.y-L0*.25,d=new V3();
+  for(let i=0;i<pos.count;i++){
+    if(f[i*3+1]<cou)continue;
+    const x=Math.min(cv.width-1,Math.floor(uv.getX(i)*ku*cv.width)),y=Math.min(cv.height-1,Math.floor(uv.getY(i)*ku*cv.height)),o=(y*cv.width+x)*4;
+    d.set(f[i*3]-c.x,f[i*3+1]-c.y,f[i*3+2]-c.z);const L=d.length();if(L<=R)continue;
+    const r=px[o]/255,g=px[o+1]/255,b=px[o+2]/255;if(L<R*1.3&&(.3*r+.59*g+.11*b>.2||Math.max(r,g,b)-Math.min(r,g,b)>.08))continue;
+    d.multiplyScalar(1/L);f[i*3]=c.x+d.x*R;f[i*3+1]=c.y+d.y*R;f[i*3+2]=c.z+d.z*R;fn[i*3]=d.x;fn[i*3+1]=d.y;fn[i*3+2]=d.z;
+  }
+  geo.setAttribute('position',new THREE.BufferAttribute(f,3));geo.setAttribute('normal',new THREE.BufferAttribute(fn,3));geo.computeBoundingSphere();
+  // Chignon (sur la nuque) ou foulard (sur le crâne), accrochés à l'os de la tête : tailles en mètres, à l'échelle du personnage
+  const tete=findBone(n.root,['mixamorigHead']);if(!tete)return;const k=n.h/1.72;
+  if(chignon){const b=new THREE.Mesh(new THREE.SphereGeometry(.058*k,14,10),new THREE.MeshStandardMaterial({color:chignon,roughness:.75}));b.scale.set(1,.85,.9);attachTo(tete,b,0,.13*k,-.085*k);b.castShadow=true}
+  if(foulard){const b=new THREE.Mesh(new THREE.SphereGeometry(.112*k,18,10,0,Math.PI*2,0,Math.PI*.56),tissu(foulard));b.scale.set(1,.95,1.08);b.rotation.x=-.2;attachTo(tete,b,0,.105*k,-.012*k);b.castShadow=true}
+}
+export const LOOKS={
+  mara:{modele:'michelle',env:.8,mat:recolor('float y=smoothstep(.12,.3,min(c.r,c.g)-c.b)*step(c.b*1.6,c.g);diffuseColor.rgb=mix(c,vec3(c.r*.42+.05,c.g*.06,c.g*.1),y);'),
+    apres:n=>{const hand=findBone(n.root,['mixamorigRightHand']);if(hand){const c=new THREE.Mesh(new THREE.SphereGeometry(.014,6,6),glow(0xff5a20,3));attachTo(hand,c,0,.09,.02);n.cig=c}
+      cyberize(n,{arm:'Right',r1:.047,r2:.04,col:0xff3d6a,head:1,neck:true})}},
+  nox:{modele:'xbot',env:1.4,mat:m=>{if(/Joints/.test(m.name)){m.color.setHex(0x1c2a33);m.emissive=new THREE.Color(0x2ad8ff);m.emissiveIntensity=.55;m.metalness=.8;m.roughness=.3}else{m.color.setHex(0xb9c2cc);m.metalness=.55;m.roughness=.32}},
+    apres:n=>cyberize(n,{neck:true,col:0x2ad8ff})},
+  sid:{modele:'sid',env:.7,pose:true,apres:n=>{habillerSid(n);cyberize(n,{arm:'Left',r1:.052,r2:.045,col:0xffa040,head:-1,neck:true})}},
+  // Rosa Delorme : cheveux gris, bleu de travail, veste de toile, bras gauche K7
+  rosa:{modele:'michelle',env:.7,mat:teinte({cheveux:[.36,.355,.35],pantalon:[.025,.03,.05],haut:[.06,.07,.05],rouge:[.05,.05,.055]}),
+    apres:n=>{coiffer(n);vetir(n,{col:0x2c3a2e,sauf:'Left'});cyberize(n,{arm:'Left',r1:.052,r2:.046,col:0xffb347,neck:true})}},
+  // Dr Ilse Varga : blouse blanche fermée, cheveux blond foncé, œil K7
+  varga:{modele:'michelle',env:.9,mat:teinte({cheveux:[.3,.2,.1],pantalon:[.05,.05,.055],haut:[.035,.035,.04],rouge:[.12,.12,.13]}),
+    apres:n=>{coiffer(n,{chignon:0x4a3420});vetir(n,{col:0xc9ccd0,long:true,ouvert:.1,prof:.95});cyberize(n,{head:1,col:0x58e6ff})}},
+  // Figurante : une canuse en bleu de travail, bras droit K7
+  canut:{modele:'michelle',env:.7,mat:teinte({cheveux:[.12,.045,.02],pantalon:[.02,.03,.06],haut:[.18,.24,.34],rouge:[.06,.06,.065]}),
+    apres:n=>{coiffer(n,{foulard:0x7a2a22});vetir(n,{col:0x24344e,sauf:'Right'});cyberize(n,{arm:'Right',r1:.05,r2:.044,col:0xffb347})}},
+};
+// Monte le personnage n (doit avoir g, h) avec un habillage de LOOKS ; silhouette de secours si les modèles manquent.
+export function habiller(n,nom){
+  const L=LOOKS[nom],M=MODELES[L.modele];
+  if(!M){const f=figure(n.o||{coat:0x3a3530,skin:0xb08870});n.g.add(f);n.root=f;return n}
+  mountChar(n,THREE.SkeletonUtils.clone(M.scene),L.pose?{}:(M.clips||{}),{env:L.env,mat:L.mat,flip:L.modele==='soldier'});
+  try{L.apres(n)}catch(e){console.warn('habillage',nom,e)}
+  return n;
 }

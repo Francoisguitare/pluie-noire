@@ -9,6 +9,7 @@ import {footstep,shotSound,lockSound,unlockSound,verreSound} from './son.js';
 import {toast} from './interface.js';
 import {killDrone,burst} from './drones.js';
 import {toucheGardien} from './gardiens.js';
+import {detruireCamera} from './cameras.js';
 
 /* ---------- Arme (P-9 silencieux) ---------- */
 const gun=new THREE.Group();gun.visible=false;camera.add(gun);
@@ -45,8 +46,9 @@ export function shoot(){
   for(const d of Z.drones){if(d.dead||!d.g.visible)continue;const t=vise(d.g.position.x,d.g.position.y,d.g.position.z,.6);if(t<bt&&los(_o.x,_o.z,d.g.position.x,d.g.position.z)){best=d;bt=t;kind='drone'}}
   for(const l of Z.lumieres){if(!l.on||!l.cassable)continue;const t=vise(l.hx,l.hy,l.hz,.3);if(t<bt){best=l;bt=t;kind='lampe'}}
   for(const g of Z.gardiens){const t=vise(g.pos.x,1.2,g.pos.z,.42);if(t<bt&&los(_o.x,_o.z,g.pos.x,g.pos.z)){best=g;bt=t;kind='gardien'}}
+  for(const c of Z.cameras){if(c.mort)continue;const t=vise(c.x,c.y,c.z,.3);if(t<bt&&los(_o.x,_o.z,c.x,c.z)){best=c;bt=t;kind='camera'}}
   if(!best)return;const b=best;
-  setTimeout(()=>{if(kind==='drone')killDrone(b);else if(kind==='lampe'){eteindre(b);_v.set(b.hx,b.hy,b.hz);burst(_v,40);verreSound();emit('lampeCassee',b)}else toucheGardien(b)},40+bt*6);
+  setTimeout(()=>{if(kind==='drone')killDrone(b);else if(kind==='lampe'){eteindre(b);_v.set(b.hx,b.hy,b.hz);burst(_v,40);verreSound();emit('lampeCassee',b)}else if(kind==='camera')detruireCamera(b);else toucheGardien(b)},40+bt*6);
 }
 on('shoot',shoot);
 

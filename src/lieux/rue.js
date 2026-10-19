@@ -5,7 +5,7 @@ import {PUD,PUDD,canvasTex,mk,asphaltCanvas,roughCanvas} from '../textures.js';
 import {into,add,pushCol,M,glow,addBox,building,neon,plight,shaft,Particles,steam,cable,acUnit,lamp,bmats,boxGeoWorldUV,spot,shadowPoint,ombre,flushLedges,flamme} from '../construire.js';
 import {makeZone} from '../zones.js';
 import {makeDrone} from '../drones.js';
-import {nameTag,loadGLB,restInfo,retarget,prepClip,mountChar,findBone,attachTo,cyberize,fallbackChars,preparerModele,habillerSid} from '../personnages.js';
+import {nameTag,loadGLB,restInfo,retarget,prepClip,mountChar,findBone,attachTo,cyberize,fallbackChars,preparerModele,habillerSid,MODELES} from '../personnages.js';
 
 export const Z=makeZone('rue',{
   indoor:p=>p.x>-7.5&&p.x<7.5&&p.z>-51.5&&p.z<-40.5,
@@ -291,6 +291,8 @@ export async function loadRueCharacters(){
   const addv=c=>THREE.AnimationUtils.makeClipAdditive(c);
   const forRig=R=>({idle:retarget(X('idle'),RX,R,'mixamorig'),agree:addv(retarget(X('agree'),RX,R,'mixamorig')),shake:addv(retarget(X('headShake'),RX,R,'mixamorig'))});
   const base={idle:prepClip(X('idle'),false),agree:addv(prepClip(X('agree'),false)),shake:addv(prepClip(X('headShake'),false))};
+  // Animations prêtes pour les clones des autres zones (Rosa, Varga, Mara, Nox, figurants)
+  MODELES.michelle.clips=forRig(RM);MODELES.xbot.clips=base;MODELES.xbot.marche=prepClip(X('walk'),false);
   // Mara
   mountChar(npcBy('mara'),mich.scene,forRig(RM),{env:.8,mat:m=>{m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
     {vec3 c=diffuseColor.rgb;float y=smoothstep(.12,.3,min(c.r,c.g)-c.b)*step(c.b*1.6,c.g);diffuseColor.rgb=mix(c,vec3(c.r*.42+.05,c.g*.06,c.g*.1),y);}`)}}});

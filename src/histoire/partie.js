@@ -6,7 +6,7 @@ import {stopDialog} from './dialogue.js';
 import {zone,enterZone,assurerZone} from '../zones.js';
 import {THREE,scene,V3} from '../core.js';
 import {buildEnv} from '../rendu.js';
-import {showSky,setHemiBase} from '../ciel.js';
+import {showSky,setHemiBase,placerCiel} from '../ciel.js';
 import {rain} from '../pluie.js';
 import {fade} from '../interface.js';
 import {resetDrones} from '../drones.js';
@@ -18,9 +18,11 @@ export const S0=()=>({chapter:1,heure:192,quest:false,code:false,credits:80,vent
   // relations du chapitre 1, utiles plus tard
   kovacVerite:false,kovacPaye:false,kovacMenace:false,readMail:false,
   // chapitre 3 (Black-out)
-  blackout:false,kovacAide:false,escalier:false,dd3:[false,false],maraVue:false,maraFree:null,trappe:false,
-  // chapitres 4 et 5
-  noxWith:false,vargaTestifies:null,fin:null});
+  blackout:false,kovacAide:false,escalier:false,dd3:[false,false],toits:false,maraVue:false,maraFree:null,trappe:false,noxWith:false,
+  // chapitre 4 (Traboules) ; boitier : qui tient la copie du kill-switch de Mara (null, 'mara' ou 'ash')
+  sidTrab:false,canuts:false,rosaVue:false,vargaVue:false,atelierOuvert:false,carte:false,badge:false,galerie:false,maraTrab:false,boitier:null,temoignage:false,vargaTestifies:null,
+  // chapitre 5
+  fin:null});
 export let S=S0();
 
 /* Un chapitre : {zone, objectives(S,L), checkpoint(S) → [x,z,yaw], reset(), apply(S), describe(S), ends} */
@@ -73,7 +75,7 @@ export function applySave(d){
 export function allerZone(id,spawn,{fondu=true,ensuite=null}={}){
   const faire=()=>{
     const z=assurerZone(id);enterZone(id);
-    scene.fog.color.setHex(z.fog);scene.background.setHex(z.fog);scene.fog.density=z.fogD;showSky(z.ciel);setHemiBase(z.hemi);
+    scene.fog.color.setHex(z.fog);scene.background.setHex(z.fog);scene.fog.density=z.fogD;showSky(z.ciel);placerCiel(z.cielY);setHemiBase(z.hemi);
     if(!z.env){const cach=[rain];z.root.traverse(o=>{if(o.type==='Reflector')cach.push(o)});z.env=buildEnv(new V3(...z.envPos),cach)}
     scene.environment=z.env;
     if(spawn){P.pos.set(spawn[0],0,spawn[1]);P.yaw=spawn[2]||0;P.pitch=0;P.vx=P.vz=0}
