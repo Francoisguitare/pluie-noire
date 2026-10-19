@@ -521,7 +521,8 @@ addBox(4.7,6,-30,34,0,.13,M.curb,{collide:false});
 addBox(-4.75,-4.65,-30,34,0,.14,M.metal,{collide:false});addBox(4.65,4.75,-30,34,0,.14,M.metal,{collide:false});
 for(let z=-26;z<32;z+=6){const d=new THREE.Mesh(new THREE.PlaneGeometry(.16,2.4),M.paint);d.rotation.x=-Math.PI/2;d.position.set(0,.012,z);scene.add(d)}
 for(let x=-4;x<=4;x+=1.1){const d=new THREE.Mesh(new THREE.PlaneGeometry(.55,3),M.paint);d.rotation.x=-Math.PI/2;d.position.set(x,.012,-29);scene.add(d)}
-for(const[x,z]of[[-2,8],[2.5,-16],[-1.5,-31]]){const m=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.03,24),M.metal);m.position.set(x,.015,z);scene.add(m);const ring=new THREE.Mesh(new THREE.TorusGeometry(.42,.03,6,24),M.darkMetal);ring.rotation.x=Math.PI/2;ring.position.set(x,.03,z);scene.add(ring);steam(x,.05,z,0xc8d0e8,{a:.22,rate:9,s1:3.2})}
+const MANHOLES=[[-2,8],[2.5,-16],[-1.5,-31]];
+for(const[x,z]of MANHOLES){const m=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.03,24),M.metal);m.position.set(x,.015,z);scene.add(m);const ring=new THREE.Mesh(new THREE.TorusGeometry(.42,.03,6,24),M.darkMetal);ring.rotation.x=Math.PI/2;ring.position.set(x,.03,z);scene.add(ring);steam(x,.05,z,0xc8d0e8,{a:.22,rate:9,s1:3.2})}
 
 /* ---------- City blocks ---------- */
 building(-22,-6,-6,34,22);building(-22,-14,-46,-6,30);building(-9,-6,-30,-12,14);building(-22,-8,-52,-46,18);
@@ -735,7 +736,7 @@ const NPCS=[
   {key:'mara',name:'MARA',x:-4.9,z:20.2,yaw:Math.PI/2,h:1.72,o:{coat:0x5a1520,skin:0xc8957a,hair:0x120c0c,long:true,visor:0x58e6ff,cig:true}},
   {key:'nox',name:'NOX-7',x:4.5,z:14.5,yaw:-Math.PI/2,h:1.76,o:{coat:0x1f3a4a,skin:0x8a5e45,hood:true,belt:0x3dff8a}},
   {key:'kovac',name:'KOVAC',x:8.65,z:5,yaw:-Math.PI/2,h:1.86,o:{coat:0x2e2c28,skin:0xd2a888,hair:0x3a3a3a,mech:true}},
-  {key:'sid',name:'SID',x:-11.6,z:-16.6,yaw:-Math.PI*.75,h:1.76,o:{coat:0x3b3426,skin:0xb0846a,beanie:0x6a2a1a,hunch:true,mech:true}},
+  {key:'sid',name:'SID',x:-12.0,z:-16.4,yaw:-Math.PI/4,h:1.76,o:{coat:0x3b3426,skin:0xb0846a,beanie:0x6a2a1a,hunch:true,mech:true}},
 ];
 const inter=[];
 const blobTex=(()=>{const[c,g]=mk(128,128);const gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,'rgba(0,0,0,.85)');gr.addColorStop(.5,'rgba(0,0,0,.45)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,128,128);return new THREE.CanvasTexture(c)})();
@@ -779,7 +780,7 @@ function mountChar(n,root,clips,opt){
   if(opt.flip)root.rotation.y+=Math.PI;
   n.g.add(root);n.root=root;
   const mx=new THREE.AnimationMixer(root);n.mixer=mx;
-  if(!clips.idle){n.bones={};root.traverse(o=>{if(o.isBone)n.bones[o.name.replace(/^mixamorig/,'')]=o});n.rest={};for(const k in n.bones)n.rest[k]=n.bones[k].quaternion.clone();return}
+  if(!clips.idle){n.bones={};root.traverse(o=>{if(o.isBone)n.bones[o.name.replace(/^mixamorig/,'')]=o});n.rest={};for(const k in n.bones)n.rest[k]=n.bones[k].quaternion.clone();n.warm=1;return}
   const idle=mx.clipAction(clips.idle);idle.play();idle.time=rnd()*clips.idle.duration;idle.timeScale=.85+rnd()*.3;
   n.gest={};for(const k of['agree','shake']){if(!clips[k])continue;const a=mx.clipAction(clips[k]);a.blendMode=THREE.AdditiveAnimationBlendMode;a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=false;n.gest[k]=a}
 }
@@ -810,8 +811,8 @@ async function loadCharacters(){
   // Kovac
   const sIdle=sold.animations.find(a=>a.name==='Idle'),rs=forRig(RS);
   mountChar(npcBy('kovac'),sold.scene,{idle:sIdle?prepClip(sIdle,false):rs.idle,agree:rs.agree,shake:rs.shake},{env:1.1,flip:true});
-  // Sid (pose procédurale)
-  mountChar(npcBy('sid'),rpm.scene,{},{env:.7,flip:true});
+  // Sid (pose procédurale ; ce modèle regarde déjà vers +Z, pas de demi-tour)
+  mountChar(npcBy('sid'),rpm.scene,{},{env:.7});
   // Nox-7
   mountChar(npcBy('nox'),xbot.scene,base,{env:1.4,mat:(m)=>{
     if(/Joints/.test(m.name)){m.color.setHex(0x1c2a33);m.emissive=new THREE.Color(0x2ad8ff);m.emissiveIntensity=.55;m.metalness=.8;m.roughness=.3}
@@ -862,19 +863,22 @@ function cyberize(n,o){const r=n.root;
   if(o.neck)cyberNeck(boneEnd(r,o.neckBone||'Neck'),o.col);
 }
 
-const _q1=new THREE.Quaternion(),_q2=new THREE.Quaternion(),_q3=new THREE.Quaternion(),_ax=new V3();
-function boneWorldRot(b,rest,axis,ang){b.parent.getWorldQuaternion(_q1);_q3.copy(_q1).invert();_q2.setFromAxisAngle(axis,ang);b.quaternion.copy(_q3.multiply(_q2).multiply(_q1).multiply(rest))}
+const _q1=new THREE.Quaternion(),_q2=new THREE.Quaternion(),_q3=new THREE.Quaternion(),_q4=new THREE.Quaternion();
+function boneWorldQ(b,rest,q){b.parent.getWorldQuaternion(_q1);_q3.copy(_q1).invert();b.quaternion.copy(_q3.multiply(q).multiply(_q1).multiply(rest));b.updateMatrixWorld(true)}
+function boneWorldRot(b,rest,axis,ang){boneWorldQ(b,rest,_q2.setFromAxisAngle(axis,ang))}
+// Sid regarde vers +Z local, sa gauche est +X. warm = 1 : il se chauffe les mains au-dessus du baril.
 function poseSid(n){
   const B=n.bones,R=n.rest;if(!B.Spine)return;
   for(const k in B)B[k].quaternion.copy(R[k]);n.g.updateMatrixWorld(true);
-  const gq=n.g.quaternion,right=new V3(1,0,0).applyQuaternion(gq),fwd=new V3(0,0,1).applyQuaternion(gq),up=new V3(0,1,0);
+  const gq=n.g.quaternion,left=new V3(1,0,0).applyQuaternion(gq),fwd=new V3(0,0,1).applyQuaternion(gq),up=new V3(0,1,0),w=n.warm||0;
   const br=Math.sin(T*1.6)*.025;
-  if(B.Spine1){boneWorldRot(B.Spine1,R.Spine1,right,-.2+br);B.Spine1.updateMatrixWorld(true)}
-  if(B.LeftArm){boneWorldRot(B.LeftArm,R.LeftArm,fwd,.55);B.LeftArm.updateMatrixWorld(true)}
-  if(B.RightArm){boneWorldRot(B.RightArm,R.RightArm,fwd,-.55);B.RightArm.updateMatrixWorld(true)}
-  if(B.LeftForeArm){boneWorldRot(B.LeftForeArm,R.LeftForeArm,right,-.5)}
-  if(B.RightForeArm){boneWorldRot(B.RightForeArm,R.RightForeArm,right,-.5)}
-  if(B.Head){B.Neck&&B.Neck.updateMatrixWorld(true);boneWorldRot(B.Head,R.Head,up,Math.sin(T*.35)*.3+(n.talk||0)*Math.sin(T*3)*.08)}
+  if(B.Spine1)boneWorldRot(B.Spine1,R.Spine1,left,.2+.1*w+br);
+  for(const[s,sg]of[['Left',1],['Right',-1]]){
+    const a=B[s+'Arm'],f=B[s+'ForeArm'];
+    if(a){_q4.setFromAxisAngle(fwd,-sg*(.5-.05*w));boneWorldQ(a,R[s+'Arm'],_q2.setFromAxisAngle(left,-(.1+.45*w)).multiply(_q4))}
+    if(f){_q4.setFromAxisAngle(up,-sg*.45*w);boneWorldQ(f,R[s+'ForeArm'],_q4.multiply(_q2.setFromAxisAngle(left,-(.25+1.05*w))))}
+  }
+  if(B.Head){B.Neck&&B.Neck.updateMatrixWorld(true);_q4.setFromAxisAngle(up,Math.sin(T*.35)*.3*(1-.7*w));boneWorldQ(B.Head,R.Head,_q4.multiply(_q2.setFromAxisAngle(left,.25*w)))}
 }
 function fallbackChars(){for(const n of NPCS){if(n.root)continue;const f=figure(n.o);n.g.add(f);n.root=f;if(f.userData.cig)n.cig=f.userData.cig}}
 
@@ -966,6 +970,47 @@ function shoot(){
 let hitT=null;function showHit(){const h=$('hit');h.classList.add('on');clearTimeout(hitT);hitT=setTimeout(()=>h.classList.remove('on'),120)}
 function giveWeapon(){if(S.armed)return;S.ch2=true;S.armed=true;gun.visible=true;document.body.classList.add('armed');tone(600,.08,'square',.03);setTimeout(()=>tone(900,.06,'square',.03),70);updHud()}
 
+/* ---------- Main prothétique K7 d'Ash (scène où Mara la verrouille) ---------- */
+const kHand=new THREE.Group();kHand.visible=false;camera.add(kHand);
+const kSeam=glow(0xf0a53a,1.6),kFingers=[];
+let kShow=0,kLock=0,kLockT=0;
+(function(){
+  const hm=new THREE.MeshStandardMaterial({color:0x8a919b,roughness:.32,metalness:.9,envMapIntensity:1.1});
+  const gm=new THREE.MeshStandardMaterial({color:0x22252b,roughness:.4,metalness:.85,envMapIntensity:1});
+  const palm=new THREE.Mesh(new THREE.BoxGeometry(.08,.088,.024),gm);palm.position.y=.044;kHand.add(palm);
+  const plate=new THREE.Mesh(new THREE.BoxGeometry(.07,.074,.006),hm);plate.position.set(0,.046,.014);kHand.add(plate);
+  for(const x of[-.027,-.009,.009,.027]){const s=new THREE.Mesh(new THREE.BoxGeometry(.0025,.06,.002),kSeam);s.position.set(x,.046,.0175);kHand.add(s)}
+  // Dos de la main vers la caméra : le pouce est à gauche, les doigts se replient vers -Z.
+  const jointG=new THREE.SphereGeometry(1,12,8);
+  const finger=(x,y,k,rz)=>{let j=new THREE.Group();j.position.set(x,y,0);j.rotation.z=rz;kHand.add(j);const js=[j];
+    [.032,.026,.02].forEach((L,i)=>{const r=.0088-i*.0012,seg=new THREE.Mesh(new THREE.CylinderGeometry(r*.9,r,L*k,12),i===1?gm:hm);seg.position.y=L*k/2;j.add(seg);
+      const kn=new THREE.Mesh(jointG,i?gm:hm);kn.scale.setScalar(r*1.15);j.add(kn);
+      if(i<2){const nj=new THREE.Group();nj.position.y=L*k;j.add(nj);js.push(nj);j=nj}
+      else{const tip=new THREE.Mesh(jointG,hm);tip.scale.setScalar(r*.9);tip.position.y=L*k;j.add(tip)}});
+    kFingers.push(js)};
+  for(const[x,k]of[[-.028,.95],[-.0095,1.05],[.0095,.97],[.028,.8]])finger(x,.09,k,0);
+  finger(-.043,.022,.85,.8);
+  const dir=new V3(.35,-.85,.4).normalize();
+  const arm=new THREE.Mesh(new THREE.CylinderGeometry(.036,.042,.34,18),hm);arm.quaternion.setFromUnitVectors(new V3(0,1,0),dir);arm.position.copy(dir).multiplyScalar(.17);kHand.add(arm);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(.038,.0035,6,24),kSeam);ring.quaternion.setFromUnitVectors(new V3(0,0,1),dir);ring.position.copy(dir).multiplyScalar(.02);kHand.add(ring);
+  kHand.scale.setScalar(.85);
+})();
+function lockHand(on){
+  if(on){kLock=1;kLockT=0;lockSound();try{navigator.vibrate&&navigator.vibrate([90,50,220])}catch(e){}toast('Prothèse K7 · verrouillage à distance')}
+  else{kLock=0;unlockSound();$('vig').style.opacity=0}
+}
+function updateHand(dt){
+  kShow+=((kLock?1:0)-kShow)*Math.min(1,dt*(kLock?4:3));kHand.visible=kShow>.01;kLockT+=dt;
+  const spasm=kLock?Math.max(0,1-kLockT/1.1):0;
+  if(finalPass)finalPass.uniforms.glitch.value=kLock?.22+spasm*.9:Math.max(0,finalPass.uniforms.glitch.value-dt*2);
+  if(kLock)$('vig').style.opacity=(.35+spasm*.4).toFixed(2);
+  if(!kHand.visible)return;
+  kHand.position.set(.15+Math.sin(T*41)*.003*spasm,-.36+kShow*.27,-.42);kHand.rotation.set(-.12,.3,-.22+Math.sin(T*29)*.04*spasm);
+  const curl=kLock?Math.min(1,kLockT*1.4):0;
+  kFingers.forEach((js,fi)=>js.forEach((j,ji)=>{j.rotation.x=-curl*(ji?.75:.45)-.06-spasm*.25*Math.sin(T*37+fi*2.1+ji*1.3)}));
+  if(kLock)kSeam.color.setHex(0xff2a2a).multiplyScalar(Math.sin(T*18)>-.2?2.4:.6);else kSeam.color.setHex(0xf0a53a).multiplyScalar(1.6);
+}
+
 /* ---------- Pluie ---------- */
 const RAIN=3200,rainPos=new Float32Array(RAIN*6),rainV=new Float32Array(RAIN);
 for(let i=0;i<RAIN;i++){const x=(rnd()-.5)*50,y=rnd()*22,z=(rnd()-.5)*50;rainV[i]=17+rnd()*9;rainPos.set([x,y+.6,z,x+.07,y,z],i*6)}
@@ -1009,10 +1054,11 @@ if(FX){
     composer.setPixelRatio(pr());composer.setSize(innerWidth,innerHeight);
     composer.addPass(new THREE.RenderPass(scene,camera));
     bloom=new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.95,.62,.8);composer.addPass(bloom);
-    finalPass=new THREE.ShaderPass({uniforms:{tDiffuse:{value:null},time:{value:0},res:{value:new THREE.Vector2(innerWidth,innerHeight)},flash:{value:0},alert:{value:0}},
+    finalPass=new THREE.ShaderPass({uniforms:{tDiffuse:{value:null},time:{value:0},res:{value:new THREE.Vector2(innerWidth,innerHeight)},flash:{value:0},alert:{value:0},glitch:{value:0}},
       vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-      fragmentShader:`uniform sampler2D tDiffuse;uniform float time;uniform vec2 res;uniform float flash;uniform float alert;varying vec2 vUv;
-        void main(){vec2 uv=vUv,c=uv-.5;float r2=dot(c,c);float ca=.006*r2*2.;
+      fragmentShader:`uniform sampler2D tDiffuse;uniform float time;uniform vec2 res;uniform float flash;uniform float alert;uniform float glitch;varying vec2 vUv;
+        void main(){vec2 uv=vUv;float gt=floor(time*24.),gb=step(.88,fract(sin(floor(uv.y*42.)+gt*7.13)*437.585));uv.x+=glitch*gb*(fract(sin(gt*91.7)*311.3)-.5)*.07;
+          vec2 c=uv-.5;float r2=dot(c,c);float ca=.006*r2*2.+glitch*.01;
           vec3 col=vec3(texture2D(tDiffuse,uv+c*ca).r,texture2D(tDiffuse,uv).g,texture2D(tDiffuse,uv-c*ca).b);
           float l=dot(col,vec3(.2126,.7152,.0722));
           col*=mix(vec3(.9,1.,1.1),vec3(1.08,.98,.84),smoothstep(.04,.7,l));
@@ -1021,6 +1067,7 @@ if(FX){
           col=pow(max(col,0.),vec3(1./2.2));
           col=(col-.5)*1.07+.5;
           col=mix(col,col*vec3(1.25,.55,.5),alert*.35);
+          col=mix(col,col*vec3(1.3,.55,.5),glitch*.45);
           col*=1.-smoothstep(.2,.9,r2*1.7)*.6;
           float n=fract(sin(dot(uv*res+fract(time)*97.,vec2(12.9898,78.233)))*43758.5453);col+=(n-.5)*.04;
           gl_FragColor=vec4(clamp(col,0.,1.),1.);}`});
@@ -1057,6 +1104,14 @@ function segHits(ax,az,bx,bz,c){
 }
 function los(ax,az,bx,bz){for(const c of colliders){if(c.off||!c.los)continue;if(segHits(ax,az,bx,bz,c))return false}return true}
 const insideLab=p=>p.x>-7.5&&p.x<7.5&&p.z>-51.5&&p.z<-40.5;
+// Surface sous les pieds : même masque de flaques que le shader de reflet du sol.
+const PUDD=(()=>{const d=PUD.getContext('2d').getImageData(0,0,512,512).data,a=new Uint8Array(512*512);for(let i=0;i<a.length;i++)a[i]=d[i*4];return a})();
+function surfaceAt(p){
+  if(insideLab(p))return'tile';
+  for(const[x,z]of MANHOLES)if((p.x-x)**2+(p.z-z)**2<.2)return'metal';
+  const u=((p.x+130)/260*12)%1,v=((130-p.z)/260*12)%1;
+  return PUDD[(Math.floor((1-v)*512)&511)*512+(Math.floor(u*512)&511)]>240?'puddle':'asphalt';
+}
 
 /* ---------- Interactions du décor ---------- */
 inter.push({p:new V3(1.65,0,-39.4),r:2.3,on:()=>!S.door&&!insideLab(P.pos),
@@ -1073,9 +1128,9 @@ inter.push({p:new V3(0,0,-49),r:2.2,on:()=>!S.chip,label:()=>'Prendre la puce',a
 inter.push({p:new V3(4,0,-50.4),r:2.2,label:()=>'Lire le terminal',act:()=>openDialog('terminal')});
 
 /* ---------- État ---------- */
-const S0=()=>({quest:false,code:false,credits:80,ventTip:false,chip:false,door:false,spotted:0,t0:0,noxPaid:false,ch2:false,armed:false,dd:[false,false,false],gate:false,battery:false,decoded:false});
+const S0=()=>({quest:false,code:false,credits:80,ventTip:false,chip:false,door:false,spotted:0,t0:0,noxPaid:false,ch2:false,armed:false,dd:[false,false,false],gate:false,battery:false,decoded:false,forced:false});
 let S=S0();
-const P={pos:new V3(0,0,26),yaw:0,pitch:0,vx:0,vz:0,crouch:0,bobT:0,stepAcc:0,fov:72};
+const P={pos:new V3(0,0,26),yaw:0,pitch:0,vx:0,vz:0,crouch:0,stepPh:0,stepIdx:0,fov:72};
 let state='title',T=0,grace=0,beepT=0,curInter=null,lastPrompt='',flash=0,nextBolt=12,alertLvl=0;
 
 /* ---------- Dialogues ---------- */
@@ -1089,14 +1144,21 @@ const DLG={
   pay:{t:"Deux mille crédits à la livraison. Pour l'instant t'en as quatre-vingts. Ça devrait suffire pour graisser Kovac.",c:backMara},
   accept:{t:"Le labo est au bout de la rue, au nord. Si un drone te voit trop longtemps, tout le quartier est bouclé. Ne me fais pas attendre.",act:()=>{if(!S.quest){S.quest=true;toast('Nouvel objectif : entrer dans le labo Helix')}},c:()=>[{l:'(Partir)',go:null}]},
   remind:{t:()=>S.code?"Tu as le code. Qu'est-ce que tu attends ? Le labo, c'est tout au nord.":"Le code de la porte, c'est Kovac qui l'a. Le bar à nouilles, sur ta droite en remontant la rue.",c:()=>[{l:'(Partir)',go:null}]},
-  final:{t:"Tu l'as ? Montre.",c:()=>[{l:"La voilà. (Donner la puce)",go:'gift'},{l:"Avant ça : c'est qui, ton client ?",go:'who'},{l:"Je la garde.",go:()=>finish('keep')}]},
-  gift:{t:"Joli travail, Ash. Mais elle est verrouillée : il faut la faire tourner dans mon décodeur, et il est à sec. Helix garde ses batteries au dépôt, au fond du parvis à droite, derrière une grille laser. Cette grille tire son courant des trois drones du quartier.",c:()=>[{l:"Trois drones. Avec quoi, je les descends ?",go:'gift2'}]},
-  gift2:{t:"Avec ça. (Elle te tend un pistolet compact au canon allongé.) P-9 silencieux, recharge cinétique : munitions illimitées, et personne n'entendra rien. Une balle dans le capteur, le drone tombe.",act:giveWeapon,c:()=>[{l:"Je commence par lequel ?",go:'gift3'}]},
+  final:{t:"Tu l'as ? Montre.",c:()=>[{l:"La voilà. (Donner la puce)",go:'gift'},{l:"Avant ça : c'est qui, ton client ?",go:'who'},{l:"Je la garde.",go:'keep1'}]},
+  // Refus : Mara verrouille la main K7 d'Ash avec une copie du kill-switch. La partie continue, mais S.forced reste.
+  keep1:{t:"(Mara ne discute pas. Elle sort de sa poche un boîtier noir, pas plus gros qu'un briquet, et pose le pouce dessus.) Regarde ta main, Ash.",act:()=>lockHand(true),c:()=>[{l:"Qu'est-ce que tu m'as fait ?",go:'keep2'}]},
+  keep2:{t:"(Tes doigts se replient tout seuls. Tu ne les sens plus.) Le kill-switch d'Helix. Un de leurs techniciens m'en a vendu une copie il y a deux ans. Ta main droite est une K7, comme la moitié des mains de ce quartier. Tu croyais vraiment que je confiais un boulot pareil sans assurance ?",c:()=>[{l:"Débloque-la. Tout de suite.",go:'keep3'},{l:"T'es pire qu'Helix.",go:'keep3b'}]},
+  keep3:{t:"Quand j'aurai la puce. (Elle tend sa main libre, paume ouverte.) Je ne te le demanderai pas deux fois.",c:()=>[{l:"(Lui donner la puce)",go:'keepGive'}]},
+  keep3b:{t:"Peut-être. Sauf qu'Helix ne te la rendrait jamais, ta main. Moi, si. (Elle tend sa main libre, paume ouverte.) La puce.",c:()=>[{l:"(Lui donner la puce)",go:'keepGive'}]},
+  keepGive:{t:"(Elle glisse la puce dans sa poche et appuie de nouveau sur le boîtier. Tes doigts se remettent à répondre, un par un.) Voilà. On repart sur de bonnes bases.",act:()=>{S.forced=true;lockHand(false)},c:()=>[{l:"Range ce truc.",go:'keepGive2'}]},
+  keepGive2:{t:"Il reste dans ma poche. Ça t'évitera de changer d'avis une deuxième fois. Maintenant, écoute-moi bien.",c:()=>[{l:"(Écouter)",go:'gift'}]},
+  gift:{t:()=>(S.forced?"La puce est verrouillée":"Joli travail, Ash. Mais elle est verrouillée")+" : il faut la faire tourner dans mon décodeur, et il est à sec. Helix garde ses batteries au dépôt, au fond du parvis à droite, derrière une grille laser. Cette grille tire son courant des trois drones du quartier.",c:()=>[{l:"Trois drones. Avec quoi, je les descends ?",go:'gift2'}]},
+  gift2:{t:()=>"Avec ça. (Elle te tend un pistolet compact au canon allongé.) P-9 silencieux, recharge cinétique : munitions illimitées, et personne n'entendra rien. Une balle dans le capteur, le drone tombe."+(S.forced?" Et ne pense même pas à le pointer sur moi : le boîtier ne quitte pas ma poche.":""),act:giveWeapon,c:()=>[{l:"Je commence par lequel ?",go:'gift3'}]},
   gift3:{t:()=>MOBILE?"Celui en maintenance, au-dessus de la rue, devant toi. Il est en veille, il ne te verra pas : parfait pour te faire la main. Vise avec le réticule et touche « Tirer ». Les deux autres patrouillent au nord, eux ont les yeux ouverts.":"Celui en maintenance, au-dessus de la rue, devant toi. Il est en veille, il ne te verra pas : parfait pour te faire la main. Vise et clique, ou appuie sur F. Les deux autres patrouillent au nord, eux ont les yeux ouverts.",c:()=>[{l:"Compris. (Partir)",go:null}]},
   ch2:{t:()=>{const k=kills();return k<3?`Encore ${3-k} drone${3-k>1?'s':''}. Tant qu'ils volent, la grille du dépôt reste sous tension. Reste dans leur dos et vise le capteur.`:"La grille est tombée. File au dépôt, au fond du parvis à droite, et ramène-moi cette batterie."},c:()=>[{l:'(Partir)',go:null}]},
   batReady:{t:"Tu l'as. Branche-la sur le décodeur, là, contre le mur à côté de moi.",c:()=>[{l:'(Partir)',go:null}]},
   end2:{t:"(La batterie ronronne. Sur l'écran, la puce s'éveille et la liste des prothèses K7 se met à défiler.) Regarde. Elles décrochent une par une. Le kill-switch d'Helix ne répond plus nulle part.",c:()=>[{l:"Et maintenant ?",go:()=>finish('decode')}]},
-  who:{t:"Un collectif de mécanos augmentés. Ils veulent comprendre le kill-switch pour le neutraliser. Pas de corpo, pas de flic. C'est assez propre pour toi ?",c:()=>[{l:"Ça me va. (Donner la puce)",go:'gift'},{l:"Je la garde quand même.",go:()=>finish('keep')}]},
+  who:{t:"Un collectif de mécanos augmentés. Ils veulent comprendre le kill-switch pour le neutraliser. Pas de corpo, pas de flic. C'est assez propre pour toi ?",c:()=>[{l:"Ça me va. (Donner la puce)",go:'gift'},{l:"Je la garde quand même.",go:'keep1'}]},
  }},
  kovac:{name:'Kovac',entry:()=>S.code?'after':'start',nodes:{
   start:{t:"(Sa main droite, entièrement mécanique, essuie un verre qui n'en a pas besoin.) Kovac. Nouilles, bière, informations. Qu'est-ce que je te sers ?",c:()=>[{l:"Le code de la porte d'Helix.",go:'code'},{l:"Un bol de nouilles.",go:'noodle'},{l:"Rien. (Partir)",go:null}]},
@@ -1124,7 +1186,7 @@ const DLG={
  }},
 };
 let dlg=null,typeTimer=null,fullText='';
-const SHAKE=new Set(['code','pNo','threat','after','final']);
+const SHAKE=new Set(['code','pNo','threat','after','final','keep3','keep3b']);
 function openDialog(key,node){dlg={d:DLG[key],key};document.body.classList.add('dialogue');state='dialogue';if(document.pointerLockElement)document.exitPointerLock();
   $('prompt').hidden=true;$('dialog').hidden=false;$('dwho').textContent=dlg.d.name;tone(720,.06,'triangle',.04);showNode(node||dlg.d.entry())}
 function showNode(id){
@@ -1160,14 +1222,12 @@ function caught(){
   setTimeout(()=>{const[x,z,y]=checkpoint();P.pos.set(x,0,z);P.yaw=y;P.pitch=0;P.vx=P.vz=0;resetDrones();grace=2.5;$('caught').hidden=true;if(state==='caught')state='play'},1500);
 }
 const ENDS={
-  decode:['Signal coupé',"Trois drones au tapis, pas un bruit. La batterie du dépôt alimente maintenant le décodeur de Mara, et la puce d'Helix travaille contre ses créateurs : dans tout Lyon-Basse, les prothèses K7 échappent à la coupure à distance. Mara t'offre une cigarette que tu refuses. Pour cette nuit, c'est assez."],
-  give:['Livraison',"Mara glisse la puce dans une boîte plombée et disparaît sous la pluie. Trois jours plus tard, un patch pirate circule dans tous les ateliers de Lyon-Basse : le kill-switch d'Helix ne répond plus. Personne ne connaît ton nom. C'est très bien comme ça."],
-  keep:["Monnaie d'échange","Tu gardes la puce. Mara ne dit rien. Elle allume une cigarette, te regarde une dernière fois et s'éloigne. Avant l'aube, trois offres arrivent sur ton terminal. La plus haute vient d'Helix."],
+  decode:['Signal coupé',()=>"Trois drones au tapis, pas un bruit. La batterie du dépôt alimente maintenant le décodeur de Mara, et la puce d'Helix travaille contre ses créateurs : dans tout Lyon-Basse, les prothèses K7 échappent à la coupure à distance. "+(S.forced?"Mara, elle, a gardé son boîtier noir. Pour cette nuit, c'est assez.":"Mara t'offre une cigarette que tu refuses. Pour cette nuit, c'est assez.")],
 };
 function finish(k){
   clearInterval(typeTimer);document.body.classList.remove('dialogue');$('dialog').hidden=true;dlg=null;state='end';if(document.pointerLockElement)document.exitPointerLock();
   const sec=Math.round((performance.now()-S.t0)/1000);
-  $('endTitle').textContent=ENDS[k][0];$('endText').textContent=ENDS[k][1];
+  $('endTitle').textContent=ENDS[k][0];$('endText').textContent=typeof ENDS[k][1]==='function'?ENDS[k][1]():ENDS[k][1];
   $('endStats').textContent=`Temps ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}  ·  Repéré ${S.spotted} fois  ·  ${S.credits} crédits restants`;
   $('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');clearSave();$('end').hidden=false;tone(220,1.2,'sine',.05,330);
 }
@@ -1178,6 +1238,7 @@ function resetGame(){
   labLight.color.setHex(0xd9f4ff);
   for(const d of drones)reviveDrone(d);closeGate();battery.visible=true;batLight.intensity=1.8;gun.visible=false;document.body.classList.remove('armed');
   decLed.material.color.setHex(0xff3030).multiplyScalar(2.2);decScreen.material.color.setHex(0x150a06);
+  kLock=0;kShow=0;kHand.visible=false;
   resetDrones();grace=1;updHud();
 }
 
@@ -1199,15 +1260,18 @@ function updHud(){
 }
 
 /* ---------- Audio ---------- */
-let AC=null,out=null,noiseBuf=null,muted=false;
+let AC=null,out=null,noiseBuf=null,muted=false,room=null,rainG=null,rainLP=null,rainIn=false;
 function initAudio(){
   if(AC){AC.resume&&AC.resume();return}
   try{
     AC=new(window.AudioContext||window.webkitAudioContext)();out=AC.createGain();out.gain.value=.7;out.connect(AC.destination);
     noiseBuf=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    // Réverbération courte pour les intérieurs (labo)
+    const ir=AC.createBuffer(2,AC.sampleRate*.7|0,AC.sampleRate);for(let c=0;c<2;c++){const b=ir.getChannelData(c);for(let i=0;i<b.length;i++)b[i]=(Math.random()*2-1)*Math.pow(1-i/b.length,3.2)}
+    room=AC.createConvolver();room.buffer=ir;const rg=AC.createGain();rg.gain.value=.35;room.connect(rg);rg.connect(out);
     const r=AC.createBufferSource();r.buffer=noiseBuf;r.loop=true;
     const hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=500;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2600;
-    const g=AC.createGain();g.gain.value=.1;r.connect(hp);hp.connect(lp);lp.connect(g);g.connect(out);r.start();
+    const g=AC.createGain();g.gain.value=.1;r.connect(hp);hp.connect(lp);lp.connect(g);g.connect(out);r.start();rainG=g;rainLP=lp;
     const hum=AC.createOscillator();hum.type='sawtooth';hum.frequency.value=50;const hl=AC.createBiquadFilter();hl.type='lowpass';hl.frequency.value=130;
     const hg=AC.createGain();hg.gain.value=.03;hum.connect(hl);hl.connect(hg);hg.connect(out);hum.start();
   }catch(e){AC=null}
@@ -1217,18 +1281,43 @@ function tone(f,dur,type,vol,f2){
   if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(vol||.05,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
   o.connect(g);g.connect(out);o.start(t);o.stop(t+dur+.05);
 }
-let stepSide=0;
-function footstep(soft,indoor){
-  if(!AC)return;const t=AC.currentTime,v=soft?.4:1;stepSide^=1;const pv=1+(stepSide?.07:-.05)+(Math.random()-.5)*.08;
-  const o=AC.createOscillator(),og=AC.createGain();o.type='sine';o.frequency.setValueAtTime(105*pv,t);o.frequency.exponentialRampToValueAtTime(48,t+.09);
-  og.gain.setValueAtTime(.0001,t);og.gain.exponentialRampToValueAtTime(.38*v,t+.007);og.gain.exponentialRampToValueAtTime(.0001,t+.13);o.connect(og);og.connect(out);o.start(t);o.stop(t+.16);
-  if(indoor){nz(t+.004,'bandpass',2600*pv,2.2,.16*v,.002,.05);nz(t+.06,'bandpass',3400*pv,3,.06*v,.002,.03)}
-  else{nz(t+.008,'highpass',1200*pv,.7,.26*v,.01,.15);nz(t+.05,'bandpass',700*pv,1.2,.1*v,.01,.09)}
+// Pas : talon puis semelle, timbre selon la surface, alternance gauche/droite. Accroupi : aucun son (voir updatePlayer).
+// STEP_VOL cale un pas sur l'asphalte un peu au-dessus du fond de pluie.
+const STEP_VOL=10;let stepSide=0;
+function footstep(surf,run){
+  if(!AC)return;const t=AC.currentTime+.005,R=Math.random;stepSide^=1;
+  const bus=AC.createGain();bus.gain.value=(run?1.4:1)*(.8+R()*.4)*STEP_VOL;
+  const pan=AC.createStereoPanner?AC.createStereoPanner():null;
+  if(pan){pan.pan.value=stepSide?.14:-.14;bus.connect(pan);pan.connect(out)}else bus.connect(out);
+  if(surf==='tile'&&room){const s=AC.createGain();s.gain.value=.6;bus.connect(s);s.connect(room)}
+  const pv=1+(R()-.5)*.16,toe=t+(run?.03:.055)+R()*.025;
+  const n=(at,type,f,q,v,a,d)=>nz(at,type,f*pv,q,v,a,d,undefined,bus);
+  if(surf==='tile'){n(t,'bandpass',2600,2.5,.12,.001,.025);n(t,'lowpass',650,.8,.1,.002,.04);n(toe,'bandpass',3800,3,.05,.001,.02);return}
+  if(surf==='metal'){n(t,'bandpass',900,3,.045,.001,.04);n(toe,'bandpass',3200,4,.022,.001,.02);
+    for(const[f,v]of[[470,.007],[1210,.0035]]){const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f*pv;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.35);o.connect(g);g.connect(bus);o.start(t);o.stop(t+.4)}
+    return}
+  n(t,'lowpass',420,.8,.09,.002,.05);
+  if(surf==='puddle'){n(t+.004,'bandpass',1100,1,.035,.003,.12);n(t+.01,'highpass',2800,.7,.025,.005,.18);for(let i=0;i<4;i++)n(t+.04+R()*.16,'bandpass',3000+R()*2500,8,.01,.001,.015);return}
+  n(t,'bandpass',1400,1.2,.03,.001,.03);n(toe,'bandpass',2600,1.5,.028,.002,.035);n(t+.01,'highpass',3200,.7,.022,.004,.07);
+}
+function lockSound(){
+  if(!AC)return;const t=AC.currentTime;
+  const o=AC.createOscillator(),lp=AC.createBiquadFilter(),g=AC.createGain();o.type='sawtooth';o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(140,t+.75);
+  lp.type='lowpass';lp.frequency.value=2400;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.05,t+.05);g.gain.exponentialRampToValueAtTime(.0001,t+.8);
+  o.connect(lp);lp.connect(g);g.connect(out);o.start(t);o.stop(t+.85);
+  nz(t+.72,'lowpass',220,.7,.3,.004,.25);click(t+.74,1600,.06);
+  for(let i=0;i<7;i++)nz(t+.05+Math.random()*.6,'bandpass',2500+Math.random()*3000,6,.05,.001,.012);
+}
+function unlockSound(){
+  if(!AC)return;const t=AC.currentTime;
+  const o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(760,t+.4);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.04,t+.04);g.gain.exponentialRampToValueAtTime(.0001,t+.45);o.connect(g);g.connect(out);o.start(t);o.stop(t+.5);
+  for(let i=0;i<4;i++)click(t+.1+i*.07,1800+i*300,.03);
 }
 function click(t,f,v){const o=AC.createOscillator(),bp=AC.createBiquadFilter(),g=AC.createGain();o.type='square';o.frequency.value=f;bp.type='bandpass';bp.frequency.value=f;bp.Q.value=5;
   g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.025);o.connect(bp);bp.connect(g);g.connect(out);o.start(t);o.stop(t+.04)}
-function nz(t,type,f,q,v,att,dec,off){const s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=noiseBuf;fl.type=type;fl.frequency.value=f;fl.Q.value=q;
-  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+att+dec);s.connect(fl);fl.connect(g);g.connect(out);s.start(t,off??Math.random()*1.5,att+dec+.05);return fl}
+function nz(t,type,f,q,v,att,dec,off,dest){const s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=noiseBuf;fl.type=type;fl.frequency.value=f;fl.Q.value=q;
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+att+dec);s.connect(fl);fl.connect(g);g.connect(dest||out);s.start(t,off??Math.random()*1.5,att+dec+.05);return fl}
 function shotSound(){
   if(!AC)return;const t=AC.currentTime;
   const f=nz(t,'lowpass',5200,.5,.5,.003,.1);f.frequency.setValueAtTime(5200,t);f.frequency.exponentialRampToValueAtTime(600,t+.1);
@@ -1362,15 +1451,16 @@ function updatePlayer(dt){
   const sy=Math.sin(P.yaw),cy=Math.cos(P.yaw);
   const tx=(-sy*f+cy*s)*sp*mag,tz=(-cy*f-sy*s)*sp*mag,k=1-Math.exp(-dt*12);
   P.vx+=(tx-P.vx)*k;P.vz+=(tz-P.vz)*k;P.pos.x+=P.vx*dt;P.pos.z+=P.vz*dt;collide(P.pos,.38);
-  const mv=Math.hypot(P.vx,P.vz);P.bobT+=dt*mv*2.3;
-  P.stepAcc+=mv*dt;if(P.stepAcc>(cr?1.0:sprint?2.1:1.5)){P.stepAcc=0;footstep(cr,insideLab(P.pos))}
-  const bob=Math.sin(P.bobT)*.035*Math.min(1,mv/4);
+  // Une foulée = un demi-tour de phase ; le pas tombe au point bas du balancement de la tête.
+  const mv=Math.hypot(P.vx,P.vz);P.stepPh+=mv*dt/(cr?1.0:sprint?2.1:1.5)*Math.PI;
+  const si=Math.floor(P.stepPh/Math.PI);if(si!==P.stepIdx){P.stepIdx=si;if(!cr&&mv>.6)footstep(surfaceAt(P.pos),sprint)}
+  const bob=(Math.abs(Math.sin(P.stepPh))-.6)*.045*Math.min(1,mv/4);
   P.fov+=((sprint&&mv>5?79:72)-P.fov)*Math.min(1,dt*6);if(Math.abs(camera.fov-P.fov)>.01){camera.fov=P.fov;camera.updateProjectionMatrix()}
   camera.position.set(P.pos.x,1.66-.62*P.crouch+bob,P.pos.z);
   fireCD-=dt;
-  if(gun.visible){gunKick=Math.max(0,gunKick-dt*7);const mm=Math.min(1,mv/4),bx=Math.sin(P.bobT)*.009*mm,by=Math.abs(Math.cos(P.bobT))*.007*mm;
+  if(gun.visible){gunKick=Math.max(0,gunKick-dt*7);const mm=Math.min(1,mv/4),bx=Math.sin(P.stepPh)*.009*mm,by=(1-Math.abs(Math.sin(P.stepPh)))*.007*mm;
     gun.position.set((MOBILE?.19:.16)+bx,-.15-by+gunKick*.012,-.34+gunKick*.05);gun.rotation.set(gunKick*.32,0,0);
-    if(flashT>0){flashT-=dt;if(flashT<=0)muzzle.visible=false}}camera.rotation.set(P.pitch,P.yaw,Math.sin(P.bobT*.5)*.004*Math.min(1,mv/4));
+    if(flashT>0){flashT-=dt;if(flashT<=0)muzzle.visible=false}}camera.rotation.set(P.pitch,P.yaw,Math.sin(P.stepPh)*.004*Math.min(1,mv/4));
   let best=null,bd=1e9;const fx=-sy,fz=-cy;
   for(const it of inter){if(it.on&&!it.on())continue;const dx=it.p.x-P.pos.x,dz=it.p.z-P.pos.z,d=Math.hypot(dx,dz);if(d>it.r)continue;
     if(d>1.1&&(dx*fx+dz*fz)/d<.45)continue;if(d<bd){bd=d;best=it}}
@@ -1416,6 +1506,7 @@ function updateWorld(dt){
     rainPos[o+1]=y+.6;rainPos[o+4]=y}
   rainGeo.attributes.position.needsUpdate=true;
   const inLab=state==='play'&&insideLab(P.pos);rain.visible=!inLab;splashes.pts.visible=!inLab;
+  if(rainG&&inLab!==rainIn){rainIn=inLab;const t=AC.currentTime;rainG.gain.setTargetAtTime(inLab?.035:.1,t,.3);rainLP.frequency.setTargetAtTime(inLab?800:2600,t,.3)}
   for(const ps of particleSystems)ps.update(dt);
   for(const f of flickers){const n=Math.sin(T*13+f.ph)*Math.sin(T*3.1+f.ph*2);f.m.material.opacity=n>.93?.2:1}
   for(const b of beacons)b.m.visible=Math.sin(T*2+b.ph)>.3;
@@ -1423,6 +1514,7 @@ function updateWorld(dt){
   for(const s of shafts)s.material.uniforms.time.value=T;
   for(const s of searchlights){s.g.rotation.z=Math.sin(T*.13+s.ph)*.45;s.g.rotation.x=Math.cos(T*.11+s.ph)*.3;s.g.children[0].material.uniforms.time.value=T}
   holoMat.uniforms.time.value=T;
+  updateHand(dt);
   helix.rotation.y+=dt*.5;
   fireLight.intensity=2.2+Math.sin(T*17)*.45+Math.sin(T*7.3)*.35;fire.scale.y=1+Math.sin(T*15)*.15;
   ventLight.intensity=Math.sin(T*9)>.97?.2:1.3;
@@ -1432,8 +1524,9 @@ function updateWorld(dt){
   for(const l of rackLeds)if(rnd()<.02)l.visible=!l.visible;
   for(const c of cars){c.g.position.x+=c.v*dt;if(c.g.position.x>180)c.g.position.x=-180;if(c.g.position.x<-180)c.g.position.x=180}
   const pp=state==='title'||state==='end'?camera.position:P.pos;
-  for(const n of NPCS){const dx=pp.x-n.x,dz=pp.z-n.z,d=Math.hypot(dx,dz);
-    if(d<6&&state!=='title')n.g.rotation.y=lerpAng(n.g.rotation.y,Math.atan2(dx,dz),dt*3);
+  for(const n of NPCS){const dx=pp.x-n.x,dz=pp.z-n.z,d=Math.hypot(dx,dz),near=d<6&&state!=='title';
+    n.g.rotation.y=near?lerpAng(n.g.rotation.y,Math.atan2(dx,dz),dt*3):lerpAng(n.g.rotation.y,n.yaw,dt*1.2);
+    if(n.warm!==undefined)n.warm+=((near?0:1)-n.warm)*Math.min(1,dt*2);
     if(n.mixer)n.mixer.update(dt);if(n.bones)poseSid(n);n.tag.material.opacity=clamp(1-(d-5)/4,0,1);
     if(n.cig)n.cig.material.color.setRGB(3,.6+Math.sin(T*.8)*.3,.15)}
   // orage
