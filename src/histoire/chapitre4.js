@@ -99,8 +99,8 @@ DLG.rosa={name:'Rosa Delorme',entry:()=>!S.rosaVue?'start':S.vargaTestifies===tr
     act:()=>{if(!S.rosaVue){S.rosaVue=true;heure(4*60+56);refreshHud()}},c:()=>[{l:'Je vais lui parler.',go:null}]},
   encore:{t:()=>S.vargaVue?"Un Gardien est entré par la galerie des câbles. Il tourne entre les métiers de Varga. Nos lampes, là-dedans, tu peux les casser : on en a d'autres.":"Varga est au fond, près de l'établi. Vas-y doucement : elle a eu une longue nuit.",c:partir},
   carte:{t:"Tu l'as ? (Elle regarde le ruban sans le toucher.) Ma grand-mère tissait ça pour les soieries de la presqu'île. Des fleurs, des oiseaux. Jamais des clés. Porte-le à Varga.",c:partir},
-  temoin:{t:"Elle témoignera. Il faudra la garder en vie jusque-là : ça, c'est notre affaire. (Un temps.) Le reste, c'est toi qui le portes. La galerie des câbles, au fond de son atelier, mène aux quais. De là, Confluence.",c:partir},
-  rendue:{t:"Elle est partie se rendre. Je n'ai pas pu la retenir. (Elle crache dans un chiffon.) Il faut croire qu'on n'a pas les mêmes héros. La galerie des câbles, au fond de son atelier, mène aux quais. Ne traîne pas.",c:partir},
+  temoin:{t:"Elle témoignera. Il faudra la garder en vie jusque-là : ça, c'est notre affaire. (Un temps.) Le reste, c'est toi qui le portes. La galerie des câbles, au fond de son atelier, mène aux quais. De là, Confluence. (Elle te glisse une oreillette dans la main.) On t'entendra. On te parlera.",c:partir},
+  rendue:{t:"Elle est partie se rendre. Je n'ai pas pu la retenir. (Elle crache dans un chiffon.) Il faut croire qu'on n'a pas les mêmes héros. La galerie des câbles, au fond de son atelier, mène aux quais. (Elle te glisse une oreillette dans la main.) On t'entendra. Ne traîne pas.",c:partir},
 }};
 SHAKE.add('rendue');
 

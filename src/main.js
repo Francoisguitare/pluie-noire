@@ -7,6 +7,9 @@ import {buildRue,loadRueCharacters,rueFallback,H} from './lieux/rue.js';
 import {H as HT} from './lieux/toits.js';
 import {H as HTB} from './lieux/traboules.js';
 import * as METIER from './metier.js';
+import {H as HQ} from './lieux/quais.js';
+import {H as HTO} from './lieux/tour.js';
+import {H as HS} from './lieux/sommet.js';
 import {initSparks,updateDrones,killDrone} from './drones.js';
 import {updateGardiens} from './gardiens.js';
 import {updateFaucheuses} from './faucheuse.js';
@@ -18,6 +21,7 @@ import {DLG,openDialog,pickChoice} from './histoire/dialogue.js';
 import {ACTIONS} from './histoire/chapitre1.js';
 import './histoire/chapitre3.js';
 import './histoire/chapitre4.js';
+import './histoire/chapitre5.js';
 import {S,chap,newGame,applySave,allerZone,fmtHeure} from './histoire/partie.js';
 import {saveGame,readSave,clearSave,showSaveInfo,lire,exportCode,importCode} from './sauvegarde.js';
 import {toast,detectionHud,fade} from './interface.js';
@@ -45,6 +49,7 @@ $('resume').onclick=()=>{$('pauseMenu').hidden=true;document.body.classList.remo
 function toTitle(save){if(save){saveGame();emit('saveNow')}document.body.classList.remove('paused');$('pauseMenu').hidden=true;$('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');setState('title');showSaveInfo();$('title').hidden=false;
   try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}}
 $('toTitle').onclick=()=>toTitle(true);
+$('endTitre').onclick=()=>{$('end').hidden=true;toTitle(false)};
 // Partie importée (code, QR code, compte) pendant une pause : retour à l'écran titre sans écraser l'import.
 on('partieImportee',()=>{if(state!=='title')toTitle(false)});
 $('transferBtn').onclick=()=>ouvrirTransfert('title');$('pauseTransfer').onclick=()=>ouvrirTransfert('pauseMenu');
@@ -83,7 +88,7 @@ function frame(dt){
   updateFx(dt,z);updateSky(dt);if(z.update)z.update(dt,S);
   fx.glitch=updateHand(dt);
   updateAmbiance(dt,z);
-  updateNpcs(dt);
+  updateNpcs(dt);for(const f of z.figurants)if(f.mixer)f.mixer.update(dt);
   fx.flash=G.flash;fx.alert=state==='play'?Math.max(0,G.alertLvl-.3):0;
   if(perfProbe&&state==='play'){perfProbe.t+=dt;perfProbe.f++;if(perfProbe.t>4){const fps=perfProbe.f/perfProbe.t;perfProbe=null;
     if(fps<38&&quality!=='low'){const was=quality;setQuality(quality==='ultra'?'perf':'low');toast(quality==='perf'?'Graphismes passés en mode performance':'Graphismes passés en mode économie');if(was==='ultra')perfProbe={t:0,f:0}}}}
@@ -93,7 +98,7 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.
 
 /* ---------- Mode debug (?debug) : accès pour les tests automatiques ---------- */
 if(DEBUG)window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,newGame,applySave,saveGame,readSave,killDrone,zone,zones,handLocked,lire,exportCode,importCode,allerZone,passerCine,
-  get S(){return S},get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB},metier:METIER,
+  get S(){return S},get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB,quais:HQ,tour:HTO,sommet:HS},metier:METIER,
   step:(n,dt=1/30)=>{for(let i=0;i<n;i++)frame(dt)}};
 
 /* ---------- Démarrage : polices, monde, personnages, boucle ---------- */

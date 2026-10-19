@@ -219,6 +219,11 @@ export const LOOKS={
   // Dr Ilse Varga : blouse blanche fermée, cheveux blond foncé, œil K7
   varga:{modele:'michelle',env:.9,mat:teinte({cheveux:[.3,.2,.1],pantalon:[.05,.05,.055],haut:[.035,.035,.04],rouge:[.12,.12,.13]}),
     apres:n=>{coiffer(n,{chignon:0x4a3420});vetir(n,{col:0xc9ccd0,long:true,ouvert:.1,prof:.95});cyberize(n,{head:1,col:0x58e6ff})}},
+  // Victor Saal : le costume et le chapeau d'origine du modèle, en sombre, rasé de près, aucun implant visible
+  saal:{modele:'sid',env:.9,pose:true,apres:n=>{n.root.traverse(o=>{if(!o.isMesh)return;const nm=o.name;
+      if(/Beard/.test(nm)){o.visible=false;return}
+      const c=/Outfit_Top/.test(nm)?0x404654:/Outfit_Bottom/.test(nm)?0x2c3038:/Headwear/.test(nm)?0x2a2c32:/Footwear/.test(nm)?0x18181a:null;
+      if(c!==null){o.material=o.material.clone();o.material.color.setHex(c)}})}},
   // Figurante : une canuse en bleu de travail, bras droit K7
   canut:{modele:'michelle',env:.7,mat:teinte({cheveux:[.12,.045,.02],pantalon:[.02,.03,.06],haut:[.18,.24,.34],rouge:[.06,.06,.065]}),
     apres:n=>{coiffer(n,{foulard:0x7a2a22});vetir(n,{col:0x24344e,sauf:'Right'});cyberize(n,{arm:'Right',r1:.05,r2:.044,col:0xffb347})}},

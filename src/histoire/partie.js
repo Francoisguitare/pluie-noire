@@ -21,8 +21,8 @@ export const S0=()=>({chapter:1,heure:192,quest:false,code:false,credits:80,vent
   blackout:false,kovacAide:false,escalier:false,dd3:[false,false],toits:false,maraVue:false,maraFree:null,trappe:false,noxWith:false,
   // chapitre 4 (Traboules) ; boitier : qui tient la copie du kill-switch de Mara (null, 'mara' ou 'ash')
   sidTrab:false,canuts:false,rosaVue:false,vargaVue:false,atelierOuvert:false,carte:false,badge:false,galerie:false,maraTrab:false,boitier:null,temoignage:false,vargaTestifies:null,
-  // chapitre 5
-  fin:null});
+  // chapitre 5 (Confluence) ; cams : caméras abattues (« zone:numéro »)
+  tour:false,ascenseur:false,couloir:false,lasersCoupes:false,cle:false,sommet:false,finale:false,cams:[],fin:null});
 export let S=S0();
 
 /* Un chapitre : {zone, objectives(S,L), checkpoint(S) → [x,z,yaw], reset(), apply(S), describe(S), ends} */
@@ -43,9 +43,11 @@ export function caught(){
 }
 on('caught',caught);
 
-export function finish(k){
+// o.kicker : sur-titre (« Fin de la saison 1 ») ; o.saison : note sur la suite.
+export function finish(k,o={}){
   stopDialog();setState('end');if(document.pointerLockElement)document.exitPointerLock();
   const sec=Math.round((performance.now()-S.t0)/1000),e=ENDS[k];
+  $('endKicker').textContent=o.kicker||'Fin de mission';$('endSaison').textContent=o.saison||'';$('endSaison').hidden=!o.saison;
   $('endTitle').textContent=e[0];$('endText').textContent=typeof e[1]==='function'?e[1]():e[1];
   $('endStats').textContent=`Temps ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}  ·  Repérages : ${S.spotted}  ·  ${S.credits} crédits restants`;
   $('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');emit('clearSave');$('end').hidden=false;tone(220,1.2,'sine',.05,330);
@@ -76,7 +78,7 @@ export function allerZone(id,spawn,{fondu=true,ensuite=null}={}){
   const faire=()=>{
     const z=assurerZone(id);enterZone(id);
     scene.fog.color.setHex(z.fog);scene.background.setHex(z.fog);scene.fog.density=z.fogD;showSky(z.ciel);placerCiel(z.cielY);setHemiBase(z.hemi);
-    if(!z.env){const cach=[rain];z.root.traverse(o=>{if(o.type==='Reflector')cach.push(o)});z.env=buildEnv(new V3(...z.envPos),cach)}
+    if(!z.env){const cach=[rain,...(z.cacherEnv||[])];z.root.traverse(o=>{if(o.type==='Reflector')cach.push(o)});z.env=buildEnv(new V3(...z.envPos),cach)}
     scene.environment=z.env;
     if(spawn){P.pos.set(spawn[0],0,spawn[1]);P.yaw=spawn[2]||0;P.pitch=0;P.vx=P.vz=0}
     resetDrones(z);emit('apresCapture');G.grace=Math.max(G.grace,1.5);

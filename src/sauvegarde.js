@@ -28,14 +28,16 @@ export const saisons=()=>lire().saisons;
 export function remplacer(d){ecrire(Object.assign(vide(),d))}
 on('save',saveGame);on('clearSave',clearSave);
 
+// Les fins de la saison 1, telles qu'on les nomme au joueur.
+export const NOMS_FINS={diffuser:'« La ville a vu »',saboter:"« Le silence de l'antenne »",negocier:"« Le prix d'une main »",mara:'« La main de Mara »',maraForce:'« La main de Mara »'};
 // Résumé lisible d'une sauvegarde (écran titre, import).
 export function decrire(d){
-  if(!d||!d.partie)return d&&Object.keys(d.saisons||{}).length?'Saison 1 terminée':'Aucune partie en cours';
+  if(!d||!d.partie)return d&&d.saisons&&d.saisons['1']?`Saison 1 terminée · ${NOMS_FINS[d.saisons['1'].fin]||''}`:'Aucune partie en cours';
   const min=Math.round((Date.now()-d.partie.at)/60000),ago=min<1?"à l'instant":min<60?`il y a ${min} min`:min<1440?`il y a ${Math.round(min/60)} h`:`il y a ${Math.round(min/1440)} j`;
   return`Sauvegarde ${ago} · ${chap(d.partie.S.chapter).describe(d.partie.S)}`;
 }
 export function showSaveInfo(){const d=lire(),p=d.partie;$('cont').hidden=!p;$('play').textContent=p?'Nouvelle partie':'Entrer dans la nuit';$('play').classList.toggle('alt',!!p);
-  if(!p){$('saveInfo').hidden=true;return}
+  if(!p){const f=d.saisons['1'];$('saveInfo').hidden=!f;if(f)$('saveInfo').textContent=`Saison 1 terminée · ${NOMS_FINS[f.fin]||f.fin}. Ta fin est gardée pour la saison 2.`;return}
   $('saveInfo').textContent=decrire(d);$('saveInfo').hidden=false}
 setInterval(()=>{if(state==='play')saveGame()},4000);
 addEventListener('pagehide',saveGame);document.addEventListener('visibilitychange',()=>{if(document.hidden)saveGame()});

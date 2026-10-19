@@ -23,9 +23,9 @@ Référence pour tout ce qui s'écrit dans le jeu : personnages, lieux, chronolo
 - **Kovac** — tient le bar à nouilles. Main droite K7, entièrement mécanique. Vend des informations. Bougon, mais il a peur pour sa main depuis qu'Ash lui a dit la vérité (s'il l'a fait).
 - **NOX-7** — robot de maintenance abandonné (contrat expiré en 2039). Mendie des pièces, donne des conseils. Enregistre tout : « c'est mon défaut de fabrication ». Ses enregistrements deviennent une preuve.
 - **Sid** — vieux poseur de câbles, remplacé chez Helix par un bras robotisé. Se chauffe les mains à un baril dans la ruelle. Connaît les conduits, les câbles et les **traboules** par cœur.
-- **Dr Ilse Varga** — ingénieure d'Helix, a conçu l'interface neurale des K7 et, sous la pression, le kill-switch. Porte elle-même un **œil K7**. A refusé de signer le rapport suivant (mail du terminal du labo). Cachée dans les traboules.
+- **Dr Ilse Varga** — ingénieure d'Helix, a conçu l'interface neurale des K7 et, sous la pression, le kill-switch. Porte elle-même un **œil K7**. A refusé de signer le rapport suivant (mail du terminal du labo). Cachée dans les traboules. Elle **vouvoie** tout le monde (quinze ans de couloirs de direction) ; on la tutoie.
 - **Rosa Delorme** — meneuse des **Nouveaux Canuts**, collectif de mécanos augmentés de la Croix-Rousse (héritiers des canuts de 1831 : « Vivre en travaillant ou mourir en combattant »). C'est elle, le client de Mara.
-- **Victor Saal** — directeur de la sécurité d'Helix. Voix calme dans les haut-parleurs, jamais un mot plus haut que l'autre. « Nous protégeons nos clients. »
+- **Victor Saal** — directeur de la sécurité d'Helix. Costume sombre et chapeau, pas d'implant visible. Voix calme dans les haut-parleurs, jamais un mot plus haut que l'autre. Il vouvoie. « Nous protégeons nos clients. Même contre eux-mêmes. »
 - **Les Gardiens** — troupes de sécurité d'Helix : armure sombre, visière, lampe-torche. Les balles du P-9 ricochent sur leur blindage : on les évite, on ne les combat pas.
 - **La Faucheuse** — l'appareil de combat d'Helix, avec son projecteur qui balaie les rues et les toits.
 
@@ -63,21 +63,24 @@ Ash donne la puce à Mara (ou refuse : Mara verrouille sa main K7 avec son boît
 - **Fin** : Sid attend près d'une trappe qui descend dans les traboules.
 
 ### 4. Traboules
-- Passages voûtés, cours à escaliers (la cour des Voraces), anciens ateliers de soierie, galeries de câbles. Des Gardiens fouillent avec des lampes : ils **entendent** les pas (courir fait du bruit, marcher un peu, accroupi rien). Le P-9 peut éteindre les lampes.
-- Rosa Delorme et les Nouveaux Canuts. Varga se cache dans un atelier de métiers Jacquard.
-- **Énigme** : Varga a caché le code d'override sur une carte perforée de métier Jacquard (l'ancêtre des ordinateurs, inventé à Lyon).
-- **Choix** : Varga veut se rendre à Helix pour négocier. Ash peut la convaincre de témoigner — l'argument décisif n'existe que si Ash a lu son mail sur le terminal du labo au chapitre 1.
-- **Fin** : une galerie mène aux quais de la Saône, puis à Confluence.
+- **Sous la trappe**, Sid guide Ash (« les Gardiens, eux, ont des oreilles ») puis passe par les caves. Passage voûté, première cour avec son puits, long passage à alcôves (on s'y cache), cour des Voraces et son grand escalier. Six Gardiens qui entendent les pas (courir s'entend de loin, marcher de près, accroupi rien). Le P-9 éteint les lampes.
+- **Chez les Nouveaux Canuts** (on frappe à la porte sous l'enseigne, « Sid m'envoie ») : Rosa Delorme ; Mara si elle s'est échappée (si elle avait forcé la main d'Ash, elle peut lui rendre son boîtier : `boitier`) ; NOX-7 s'il a suivi ; Varga, réfugiée au fond, qui **vouvoie** tout le monde.
+- **Énigme** : dans l'atelier de Varga, où un Gardien fait sa ronde, le grand métier Jacquard. Il faut poser quatre cartes perforées dans l'ordre pour tisser la clé dessinée dans son carnet. Le métier lit les cartes **de dos** : les cartes pièges tissent la clé à l'envers.
+- **Choix** : Varga veut se rendre à Saal pour négocier. Avec l'argument du mail (« Je ne signerai pas le prochain rapport », seulement si Ash l'a lu au chapitre 1), elle accepte de témoigner, et NOX-7 enregistre son témoignage s'il est là (`temoignage`). Sinon elle se rend, et le Gardien de l'atelier repart avec elle. Dans les deux cas, elle donne son badge de direction.
+- **Fin** : Rosa glisse une oreillette à Ash ; le badge ouvre la galerie des câbles, qui mène aux quais de Saône.
 
 ### 5. Confluence
-- Pied de la tour : quai de chargement, caméras, Gardiens, drones.
-- Hall (l'hologramme « Soyez entier. »), ascenseur (badge de Varga), étage de sécurité (grilles laser), salle des serveurs : le compte à rebours de la K7.2.
-- **Le toit** : orage, l'antenne, la foudre. Saal attend. Mara est là, libre ou prisonnière selon le chapitre 3.
-- **Le choix final** :
-  - **Diffuser** la vérité (mail de Varga, enregistrements de NOX-7) sur tous les écrans de la ville et bloquer la mise à jour. Possible seulement si Varga témoigne et si NOX-7 a suivi Ash.
-  - **Saboter** l'antenne : la mise à jour n'aura pas lieu, Helix reste debout et traque Ash.
-  - **Négocier** avec Saal : il épargne la main d'Ash et paie. Les autres K7 grillent à l'aube.
-  - **Laisser la main à Mara** : la mise à jour part, mais c'est le collectif qui tient désormais le kill-switch.
+- **Ouverture** : la grille de la galerie s'ouvre sur la Saône. Au bout du bas-port, la tour Helix et son écran géant qui compte les minutes jusqu'à 6 h. Rosa (et Nox, et Mara, selon les choix) dans l'oreillette.
+- **Les quais** : bas-port sous la pluie, un pont où des sans-abri ont fait du feu (point sûr), puis le quai de chargement d'Helix : conteneurs, projecteurs, deux Gardiens, la Faucheuse, deux **caméras** (elles ne tirent pas, elles appellent : on les abat au P-9). Le badge de Varga ouvre la porte de service.
+- **Le hall** : marbre noir, l'hologramme d'une main K7 (« SOYEZ ENTIER. »), deux Gardiens, une caméra. L'**ascenseur vitré** monte au 41e étage pendant que Victor Saal parle dans les haut-parleurs (il sait qu'Ash arrive ; il annonce Mara s'il la détient).
+- **Le 41e étage** : un couloir et ses trois grilles laser qui s'allument par cycles (ou qu'on coupe en abattant leur boîtier sur le palier), une caméra au bout, puis la salle des serveurs et son compte à rebours. La clé tissée glisse dans le lecteur : override armé, mais il faut le valider à la main sur l'antenne. Alarme, deux Gardiens de plus, l'escalier du toit.
+- **Le toit**, sous l'orage : panneaux solaires sous lesquels s'abriter de la Faucheuse, deux Gardiens, l'antenne. Saal attend au pied, en costume et chapeau, avec son escorte. Mara est là, libre (elle surgit, arme au poing) ou prisonnière. NOX-7 grimpe par la façade s'il a suivi.
+- **Le choix final** (dialogue avec Saal, qui offre : la main d'Ash retirée de la liste, 50 000 crédits, un avion, et Mara si elle est prisonnière) :
+  - **Diffuser** : NOX-7 envoie le témoignage de Varga et ses enregistrements sur tous les écrans de la ville, l'override coupe la K7.2. Possible seulement si Varga témoigne et si NOX-7 l'a enregistrée. Fin « La ville a vu ».
+  - **Saboter** : valider l'override et arracher les câbles ; l'antenne meurt, rien ne part, Helix traquera Ash. Fin « Le silence de l'antenne ».
+  - **Négocier** : Ash garde sa main et les crédits ; à 6 h, des centaines d'autres mains s'arrêtent. Fin « Le prix d'une main ». Mais si Mara avait forcé la main d'Ash, a gardé son boîtier et est libre sur le toit, elle s'en ressert : elle reprend la main d'Ash et la clé (fin « La main de Mara », version forcée).
+  - **Laisser la main à Mara** (si elle est libre) : la K7.2 part, mais la clé du kill-switch passe aux Nouveaux Canuts. Fin « La main de Mara ».
+- **L'aube** : l'orage se retire, le ciel s'éclaire à l'est et, pour la première fois de la saison, la pluie s'arrête. Écran de fin de saison.
 
 ## Choix qui comptent
 
@@ -88,12 +91,18 @@ Ash donne la puce à Mara (ou refuse : Mara verrouille sa main K7 avec son boît
 | `noxPaid` | Ch. 1 | NOX-7 suit Ash et enregistre (preuve du chapitre 5) |
 | `readMail` | Ch. 1 : lire le terminal | Argument pour convaincre Varga |
 | `maraFree` | Ch. 3 : transformateur | Mara libre ou prisonnière au chapitre 5 |
-| `vargaTestifies` | Ch. 4 | Ouvre la fin « Diffuser » |
-| Fin choisie | Ch. 5 | Écrite dans la sauvegarde de fin de saison |
+| `boitier` | Ch. 4 : Mara, libérée, rend son boîtier (`'ash'`) ou le garde (`'mara'`) | Au chapitre 5, si Ash négocie, Mara s'en ressert (si elle l'a gardé) |
+| `noxWith` | Ch. 3 : emmener Nox | Nox chez les Canuts, puis sur le toit |
+| `vargaTestifies`, `temoignage` | Ch. 4 | Varga témoigne ; Nox l'a enregistrée : ouvre la fin « Diffuser » |
+| Fin choisie (`fin`) | Ch. 5 | `diffuser`, `saboter`, `negocier`, `mara`, `maraForce` ; écrite dans la sauvegarde de fin de saison |
 
 ## La sauvegarde de fin de saison
 
-À la fin du chapitre 5, la partie n'est pas effacée : on écrit un dossier « saison 1 terminée » que la saison 2 relira. Il contient au minimum : la fin choisie, `forced`, `maraFree`, `vargaTestifies`, `noxPaid`, la relation à Kovac, les crédits, le nombre de fois repéré·e, le temps de jeu. Le format exact est décrit dans le code de sauvegarde (`saisonTerminee`).
+À la fin du chapitre 5, la partie en cours est effacée mais un dossier « saison 1 terminée » reste, que la saison 2 relira (`finSaison('1', …)` dans `src/sauvegarde.js`, écrit par `src/histoire/chapitre5.js`). Il suit la sauvegarde partout : code de transfert, QR code, compte en ligne. Contenu :
+
+`{fin, forced, maraFree, vargaTestifies, noxWith, noxPaid, temoignage, boitier, kovac ('verite' | 'paye' | 'menace' | null), credits, spotted, temps (secondes), at}`
+
+L'écran titre affiche alors « Saison 1 terminée · « nom de la fin » ».
 
 ## Pistes pour la saison 2
 

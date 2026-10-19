@@ -218,6 +218,7 @@ body.puzzle #hud,body.puzzle #touch,body.puzzle #prompt{display:none}
 .carte:hover:not(:disabled){filter:brightness(1.12)}
 .carte:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 #metierMsg{min-height:1.4em;color:var(--amber)}
+body.touch .carte{min-height:36px;padding:4px 10px}
 @media (max-height:660px){#metier .pitch{display:none}#metier h2{font-size:36px}}
 @media (max-height:520px){#metier h2,#metier .pitch{display:none}.tissu{grid-template-columns:repeat(var(--n,8),12px)}.tissu i{width:12px;height:12px}.carte{min-height:25px;padding:3px 8px;font-size:13px}.cartes{margin:4px 0 8px}.metierJeu figure{margin-bottom:6px}}
 </style>
@@ -252,12 +253,12 @@ body.puzzle #hud,body.puzzle #touch,body.puzzle #prompt{display:none}
   <div class="card">
     <div class="kicker">Lyon-Basse · 2041 · 03 h 12</div>
     <h1>Pluie<br><em>Noire</em></h1>
-    <p class="pitch">Helix Biotech garde un prototype dans son labo, au bout de la rue. Mara veut la puce avant l'aube. Parle aux bonnes personnes, évite les drones, entre.</p>
+    <p class="pitch">Helix Biotech garde un prototype dans son labo, au bout de la rue. Mara veut la puce avant l'aube. Une nuit entière, de la rue jusqu'au sommet de la tour Helix : parle aux bonnes personnes, évite les drones et les Gardiens.</p>
     <dl class="keys desk-only">
       <dt>ZQSD / WASD</dt><dd>Se déplacer</dd>
       <dt>Souris</dt><dd>Regarder (clic pour verrouiller)</dd>
       <dt>E</dt><dd>Parler, interagir</dd>
-      <dt>C</dt><dd>S'accroupir, moins visible</dd>
+      <dt>C</dt><dd>S'accroupir : moins visible, sans bruit</dd>
       <dt>Maj</dt><dd>Courir</dd>
       <dt>1 · 2 · 3</dt><dd>Choisir une réplique</dd>
       <dt>Clic · F</dt><dd>Tirer, quand tu es armé</dd>
@@ -267,7 +268,7 @@ body.puzzle #hud,body.puzzle #touch,body.puzzle #prompt{display:none}
       <dt>Pouce gauche</dt><dd>Se déplacer (joystick)</dd>
       <dt>Pouce droit</dt><dd>Glisser pour regarder</dd>
       <dt>Agir</dt><dd>Parler, interagir</dd>
-      <dt>Accroupi</dt><dd>Moins visible des drones</dd>
+      <dt>Accroupi</dt><dd>Moins visible, sans bruit</dd>
       <dt>Courir</dt><dd>Aller plus vite</dd>
       <dt>Tirer</dt><dd>Quand tu es armé</dd>
     </dl>
@@ -277,7 +278,7 @@ body.puzzle #hud,body.puzzle #touch,body.puzzle #prompt{display:none}
     </div>
     <div class="savehint" id="saveInfo" hidden></div>
     <div class="liens"><button class="lien" id="transferBtn">Transférer ma partie</button><button class="lien" id="compteBtn" hidden>Mon compte</button></div>
-    <div class="note" id="note">Environ 3 minutes. Clavier et souris, ou téléphone en mode paysage. Ta partie est sauvegardée automatiquement.</div>
+    <div class="note" id="note">Une nuit en cinq chapitres, environ une heure et demie. Clavier et souris, ou téléphone en mode paysage. Ta partie est sauvegardée automatiquement.</div>
   </div>
 </div>
 
@@ -303,11 +304,12 @@ body.puzzle #hud,body.puzzle #touch,body.puzzle #prompt{display:none}
 
 <div id="end" class="screen" hidden>
   <div class="card">
-    <div class="kicker">Fin de mission</div>
+    <div class="kicker" id="endKicker">Fin de mission</div>
     <h2 id="endTitle"></h2>
     <p class="pitch" id="endText"></p>
     <div class="statsline" id="endStats"></div>
-    <button class="go" id="again">Rejouer</button>
+    <p class="note" id="endSaison" hidden></p>
+    <div class="btns"><button class="go" id="again">Rejouer</button><button class="go alt" id="endTitre">Écran titre</button></div>
   </div>
 </div>
 <div id="transfer" class="screen" hidden>

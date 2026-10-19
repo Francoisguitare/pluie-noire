@@ -20,7 +20,6 @@ export const Z=makeZone('traboules',{fog:0x07080c,fogD:.04,hemi:.16,envPos:[0,2,
   surfaceAt:p=>p.z<-46&&p.z>-62&&p.x<-31.7?'bois':dehors(p)?'asphalt':'tile',
 });
 export const H={};
-Z.figurants=[];
 Z.sons=[{type:'vapeur',pos:[-30.5,.3,-30.2],vol:.25},{type:'neon',pos:[-41.3,2.75,-45.9],vol:.15}];
 
 /* ---------- Matières : pierre et pavés (textures.js), plancher ---------- */
@@ -214,7 +213,6 @@ constructeurs.traboules=()=>{
 Z.update=(dt,S)=>{
   if(!H.enseigneCanuts)return;
   H.enseigneCanuts.material.color.setScalar(Math.sin(T*7)>-.93?1.6:.5);
-  for(const f of Z.figurants)if(f.mixer)f.mixer.update(dt);
 };
 // Déplace un personnage (et son étiquette, sa collision, son interaction) ailleurs dans la zone.
 export function deplacer(n,x,z,yaw){n.x=x;n.z=z;if(yaw!==undefined)n.yaw=yaw;n.g.position.set(x,0,z);n.g.rotation.y=n.yaw;n.tag.position.set(x,n.h+.55,z);

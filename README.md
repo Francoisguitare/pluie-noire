@@ -1,12 +1,12 @@
 # Pluie Noire
 
-Mini FPS d'infiltration cyberpunk jouable dans le navigateur, sur ordinateur (clavier + souris) ou sur téléphone (en mode paysage).
+Jeu d'infiltration cyberpunk à la première personne, jouable dans le navigateur, sur ordinateur (clavier + souris) ou sur téléphone (en mode paysage).
 
-Lyon-Basse, 2041. Vole une puce dans le labo Helix, parle aux bonnes personnes, évite ou abats les drones, et alimente le décodeur de Mara.
+Lyon-Basse, 2041, de 3 h 12 à l'aube. Vole une puce dans le labo Helix, survis au black-out, traverse les toits puis les traboules de la Croix-Rousse, et monte jusqu'au sommet de la tour Helix avant que la mise à jour K7.2 ne grille toutes les prothèses de la ville. Cinq chapitres, environ une heure et demie, des choix qui comptent et quatre fins (saison 1 : « Avant l'aube »).
 
 ## Jouer
 
-Ouvre la page GitHub Pages du dépôt. La partie est sauvegardée automatiquement dans le navigateur.
+Ouvre la page GitHub Pages du dépôt. La partie est sauvegardée automatiquement dans le navigateur ; « Transférer ma partie » donne un code ou un QR code pour la reprendre sur un autre appareil. La fin choisie est gardée pour la saison 2.
 
 ## Technique
 

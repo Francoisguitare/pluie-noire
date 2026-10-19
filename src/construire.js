@@ -184,6 +184,17 @@ export function updateFx(dt,z){
   }
 }
 
+/* ---------- Hologramme : texture en lignes de balayage, scintillement, petits décrochages ---------- */
+export function holoMat(canvas,color,k=1.7){
+  return new THREE.ShaderMaterial({uniforms:{map:{value:canvasTex(canvas)},time:{value:0},color:{value:new THREE.Color(color).multiplyScalar(k)}},
+    vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+    fragmentShader:`uniform sampler2D map;uniform float time;uniform vec3 color;varying vec2 vUv;
+      void main(){vec2 uv=vUv;float gl=step(.94,fract(sin(floor(time*9.)*12.9898)*43758.5453));uv.x+=gl*.02*sin(uv.y*80.+time*50.);
+        vec4 t=texture2D(map,uv);float s=.62+.38*sin(uv.y*260.-time*7.);float f=.82+.18*sin(time*29.)*sin(time*5.3);
+        vec3 c=color*(1.+gl*vec3(.6,-.3,.4));gl_FragColor=vec4(c*t.a*s*f,1.);}`,
+    transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide});
+}
+
 /* ---------- Fusion : plusieurs maillages d'un même matériau en un seul (un seul appel de dessin) ---------- */
 // Les maillages ne sont pas ajoutés à la scène : seule leur transformation (position, rotation, échelle) compte.
 export function fusion(meshes,mat){

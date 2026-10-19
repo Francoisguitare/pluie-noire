@@ -85,6 +85,7 @@ export function lockHand(on){
 export function resetHand(){kLock=0;kShow=0;kHand.visible=false}
 // Renvoie l'intensité du glitch d'écran à appliquer.
 export function updateHand(dt){
+  gun.visible=armed&&state!=='cine'; // pas d'arme à l'écran pendant les cinématiques
   kShow+=((kLock?1:0)-kShow)*Math.min(1,dt*(kLock?4:3));kHand.visible=kShow>.01;kLockT+=dt;
   const spasm=kLock?Math.max(0,1-kLockT/1.1):0;
   if(kLock)$('vig').style.opacity=(.35+spasm*.4).toFixed(2);

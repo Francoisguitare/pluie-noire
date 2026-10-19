@@ -27,6 +27,14 @@ export function makeGardien(z,path,o={}){
   habiller(d);
   z.gardiens.push(d);placer(d);return d;
 }
+// Un Gardien immobile, pour les scènes (escorte de Saal) : même allure, lampe allumée, ne voit ni n'entend rien.
+export function gardienImmobile(z,x,zz,yaw){
+  const g=new THREE.Group();g.position.set(x,0,zz);g.rotation.y=yaw;add(g);const d={g};habiller(d);
+  const lens=new THREE.Mesh(new THREE.CircleGeometry(.03,12),glow(0xffffff,3));lens.position.set(.22,1.38,.295);g.add(lens);
+  const L=5,geo=new THREE.CylinderGeometry(.04,Math.tan(.38)*L,L,20,1,true);geo.translate(0,-L/2,0);geo.rotateX(-Math.PI/2);const cone=new THREE.Mesh(geo,shaftMat(0xdfe8ff,.18));cone.position.set(.22,1.4,.25);cone.rotation.x=.35;g.add(cone);
+  if(d.acts)for(const k in d.acts)d.acts[k].setEffectiveWeight(k==='Idle'?1:0);
+  z.figurants.push(d);return d;
+}
 // Habille le gardien avec le modèle « soldier » (armure sombre, casque à visière rouge), ou une silhouette de secours.
 function habiller(d){
   const M=MODELES.soldier;

@@ -19,15 +19,17 @@ Modules ES sans compilation. `index.html` contient le HTML et le CSS (HUD, dialo
 - `src/core.js` — utilitaires, bus d'événements (`on`/`emit`), état courant (`state` + `setState`, temps `T`, `G`, joueur `P`), moteur de rendu, scène, caméra, qualité.
 - `src/textures.js` — textures dessinées au canvas. `src/construire.js` — briques du décor (`addBox`, `building`, `neon`, `plight`, `shaft`, `Particles`, `steam`, `cable`…). Ce qui est construit entre `into(zone)` et `into(null)` appartient à la zone.
 - `src/zones.js` — les lieux : une zone = groupe 3D + collisions + interactions + personnages + drones + effets. Une seule affichée à la fois (`enterZone`).
-- `src/lieux/rue.js` — la rue des chapitres 1 et 2 ; `H` regroupe les objets que l'histoire modifie.
+- `src/lieux/` — les lieux, chacun avec son `Z` (zone) et son `H` (objets que l'histoire modifie) : `rue.js` (chapitres 1 à 3), `toits.js` (chapitre 3), `traboules.js` (chapitre 4), `quais.js`, `tour.js` et `sommet.js` (chapitre 5).
 - `src/ciel.js`, `src/pluie.js` — ciel, silhouette de la ville, orage, pluie : communs aux zones extérieures.
 - `src/personnages.js` — chargement glTF (`assets/models/*.glb`, compressés meshopt + WebP), retargeting, implants, pose de Sid, silhouettes de secours.
-- `src/drones.js`, `src/joueur.js` (déplacement, pas, arme, main K7), `src/controles.js` (clavier, souris, tactile), `src/son.js`, `src/interface.js`, `src/rendu.js` (post-traitement, reflets), `src/physique.js` (collisions 2D sur XZ), `src/sauvegarde.js`.
-- `src/histoire/partie.js` — état de l'histoire `S`, chapitres (`defineChapter`), objectifs, captures, fins, nouvelle partie, reprise. `src/histoire/dialogue.js` — moteur de dialogue. `src/histoire/chapitre1.js` — chapitres 1 et 2 (dialogues, actions, interactions).
+- `src/drones.js`, `src/gardiens.js`, `src/faucheuse.js`, `src/cameras.js` (les ennemis), `src/joueur.js` (déplacement, pas, arme, main K7), `src/controles.js` (clavier, souris, tactile), `src/son.js`, `src/ambiance.js` (sons placés), `src/interface.js`, `src/rendu.js` (post-traitement, reflets), `src/physique.js` (collisions 2D sur XZ), `src/sauvegarde.js`, `src/cinema.js` (cinématiques), `src/metier.js` (énigme du métier Jacquard).
+- `src/histoire/partie.js` — état de l'histoire `S` (tous les drapeaux dans `S0`), chapitres (`defineChapter`), objectifs, captures, fins, nouvelle partie, reprise, `allerZone`. `src/histoire/dialogue.js` — moteur de dialogue. `chapitre1.js` (chapitres 1 et 2), `chapitre3.js` (Black-out), `chapitre4.js` (Traboules), `chapitre5.js` (Confluence, fins, aube, fin de saison).
 - `src/main.js` — construit le monde **dans l'ordre** (ciel, rue, pluie, voitures : la suite aléatoire `rnd` en dépend, ne pas réordonner), branche les écrans et fait tourner la boucle. Avec `?debug` dans l'adresse, `window.__pn` expose l'état et `step(n, dt)` pour les tests.
 
 Repères :
 - Les modèles regardent vers +Z, sauf `soldier` (Kovac) qui regarde vers −Z, d'où `flip:true` pour lui seul.
+- Personnages des zones construites à la demande : `habiller(n, look)` avec `LOOKS` (`personnages.js`) clone un modèle de `MODELES` (préparé au chargement de la rue). Le modèle michelle sert à plusieurs femmes : `teinte({cheveux, pantalon, haut, rouge})` recolore dans le shader (avec `customProgramCacheKey`, sinon Three.js réutilise le premier shader pour tous), `coiffer(n, {chignon, foulard})` rabat les chignons contre le crâne, `vetir(n, {col, long, sauf})` accroche veste ou blouse au squelette. Saal est le modèle de Sid avec son costume et son chapeau d'origine.
+- Figurants animés : `zone.figurants` (mixers mis à jour par `main.js`) ; `gardienImmobile` pour les Gardiens des scènes.
 - Dialogues : nœuds `t` (texte), `c` (choix), `act` (action) ; `SHAKE` liste les nœuds où le personnage secoue la tête.
 - Sauvegarde (`src/sauvegarde.js`) : `localStorage`, clé `pluie-noire-v2` = `{v:2, partie, saisons}` ; l'ancien format v1 est converti. Écrite toutes les 4 s et à chaque étape (`emit('save')`) ; `emit('saveNow')` force l'envoi en ligne. `finSaison(n, rec)` garde la fin de saison pour la suivante.
 - Transfert sans compte (`src/transfert.js`) : code `PN2z-…` (JSON compressé + somme de contrôle) et QR code vers `…#import=<code>`.
@@ -35,8 +37,10 @@ Repères :
 - Son : tout est synthétisé (Web Audio). Les pas sont calés au niveau du fond de pluie (mesuré hors ligne) ; accroupi, aucun pas.
 - Sur ordinateur, Échap ou P ouvre la pause.
 - Cinématiques (`src/cinema.js`) : `cine([{t,cam:{p,l,p2,l2,dur,fov,suivre}},{t,fn},{t,sub:{qui,texte,dur}}])`. Passer exécute tous les `fn` restants : chaque `fn` doit laisser le monde dans un état cohérent.
-- Ennemis : drones (`drones.js`), Gardiens (`gardiens.js` : vue, ouïe via `P.noise`, lampe-torche, blindage), Faucheuse (`faucheuse.js` : projecteur, `zone.couverts` = abris vus d'en haut). Lampes à abattre : `lampeCassable` (inscrites dans `zone.lumieres` ; dans le noir, les Gardiens voient moins loin). Événement `apresCapture` pour remettre les ennemis en place.
-- Zones construites à la demande : `constructeurs[id]=fn` puis `allerZone(id,[x,z,yaw])` (fondu, ambiance, reflets, sauvegarde). Chaque zone a son propre `mulberry32(seed)`.
+- Ennemis : drones (`drones.js`), Gardiens (`gardiens.js` : vue, ouïe via `P.noise`, lampe-torche, blindage), Faucheuse (`faucheuse.js` : projecteur, `zone.couverts` = abris vus d'en haut), caméras (`cameras.js` : balayage, vue sans ouïe, abattues au P-9, gardées dans `S.cams`), grilles laser de la tour (`majLasers` dans `lieux/tour.js`, cycles, boîtier à abattre). Lampes à abattre : `lampeCassable` (inscrites dans `zone.lumieres` ; dans le noir, les Gardiens et les caméras voient moins loin ; `cassable:false` pour un éclairage qui compte sans pouvoir être abattu). Événement `apresCapture` pour remettre les ennemis en place.
+- Zones construites à la demande : `constructeurs[id]=fn` puis `allerZone(id,[x,z,yaw])` (fondu, ambiance, reflets, sauvegarde). Chaque zone a son propre `mulberry32(seed)`. Réglages de zone : `fog`, `fogD`, `hemi`, `ciel`, `cielY` (la ville au loin abaissée, au sommet de la tour), `pluie`, `indoor(p)`, `surfaceAt(p)`, `envPos` et `cacherEnv` (objets trop lumineux exclus de la capture des reflets, sinon ils éclairent tout).
+- Décor : `fusion(maillages, matériau)` regroupe des pièces en un seul appel de dessin (métiers à tisser, pylône) ; `holoMat(canvas, couleur)` pour les hologrammes ; textures `texPierre`/`texPaves` dans `textures.js`.
+- Fin de saison : `setAube(k)` (ciel, orage), `setPluie(k)` (son de la pluie), `zone.pluie=false`, puis `finSaison('1', …)` et `finish(fin, {kicker, saison})`. L'écran titre affiche la fin gardée.
 - Horloge du HUD : `S.heure` en minutes (192 = 03:12), `heure(min)` aux moments clés, plafonnée à 05:58 avant la fin.
 - Réalisme : ombres dynamiques en qualité ultra seulement (`spot`, `shadowPoint`, `ombre` dans `construire.js` ; carte d'ombre mise à jour une fois par image). Flammes : `flamme(x,y,z,w,h)`. Corniches automatiques sur les immeubles (`building` + `flushLedges` en fin de zone). Pas de tirage `rnd` dans le nouveau décor de la rue (sinon la ville change d'aspect).
 - Sons placés (`src/ambiance.js`) : la zone déclare `Z.sons=[{type:'feu'|'vapeur'|'neon',pos,vol}]` ; chaque drone a son moteur. Niveaux mesurés hors ligne par rapport au fond de pluie.
@@ -47,6 +51,9 @@ Repères :
 NODE_PATH=$(npm root -g) node tools/test/parcours.mjs /chemin/captures   # chapitres 1-2, deux branches, captures
 NODE_PATH=$(npm root -g) node tools/test/mobile.mjs /chemin/captures     # démarrage en mode téléphone
 NODE_PATH=$(npm root -g) node tools/test/sauvegardes.mjs /chemin/captures # conversion v1, code de transfert, QR code, import
+NODE_PATH=$(npm root -g) node tools/test/chapitre3.mjs /chemin/captures  # black-out, Kovac, toits, Mara
+NODE_PATH=$(npm root -g) node tools/test/chapitre4.mjs /chemin/captures  # traboules, énigme, choix de Varga
+NODE_PATH=$(npm root -g) node tools/test/chapitre5.mjs /chemin/captures  # quais, tour, toit, deux fins, fin de saison (environ 25 min)
 ```
 
 L'environnement cloud n'a pas de GPU : Chromium rend en logiciel (SwiftShader), environ une image toutes les 3 s en 1280×720. Donc :
@@ -68,7 +75,8 @@ L'environnement cloud n'a pas de GPU : Chromium rend en logiciel (SwiftShader), 
 3. ~~Réorganiser le code en modules ES, dépendances hébergées dans le dépôt, modèles en `.glb`, harnais de test~~ (fait)
 4. ~~Sauvegardes v2 : code de transfert, QR code, comptes Firebase (en attente du projet Firebase de François), page de confidentialité~~ (fait)
 5. ~~Réalisme : ombres, flammes, façades, pluie, sons spatialisés, labo, look de Sid~~ (fait ; pistes suivantes : fenêtres avec intérieurs, passants, gouttes sur l'écran)
-6. Chapitres 3 à 5 (voir `docs/histoire.md`), fin de saison et sauvegarde pour la saison 2 — chapitre 3 fait (`histoire/chapitre3.js`, `lieux/toits.js`, test `tools/test/chapitre3.mjs`)
+6. ~~Chapitres 3 à 5 (voir `docs/histoire.md`), fin de saison et sauvegarde pour la saison 2~~ (fait : environ 1 h 30 de jeu, quatre fins)
+7. Pistes : faire jouer la saison par de vrais joueurs (équilibrage de la discrétion, durée réelle), animations de marche pour Mara et Varga, vraies voix ou sons de voix, saison 2 (lire `saisons['1']`).
 
 ## Git
 

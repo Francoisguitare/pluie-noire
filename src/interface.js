@@ -2,7 +2,7 @@
 import {$,MOBILE} from './core.js';
 import {tone} from './son.js';
 
-if(MOBILE)$('note').textContent='Environ 3 minutes. Joue en mode paysage. Ta partie est sauvegardée automatiquement.';
+if(MOBILE)$('note').textContent='Une nuit en cinq chapitres, environ une heure et demie. Joue en mode paysage. Ta partie est sauvegardée automatiquement.';
 let toastT=null;
 export function toast(t){const el=$('toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),3400)}
 let hitT=null;
