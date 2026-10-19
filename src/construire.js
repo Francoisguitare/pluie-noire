@@ -1,12 +1,12 @@
 // Briques du décor : matériaux, boîtes à collisions, néons, lumières, faisceaux, particules, câbles.
 // Tout ce qui est construit entre into(zone) et into(null) appartient à cette zone (voir zones.js), le reste à la scène.
-import {THREE,scene,rnd,V3,pr,on,T} from './core.js';
+import {THREE,scene,rnd,V3,pr,on,T,camera} from './core.js';
 import {FAC,canvasTex,mk,softDot} from './textures.js';
 
 let Z=null;
 export const into=z=>{Z=z};
 export const add=o=>{(Z?Z.root:scene).add(o);return o};
-export const GLOBAL={colliders:[],particles:[],shafts:[],flickers:[],lanterns:[]};
+export const GLOBAL={colliders:[],particles:[],shafts:[],flickers:[],lanterns:[],flames:[]};
 const L=k=>(Z||GLOBAL)[k];
 export const pushCol=c=>{L('colliders').push(c);return c};
 
@@ -16,8 +16,8 @@ export const M={
   curb:new THREE.MeshStandardMaterial({color:0x34363d,roughness:.5,metalness:.2,envMapIntensity:.6}),
   metal:new THREE.MeshStandardMaterial({color:0x5a606a,roughness:.28,metalness:.9,envMapIntensity:1.4}),
   darkMetal:new THREE.MeshStandardMaterial({color:0x1a1c22,roughness:.32,metalness:.85,envMapIntensity:1.2}),
-  lab:new THREE.MeshStandardMaterial({color:0xa9b3bc,roughness:.3,metalness:.3,envMapIntensity:.9}),
-  labFloor:new THREE.MeshStandardMaterial({color:0xd6dde2,roughness:.12,metalness:.1,envMapIntensity:1}),
+  lab:new THREE.MeshStandardMaterial({color:0x515a62,roughness:.45,metalness:.35,envMapIntensity:.7}),
+  labFloor:new THREE.MeshStandardMaterial({color:0x8d979e,roughness:.22,metalness:.1,envMapIntensity:.7}),
   dumpster:new THREE.MeshStandardMaterial({color:0x1d3a2c,roughness:.45,metalness:.5,envMapIntensity:.9}),
   wood:new THREE.MeshStandardMaterial({color:0x4a2e1c,roughness:.45,envMapIntensity:.6}),
   paint:new THREE.MeshStandardMaterial({color:0x7a6428,roughness:.5,envMapIntensity:.4}),
@@ -42,7 +42,7 @@ export function addBox(x0,x1,z0,z1,y0,y1,mat,o={}){
 export const bmats=FAC.map((f,i)=>new THREE.MeshStandardMaterial({map:f.df,bumpMap:f.df,bumpScale:.025,roughness:.78,metalness:.15,emissive:0xffffff,emissiveMap:f.em,emissiveIntensity:1.05,envMapIntensity:.55}));
 let bi=0;
 export function building(x0,x1,z0,z1,h){
-  const w=x1-x0,d=z1-z0;addBox(x0,x1,z0,z1,0,h,bmats[bi++%4],{geo:boxGeoWorldUV(w,h,d,24)});
+  const w=x1-x0,d=z1-z0;addBox(x0,x1,z0,z1,0,h,bmats[bi++%4],{geo:boxGeoWorldUV(w,h,d,24)}).receiveShadow=true;ledgesFor(x0,x1,z0,z1,h);
   addBox(x0-.2,x1+.2,z0-.2,z1+.2,h,h+.6,M.concrete,{collide:false});
 }
 export function neon(text,color,w,h,x,y,z,rotY,o={}){
@@ -122,7 +122,55 @@ export function lamp(x,z,side){
   addBox(x-.07,x+.07,z-.07,z+.07,0,5.4,M.darkMetal,{collide:false});
   addBox(side>0?x:x-1.2,side>0?x+1.2:x,z-.05,z+.05,5.3,5.4,M.darkMetal,{collide:false});
   const hx=x+side*1.1;addBox(hx-.3,hx+.3,z-.12,z+.12,5.18,5.3,glow(0xffc58a,2.2),{collide:false});
-  plight(0xffa65a,2.3,15,hx,5,z);shaft(hx,5.18,z,.32,2.6,5.18,0xffb070,.17);
+  spot(0xffa65a,2.6,16,hx,5.05,z,hx,0,z,1.15,{map:512});shaft(hx,5.18,z,.32,2.6,5.18,0xffb070,.17);
+}
+/* ---------- Lumières à ombres (qualité ultra seulement) ---------- */
+export const SHADOW_LIGHTS=[];
+// Projecteur qui éclaire vers (tx,ty,tz). o.map : taille de la carte d'ombre.
+export function spot(color,int,dist,x,y,z,tx,ty,tz,angle,o={}){
+  const l=new THREE.SpotLight(color,int,dist,angle,o.penumbra??.55,1.7);l.position.set(x,y,z);l.target.position.set(tx,ty,tz);add(l);add(l.target);
+  l.shadow.mapSize.set(o.map||512,o.map||512);l.shadow.camera.near=.3;l.shadow.camera.far=dist;l.shadow.bias=-.0006;l.shadow.normalBias=.02;
+  SHADOW_LIGHTS.push(l);return l;
+}
+export function shadowPoint(l,map,far){l.shadow.mapSize.set(map,map);l.shadow.camera.near=.1;l.shadow.camera.far=far;l.shadow.bias=-.002;l.shadow.normalBias=.03;SHADOW_LIGHTS.push(l);return l}
+// Marque des objets comme projetant (cast) et/ou recevant (receive) les ombres.
+export function ombre(o,cast,receive){o.traverse(m=>{if(m.isMesh){if(cast)m.castShadow=true;if(receive)m.receiveShadow=true}});return o}
+
+/* ---------- Corniches des façades : une barre au niveau de chaque étage (alignée sur les bandes sombres de la texture) ---------- */
+const LEDGES=[];
+function ledgesFor(x0,x1,z0,z1,h){
+  for(let y=3.28;y<h-1;y+=3){
+    LEDGES.push([x1+.08,y,(z0+z1)/2,.16,.12,z1-z0+.3],[x0-.08,y,(z0+z1)/2,.16,.12,z1-z0+.3],[(x0+x1)/2,y,z1+.08,x1-x0+.3,.12,.16],[(x0+x1)/2,y,z0-.08,x1-x0+.3,.12,.16]);
+  }
+}
+// À appeler en fin de construction d'une zone : regroupe toutes les corniches en un seul objet.
+export function flushLedges(){
+  if(!LEDGES.length)return;
+  const im=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({color:0x26282e,roughness:.85,metalness:.1,envMapIntensity:.4}),LEDGES.length);
+  const m=new THREE.Matrix4();LEDGES.forEach(([x,y,z,w,h,d],i)=>{m.makeScale(w,h,d);m.setPosition(x,y,z);im.setMatrixAt(i,m)});
+  im.receiveShadow=true;add(im);LEDGES.length=0;
+}
+
+/* ---------- Flammes : deux plans tournés vers la caméra, forme et couleur calculées dans le shader ---------- */
+const FLAMES=[];
+const flameMat=ph=>new THREE.ShaderMaterial({uniforms:{time:{value:0},ph:{value:ph}},
+  vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+  fragmentShader:`uniform float time;uniform float ph;varying vec2 vUv;
+    float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+    float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+    float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<4;i++){v+=a*n2(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}
+    void main(){vec2 uv=vUv;float y=uv.y;
+      float n=fbm(vec2(uv.x*3.2+ph,y*2.6-time*2.4));
+      float w=mix(.42,.04,pow(y,.8));float d=abs(uv.x-.5+(n-.5)*.45*y)/w;
+      float body=smoothstep(1.,.15,d)*smoothstep(1.02,.45,y+n*.42)*smoothstep(0.,.1,y);
+      vec3 c=mix(vec3(1.,.93,.65),vec3(1.,.5,.1),smoothstep(.05,.55,y+d*.35));c=mix(c,vec3(.75,.12,.03),smoothstep(.45,.95,y+d*.2));
+      gl_FragColor=vec4(c*2.4,body);}`,
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,toneMapped:false});
+export function flamme(x,y,z,w,h){
+  const g=new THREE.Group();g.position.set(x,y,z);add(g);
+  for(const[k,ph]of[[1,0],[.62,4.7]]){const m=new THREE.Mesh(new THREE.PlaneGeometry(w*k,h*k),flameMat(ph));m.position.y=h*k/2;g.add(m)}
+  const bed=new THREE.Mesh(new THREE.CircleGeometry(w*.42,20),glow(0xff5a1a,1.5));bed.rotation.x=-Math.PI/2;bed.position.y=.01;g.add(bed);
+  L('flames').push(g);return g;
 }
 
 /* Animation des effets : listes globales + celles de la zone affichée */
@@ -132,5 +180,6 @@ export function updateFx(dt,z){
     for(const f of s.flickers){const n=Math.sin(T*13+f.ph)*Math.sin(T*3.1+f.ph*2);f.m.material.opacity=n>.93?.2:1}
     for(const l of s.lanterns){l.m.position.y=l.y+Math.sin(T*1.5+l.ph)*.05}
     for(const m of s.shafts)m.material.uniforms.time.value=T;
+    for(const f of s.flames){f.rotation.y=Math.atan2(camera.position.x-f.position.x,camera.position.z-f.position.z);for(const c of f.children)if(c.material.uniforms)c.material.uniforms.time.value=T}
   }
 }

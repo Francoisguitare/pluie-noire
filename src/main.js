@@ -18,13 +18,15 @@ import {enterZone,zone} from './zones.js';
 import {poseSid} from './personnages.js';
 import {ouvrirTransfert,importDepuisAdresse} from './transfert.js';
 import {ouvrirCompte,initComptes} from './compte.js';
+import {updateAmbiance} from './ambiance.js';
 window.__pnBoot=true;
 
 /* ---------- Écrans ---------- */
 $('play').disabled=true;$('cont').disabled=true;const noteTxt=$('note').textContent;$('note').textContent='Chargement des personnages…';
 const ready=()=>{$('play').disabled=false;$('cont').disabled=false;$('note').textContent=noteTxt};
 let perfProbe=null;
-function enterGame(){$('title').hidden=true;$('end').hidden=true;$('pauseMenu').hidden=true;$('hud').hidden=false;$('touch').hidden=!MOBILE;document.body.classList.add('playing');setState('play');perfProbe={t:0,f:0};
+const DEBUG=/[?&]debug\b/.test(location.search);
+function enterGame(){$('title').hidden=true;$('end').hidden=true;$('pauseMenu').hidden=true;$('hud').hidden=false;$('touch').hidden=!MOBILE;document.body.classList.add('playing');setState('play');perfProbe=DEBUG?null:{t:0,f:0}; // en test, pas de baisse automatique de qualité
   if(MOBILE){try{const r=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen({navigationUI:'hide'});if(r&&r.catch)r.catch(()=>{})}catch(e){}}else lock()}
 $('play').onclick=()=>{initAudio();clearSave();newGame();enterGame();saveGame();toast('Mara t\'attend sous l\'enseigne violette, à gauche')};
 $('cont').onclick=()=>{const d=readSave();if(!d)return;initAudio();applySave(d);enterGame();toast('Partie reprise')};
@@ -68,6 +70,7 @@ function frame(dt){
   const inside=state==='play'&&z.indoor(P.pos);updateRain(dt,!inside);setIndoor(inside);
   updateFx(dt,z);updateSky(dt);if(z.update)z.update(dt,S);
   fx.glitch=updateHand(dt);
+  updateAmbiance(dt,z);
   updateNpcs(dt);
   fx.flash=G.flash;fx.alert=state==='play'?Math.max(0,G.alertLvl-.3):0;
   if(perfProbe&&state==='play'){perfProbe.t+=dt;perfProbe.f++;if(perfProbe.t>4){const fps=perfProbe.f/perfProbe.t;perfProbe=null;
@@ -77,7 +80,7 @@ const clock=new THREE.Clock();
 function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);frame(dt);render(dt,fx)}
 
 /* ---------- Mode debug (?debug) : accès pour les tests automatiques ---------- */
-if(/[?&]debug\b/.test(location.search))window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,newGame,applySave,saveGame,readSave,killDrone,zone,handLocked,lire,exportCode,importCode,
+if(DEBUG)window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,newGame,applySave,saveGame,readSave,killDrone,zone,handLocked,lire,exportCode,importCode,
   get S(){return S},get state(){return state},
   step:(n,dt=1/30)=>{for(let i=0;i<n;i++)frame(dt)}};
 

@@ -12,7 +12,7 @@ export function prepClip(c,stripPrefix){const k=c.clone();k.tracks=k.tracks.filt
 export function findBone(root,names){let b=null;root.traverse(o=>{if(!b&&o.isBone&&names.includes(o.name))b=o});return b}
 export function attachTo(bone,mesh,x,y,z){const s=new V3();bone.getWorldScale(s);mesh.scale.multiplyScalar(1/s.x);mesh.position.set(x/s.x,y/s.x,z/s.x);bone.add(mesh)}
 export function mountChar(n,root,clips,opt){
-  root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.envMapIntensity=opt.env??.9;if(opt.mat)opt.mat(m,o)})}});
+  root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.envMapIntensity=opt.env??.9;if(opt.mat)opt.mat(m,o)})}});
   const top=findBone(root,['mixamorigHeadTop_End','HeadTop_End','mixamorigHead','Head']),feet=[];
   root.traverse(o=>{if(o.isBone&&/(Toe_End|ToeBase|Foot)$/.test(o.name))feet.push(o)});
   const v=new V3();const meas=()=>{root.updateMatrixWorld(true);top.getWorldPosition(v);const ty=v.y;let fy=1e9;for(const f of feet){f.getWorldPosition(v);fy=Math.min(fy,v.y)}return[ty,fy]};

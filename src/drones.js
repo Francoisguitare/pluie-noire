@@ -8,7 +8,7 @@ const C_IDLE=new THREE.Color(0x8fe9ff),C_WARN=new THREE.Color(0xffb02e),C_ALERT=
 // Construit un drone dans la zone en cours de construction (z).
 export function makeDrone(z,pts,yaw,o={}){
   const g=new THREE.Group();
-  const body=new THREE.Mesh(new THREE.SphereGeometry(.32,24,16),M.darkMetal);body.scale.set(1,.55,1.18);g.add(body);
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.32,24,16),M.darkMetal);body.scale.set(1,.55,1.18);body.castShadow=true;g.add(body);
   const band=new THREE.Mesh(new THREE.TorusGeometry(.33,.025,8,32),M.metal);band.rotation.x=Math.PI/2;g.add(band);
   const eyeMat=new THREE.MeshBasicMaterial({color:0x8fe9ff,toneMapped:false});const eye=new THREE.Mesh(new THREE.SphereGeometry(.075,12,10),eyeMat);eye.position.set(0,-.03,.36);g.add(eye);
   const rotors=[];

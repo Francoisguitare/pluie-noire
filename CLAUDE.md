@@ -34,6 +34,8 @@ Repères :
 - Comptes (`src/compte.js`) : Firebase, inactif tant que `src/config.js` contient `FIREBASE=null`. Mise en route : `docs/comptes-firebase.md`, règles `firestore.rules`, page `confidentialite.html`.
 - Son : tout est synthétisé (Web Audio). Les pas sont calés au niveau du fond de pluie (mesuré hors ligne) ; accroupi, aucun pas.
 - Sur ordinateur, Échap ou P ouvre la pause.
+- Réalisme : ombres dynamiques en qualité ultra seulement (`spot`, `shadowPoint`, `ombre` dans `construire.js` ; carte d'ombre mise à jour une fois par image). Flammes : `flamme(x,y,z,w,h)`. Corniches automatiques sur les immeubles (`building` + `flushLedges` en fin de zone). Pas de tirage `rnd` dans le nouveau décor de la rue (sinon la ville change d'aspect).
+- Sons placés (`src/ambiance.js`) : la zone déclare `Z.sons=[{type:'feu'|'vapeur'|'neon',pos,vol}]` ; chaque drone a son moteur. Niveaux mesurés hors ligne par rapport au fond de pluie.
 
 ## Tester
 
@@ -61,7 +63,7 @@ L'environnement cloud n'a pas de GPU : Chromium rend en logiciel (SwiftShader), 
 2. ~~Mémoire du projet et bible de l'histoire~~ (fait)
 3. ~~Réorganiser le code en modules ES, dépendances hébergées dans le dépôt, modèles en `.glb`, harnais de test~~ (fait)
 4. ~~Sauvegardes v2 : code de transfert, QR code, comptes Firebase (en attente du projet Firebase de François), page de confidentialité~~ (fait)
-5. Réalisme : ombres, flammes, façades, pluie, sons spatialisés
+5. ~~Réalisme : ombres, flammes, façades, pluie, sons spatialisés, labo, look de Sid~~ (fait ; pistes suivantes : fenêtres avec intérieurs, passants, gouttes sur l'écran)
 6. Chapitres 3 à 5 (voir `docs/histoire.md`), fin de saison et sauvegarde pour la saison 2
 
 ## Git

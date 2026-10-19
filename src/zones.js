@@ -6,7 +6,7 @@ export const zones={};
 let cur=null;
 export const zone=()=>cur;
 export function makeZone(id,o={}){
-  const z=Object.assign({id,root:new THREE.Group(),colliders:[],particles:[],shafts:[],flickers:[],lanterns:[],inter:[],npcs:[],drones:[],
+  const z=Object.assign({id,root:new THREE.Group(),colliders:[],particles:[],shafts:[],flickers:[],lanterns:[],flames:[],inter:[],npcs:[],drones:[],
     outdoor:true,indoor:()=>false,surfaceAt:()=>'asphalt',update:null,enter:null,exit:null},o);
   z.root.visible=false;scene.add(z.root);zones[id]=z;return z;
 }

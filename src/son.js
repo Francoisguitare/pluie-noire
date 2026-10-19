@@ -82,3 +82,37 @@ export function thunder(){
   f.type='lowpass';f.frequency.value=180;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.5,t+.15);g.gain.exponentialRampToValueAtTime(.0001,t+3.2);
   s.connect(f);f.connect(g);g.connect(out);s.start(t);s.stop(t+3.4);
 }
+
+/* ---------- Sons placés dans l'espace (HRTF) : feu, vapeur, drones… ---------- */
+// L'auditeur suit la caméra (position, regard, haut).
+export function updateListener(cam){
+  if(!AC)return;const L=AC.listener,e=cam.matrixWorld.elements;
+  if(L.positionX){L.positionX.value=e[12];L.positionY.value=e[13];L.positionZ.value=e[14];L.forwardX.value=-e[8];L.forwardY.value=-e[9];L.forwardZ.value=-e[10];L.upX.value=e[4];L.upY.value=e[5];L.upZ.value=e[6]}
+  else{L.setPosition(e[12],e[13],e[14]);L.setOrientation(-e[8],-e[9],-e[10],e[4],e[5],e[6])}
+}
+// Une source : on y branche des générateurs (bruitBoucle, ronronnement) ; vol() règle son niveau, stop() l'éteint.
+export function source3d(x,y,z,o={}){
+  if(!AC)return null;
+  const p=AC.createPanner();p.panningModel='HRTF';p.distanceModel='inverse';p.refDistance=o.ref||1.5;p.rolloffFactor=o.rolloff||1.3;p.maxDistance=80;
+  const g=AC.createGain();g.gain.value=0;g.connect(p);p.connect(out);
+  const s={p,in:g,nodes:[],
+    set(x,y,z){if(p.positionX){p.positionX.value=x;p.positionY.value=y;p.positionZ.value=z}else p.setPosition(x,y,z)},
+    vol(v,tc=.15){g.gain.setTargetAtTime(v,AC.currentTime,tc)},
+    stop(){g.gain.setTargetAtTime(0,AC.currentTime,.1);setTimeout(()=>{for(const n of s.nodes)try{n.stop()}catch(e){}try{p.disconnect()}catch(e){}},500)}};
+  s.set(x,y,z);return s;
+}
+export function bruitBoucle(s,type,f,q,v){
+  const b=AC.createBufferSource();b.buffer=noiseBuf;b.loop=true;b.playbackRate.value=.85+Math.random()*.3;
+  const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;const g=AC.createGain();g.gain.value=v;
+  b.connect(fl);fl.connect(g);g.connect(s.in);b.start(AC.currentTime,Math.random()*1.5);s.nodes.push(b);return{fl,g};
+}
+// Moteur de drone : dent de scie + carré filtrés, avec le battement des rotors.
+export function ronronnement(s,f,v){
+  const o1=AC.createOscillator(),o2=AC.createOscillator();o1.type='sawtooth';o2.type='square';o1.frequency.value=f;o2.frequency.value=f*2.01;
+  const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900;lp.Q.value=2;
+  const am=AC.createGain();am.gain.value=v;const lfo=AC.createOscillator();lfo.frequency.value=34+Math.random()*6;const lg=AC.createGain();lg.gain.value=v*.5;lfo.connect(lg);lg.connect(am.gain);
+  const g2=AC.createGain();g2.gain.value=.4;o2.connect(g2);g2.connect(lp);o1.connect(lp);lp.connect(am);am.connect(s.in);
+  const t=AC.currentTime;o1.start(t);o2.start(t);lfo.start(t);s.nodes.push(o1,o2,lfo);return{o1,o2,lp};
+}
+// Une brindille qui claque dans le feu (à appeler au hasard).
+export function crepitement(s){if(!AC||!s)return;const t=AC.currentTime+Math.random()*.05;nz(t,'bandpass',1800+Math.random()*3500,4,.12+Math.random()*.25,.001,.012+Math.random()*.02,undefined,s.in)}

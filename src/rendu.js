@@ -1,5 +1,6 @@
 // Post-traitement (halo lumineux, étalonnage, aberration chromatique, grain, glitch), reflets d'environnement, qualité.
-import {THREE,renderer,scene,camera,pr,on,emit,T} from './core.js';
+import {THREE,renderer,scene,camera,pr,on,emit,T,quality} from './core.js';
+import {SHADOW_LIGHTS} from './construire.js';
 
 export let composer=null,bloom=null,finalPass=null;
 try{
@@ -38,6 +39,11 @@ function applyQuality(){
   if(finalPass)finalPass.uniforms.res.value.set(innerWidth,innerHeight);
 }
 on('quality',applyQuality);on('resize',applyQuality);
+// Ombres dynamiques en qualité ultra seulement. Mises à jour une fois par image (pas une deuxième fois pour le reflet du sol).
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;
+let ombres=null;
+on('quality',()=>{const v=quality==='ultra';if(v===ombres)return;ombres=v;renderer.shadowMap.enabled=v;for(const l of SHADOW_LIGHTS)l.castShadow=v;
+  scene.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{m.needsUpdate=true})})});
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();emit('resize')});
 
 /* ---------- Environnement (reflets sur métal) : capture de la zone autour d'un point ---------- */
@@ -46,7 +52,7 @@ export function buildEnv(pos,hide=[]){
     const rt=new THREE.WebGLCubeRenderTarget(256,{format:THREE.RGBFormat,generateMipmaps:true,minFilter:THREE.LinearMipmapLinearFilter});
     const cc=new THREE.CubeCamera(.3,500,rt);cc.position.copy(pos);scene.add(cc);
     const was=hide.map(o=>o&&o.visible);hide.forEach(o=>{if(o)o.visible=false});
-    cc.update(renderer,scene);
+    renderer.shadowMap.needsUpdate=true;cc.update(renderer,scene);
     hide.forEach((o,i)=>{if(o)o.visible=was[i]});
     const pm=new THREE.PMREMGenerator(renderer);const env=pm.fromCubemap(rt.texture).texture;pm.dispose();scene.remove(cc);rt.dispose();
     return env;
@@ -54,5 +60,6 @@ export function buildEnv(pos,hide=[]){
 }
 export function render(dt,fx){
   if(finalPass){const u=finalPass.uniforms;u.time.value=T;u.flash.value=fx.flash;u.alert.value=fx.alert;u.glitch.value=fx.glitch}
+  renderer.shadowMap.needsUpdate=true;
   if(composer)composer.render(dt);else renderer.render(scene,camera);
 }

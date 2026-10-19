@@ -2,7 +2,7 @@
 // L'ordre de construction suit l'ordre d'origine : il fixe la suite aléatoire, donc l'aspect de la ville.
 import {THREE,V3,rnd,T,on,quality,camera} from '../core.js';
 import {PUD,PUDD,canvasTex,mk,asphaltCanvas,roughCanvas} from '../textures.js';
-import {into,add,pushCol,M,glow,addBox,building,neon,plight,shaft,Particles,steam,cable,acUnit,lamp,bmats,boxGeoWorldUV} from '../construire.js';
+import {into,add,pushCol,M,glow,addBox,building,neon,plight,shaft,Particles,steam,cable,acUnit,lamp,bmats,boxGeoWorldUV,spot,shadowPoint,ombre,flushLedges,flamme} from '../construire.js';
 import {makeZone} from '../zones.js';
 import {makeDrone} from '../drones.js';
 import {nameTag,loadGLB,restInfo,retarget,prepClip,mountChar,findBone,attachTo,cyberize,fallbackChars} from '../personnages.js';
@@ -17,6 +17,8 @@ export const Z=makeZone('rue',{
   },
 });
 export const insideLab=p=>Z.indoor(p);
+// Sons d'ambiance placés : le feu de Sid, la vapeur des plaques d'égout, le néon du bar.
+Z.sons=[{type:'feu',pos:[-12.6,1.2,-15.8]},{type:'vapeur',pos:[-2,.2,8],vol:.45},{type:'vapeur',pos:[2.5,.2,-16],vol:.45},{type:'vapeur',pos:[-1.5,.2,-31],vol:.45},{type:'neon',pos:[5.95,3.85,5],vol:.25}];
 const MANHOLES=[[-2,8],[2.5,-16],[-1.5,-31]];
 // Objets que l'histoire anime ou modifie
 export const H={};
@@ -27,7 +29,7 @@ into(Z);
 const groundTex=canvasTex(asphaltCanvas(),true);groundTex.repeat.set(12,12);
 const roughTex=canvasTex(roughCanvas(),true,true);roughTex.repeat.set(12,12);
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(260,260),new THREE.MeshStandardMaterial({map:groundTex,roughnessMap:roughTex,roughness:1,bumpMap:groundTex,bumpScale:.02,metalness:.35,envMapIntensity:.7}));
-ground.rotation.x=-Math.PI/2;add(ground);
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;add(ground);
 let reflector=null;
 const pudTex=canvasTex(PUD,true,true);
 {
@@ -111,10 +113,15 @@ addBox(-8.2,8.2,-52.2,-39.8,6,6.5,M.lab,{collide:false});
 addBox(-8,8,-39.98,-39.94,5.6,5.72,glow(0x58e6ff,2.4),{collide:false});
 addBox(-1.2,1.2,-39.96,-39.92,3.2,3.3,glow(0x58e6ff,2.4),{collide:false});
 for(const x of[-7.95,7.95])addBox(x-.04,x+.04,-40.02,-39.94,0,5.6,glow(0x58e6ff,2),{collide:false});
+// Sol du labo : dalles de 60 cm (texture dessinée, sans tirage aléatoire pour ne pas décaler la ville)
+{const[c,g]=mk(512,512);g.fillStyle='#8e979d';g.fillRect(0,0,512,512);
+  for(let i=0;i<4;i++)for(let j=0;j<4;j++){const v=136+((i*7+j*13)%5)*4;g.fillStyle=`rgb(${v},${v+8},${v+14})`;g.fillRect(i*128+3,j*128+3,122,122)}
+  g.fillStyle='rgba(20,24,28,.85)';for(let k=0;k<=4;k++){g.fillRect(k*128-2,0,4,512);g.fillRect(0,k*128-2,512,4)}
+  const t=canvasTex(c,true);t.repeat.set(15/2.4,11/2.4);M.labFloor.map=t;M.labFloor.color.setHex(0xffffff);M.labFloor.needsUpdate=true}
 const floorLab=new THREE.Mesh(new THREE.PlaneGeometry(15,11),M.labFloor);floorLab.rotation.x=-Math.PI/2;floorLab.position.set(0,.015,-46);add(floorLab);
 const ceil=new THREE.Mesh(new THREE.PlaneGeometry(15,11),new THREE.MeshStandardMaterial({color:0x2a2f35,roughness:.8}));ceil.rotation.x=Math.PI/2;ceil.position.set(0,5.95,-46);add(ceil);
 H.ceilPanels=[];
-for(const x of[-4,0,4]){H.ceilPanels.push(addBox(x-.9,x+.9,-46.3,-45.7,5.85,5.92,glow(0xe8f8ff,1.6),{collide:false}));shaft(x,5.85,-46,.9,2.2,5.8,0xbfe8ff,.1)}
+for(const x of[-4,0,4]){H.ceilPanels.push(addBox(x-.9,x+.9,-46.3,-45.7,5.85,5.92,glow(0xe8f8ff,1.25),{collide:false}));shaft(x,5.85,-46,.9,2.2,5.8,0xbfe8ff,.1)}
 H.door=addBox(-1,1,-40.4,-40.1,0,3.2,new THREE.MeshStandardMaterial({color:0x2c3138,roughness:.25,metalness:.85,envMapIntensity:1.3}));
 H.doorCol=H.door.userData.col;
 H.doorStrip=new THREE.Mesh(new THREE.BoxGeometry(1.7,.06,.04),glow(0xff3d3d,2));H.doorStrip.position.set(0,1.6,-40.08);add(H.doorStrip);
@@ -127,6 +134,17 @@ addBox(5.6,7.4,-46.5,-42,0,2.6,M.darkMetal);
 H.rackLeds=[];
 for(let i=0;i<22;i++){const l=new THREE.Mesh(new THREE.BoxGeometry(.03,.04,.06),glow(rnd()<.7?0x4dff9a:0x58e6ff,2.5));l.position.set(5.58,.3+rnd()*2.2,-46.3+rnd()*4.1);add(l);H.rackLeds.push(l)}
 addBox(2.8,5.2,-51.5,-50.6,0,.95,M.darkMetal,{los:false});
+// Paillasses, appareils et chemins de câbles
+{const top=new THREE.MeshStandardMaterial({color:0xc9d2d8,roughness:.35,metalness:.1,envMapIntensity:.7}),dev=new THREE.MeshStandardMaterial({color:0x2b3036,roughness:.4,metalness:.6,envMapIntensity:1});
+  addBox(-6.6,-2.6,-51.45,-50.65,0,.86,M.darkMetal,{los:false});addBox(-6.65,-2.55,-51.5,-50.6,.86,.92,top,{collide:false});
+  addBox(-7.45,-6.65,-50.2,-46.4,0,.86,M.darkMetal,{los:false});addBox(-7.5,-6.6,-50.25,-46.35,.86,.92,top,{collide:false});
+  for(const[x,z,w,d,h]of[[-5.9,-51.05,.5,.4,.45],[-4.6,-51.1,.7,.45,.32],[-3.3,-51.05,.35,.35,.6],[-7.05,-49.4,.45,.5,.38],[-7.05,-47.4,.5,.42,.5]])addBox(x-w/2,x+w/2,z-d/2,z+d/2,.92,.92+h,dev,{collide:false});
+  for(const[x,z,r]of[[-4.6,-50.85,0],[-7.05,-48.3,Math.PI/2]]){const m=new THREE.Mesh(new THREE.PlaneGeometry(.5,.3),glow(0x58e6ff,1.2));m.position.set(x,1.42,z+(r?0:.1));m.rotation.y=r;add(m)}
+  const cyl=new THREE.Mesh(new THREE.CylinderGeometry(.18,.2,.38,20),dev);cyl.position.set(-2.95,1.11,-51.0);add(cyl);
+  for(const x of[-5.5,5.5])addBox(x-.15,x+.15,-51.4,-40.6,5.45,5.55,M.darkMetal,{collide:false});
+  // Bandes de sécurité autour du socle de la puce
+  const[c,g]=mk(512,64);for(let i=0;i<16;i++){g.fillStyle=i%2?'#1a1a1a':'#d9a21b';g.beginPath();g.moveTo(i*32,0);g.lineTo(i*32+32,0);g.lineTo(i*32+16,64);g.lineTo(i*32-16,64);g.fill()}
+  const ring=new THREE.Mesh(new THREE.RingGeometry(.66,.82,48,1),new THREE.MeshStandardMaterial({map:canvasTex(c,true),roughness:.6}));ring.rotation.x=-Math.PI/2;ring.position.set(0,.02,-49);add(ring)}
 const screen=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.62),glow(0x3fd8ff,1.4));screen.position.set(4,1.35,-50.85);add(screen);
 addBox(3.42,4.58,-51.0,-50.9,1.0,1.7,M.darkMetal,{collide:false});
 const pedestal=new THREE.Mesh(new THREE.CylinderGeometry(.45,.55,1,24),M.lab);pedestal.position.set(0,.5,-49);add(pedestal);
@@ -138,7 +156,8 @@ chip.add(new THREE.Mesh(new THREE.BoxGeometry(.22,.04,.22),new THREE.MeshStandar
 chip.add(new THREE.Mesh(new THREE.BoxGeometry(.1,.05,.1),glow(0x5ff0ff,3)));
 chip.position.set(0,1.3,-49);add(chip);H.chip=chip;
 H.chipShaft=shaft(0,5.85,-49,.25,.5,4.6,0x5ff0ff,.35);
-H.labLight=plight(0xd9f4ff,1.8,13,0,4.8,-46);
+H.labLight=plight(0xd9f4ff,.5,13,0,4.8,-46);
+H.labSpot=spot(0xe6f6ff,1.5,9,0,5.8,-46,0,0,-46.5,1.2,{map:512});
 // Hélice ADN holographique sur le toit
 const helix=new THREE.Group();helix.position.set(0,23.5,-46);add(helix);H.helix=helix;
 {const gA=new THREE.SphereGeometry(.17,10,8),rung=new THREE.CylinderGeometry(.025,.025,2.8,6);const mA=glow(0x58e6ff,2.6),mB=glow(0xff4fd8,2.2),mR=glow(0x9fe8ff,1.2);
@@ -204,8 +223,9 @@ addBox(-13.8,-12.8,-36,-35,0,.9,M.wood,{los:false});addBox(-13.6,-12.9,-35.9,-35
 addBox(-9.3,-8.7,-21,-20.2,0,1.1,M.dumpster,{los:false});
 const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.34,.32,.9,18),new THREE.MeshStandardMaterial({color:0x3a2a20,metalness:.6,roughness:.5}));barrel.position.set(-12.6,.45,-15.8);add(barrel);
 pushCol({x0:-12.95,x1:-12.25,z0:-16.15,z1:-15.45,los:false,off:false});
-H.fire=new THREE.Mesh(new THREE.ConeGeometry(.26,.55,12),new THREE.MeshBasicMaterial({color:new THREE.Color(0xff9a40).multiplyScalar(2.2),toneMapped:false,transparent:true,opacity:.9}));H.fire.position.set(-12.6,1.15,-15.8);add(H.fire);
-H.fireLight=plight(0xff7a2a,2.4,9,-12.6,1.6,-15.8);
+barrel.castShadow=true;
+H.fire=flamme(-12.6,.9,-15.8,.62,.95);
+H.fireLight=shadowPoint(plight(0xff7a2a,2.4,9,-12.6,1.6,-15.8),256,9);
 new Particles(50,{color:0xff8a30,k:2.4,additive:true,rate:22,spawn:q=>{q.x=-12.6+(rnd()-.5)*.4;q.y=1.0;q.z=-15.8+(rnd()-.5)*.4;q.vx=(rnd()-.5)*.5;q.vy=1.2+rnd()*2;q.vz=(rnd()-.5)*.5;q.max=.6+rnd()*.8;q.s0=.06;q.s1=.02;q.a=1}});
 steam(-12.6,1.4,-15.8,0x40342c,{n:40,rate:6,a:.22,s0:.4,s1:2.4,up:1,life:4});
 for(let i=0;i<4;i++)addBox(-13.98,-13.9,-44+i*7,-43.6+i*7,0,9,M.darkMetal,{collide:false});
@@ -240,6 +260,9 @@ plight(0x4fe0ff,1.6,6,4.6,1.6,13);
 makeDrone(Z,[[-5,-34],[5,-34]],Math.PI/2);
 makeDrone(Z,[[1,-24],[1,-3]],0);
 makeDrone(Z,[[-1.8,10],[2.2,10]],Math.PI/2,{passive:true,tut:true,speed:.6,h:3.0});
+flushLedges();
+// Ombres : tout le décor les reçoit ; les objets bas posés au sol en projettent.
+Z.root.traverse(o=>{if(o.isMesh&&o.material&&o.material.isMeshStandardMaterial){o.receiveShadow=true;const b=o.geometry.boundingSphere||(o.geometry.computeBoundingSphere(),o.geometry.boundingSphere);if(o.position.y<1.2&&b.radius<1.6&&!o.isInstancedMesh)o.castShadow=true}});
 into(null);
 }
 
@@ -268,6 +291,16 @@ export async function loadRueCharacters(){
   mountChar(npcBy('kovac'),sold.scene,{idle:sIdle?prepClip(sIdle,false):rs.idle,agree:rs.agree,shake:rs.shake},{env:1.1,flip:true});
   // Sid (pose procédurale ; ce modèle regarde déjà vers +Z, pas de demi-tour)
   mountChar(npcBy('sid'),rpm.scene,{},{env:.7});
+  // Le vieux Sid : manteau usé, barbe grise, bonnet et écharpe à la place du costume et du chapeau.
+  { const n=npcBy('sid');
+    n.root.traverse(o=>{if(!o.isMesh)return;const nm=o.name,m=o.material;
+      if(/Headwear/.test(nm))o.visible=false;
+      else if(/Outfit_Top/.test(nm)){m.color.setHex(0x5e554b);m.roughness=.95}
+      else if(/Outfit_Bottom/.test(nm)){m.color.setHex(0x4a463f);m.roughness=.95}
+      else if(/Beard/.test(nm))m.color.setHex(0xc4beb4)});
+    const wool=c=>new THREE.MeshStandardMaterial({color:c,roughness:1});
+    const head=findBone(n.root,['Head']);if(head){const b=new THREE.Mesh(new THREE.SphereGeometry(.122,20,12,0,Math.PI*2,0,Math.PI*.52),wool(0x6a2a1a));attachTo(head,b,0,.135,-.018);b.scale.y*=.9;b.castShadow=true}
+    const neck=findBone(n.root,['Neck']);if(neck){const sc=new THREE.Mesh(new THREE.TorusGeometry(.068,.032,8,20),wool(0x39402c));sc.rotation.x=Math.PI/2;attachTo(neck,sc,0,.035,.005)} }
   // Nox-7
   mountChar(npcBy('nox'),xbot.scene,base,{env:1.4,mat:(m)=>{
     if(/Joints/.test(m.name)){m.color.setHex(0x1c2a33);m.emissive=new THREE.Color(0x2ad8ff);m.emissiveIntensity=.55;m.metalness=.8;m.roughness=.3}
@@ -290,10 +323,10 @@ on('quality',sizeReflector);on('resize',sizeReflector);
 Z.update=(dt,S)=>{
   H.holoMat.uniforms.time.value=T;
   H.helix.rotation.y+=dt*.5;
-  H.fireLight.intensity=2.2+Math.sin(T*17)*.45+Math.sin(T*7.3)*.35;H.fire.scale.y=1+Math.sin(T*15)*.15;
+  H.fireLight.intensity=2.2+Math.sin(T*17)*.45+Math.sin(T*7.3)*.35;
   H.ventLight.intensity=Math.sin(T*9)>.97?.2:1.3;
   H.chip.rotation.y+=dt*1.5;H.chip.position.y=1.3+Math.sin(T*2)*.04;
-  if(S.chip){H.labLight.color.setHex(0xff2a2a);H.labLight.intensity=1.2+Math.sin(T*6)*.8}else H.labLight.intensity=1.8;
+  if(S.chip){const a=.5+.5*Math.sin(T*6);H.labLight.color.setHex(0xff2a2a);H.labLight.intensity=.6+a*.8;H.labSpot.color.setHex(0xff3030);H.labSpot.intensity=.8+a*1.6}else{H.labLight.intensity=.5;H.labSpot.color.setHex(0xe6f6ff);H.labSpot.intensity=1.5}
   H.door.position.y+=((S.door?4.8:1.6)-H.door.position.y)*Math.min(1,dt*3);
   for(const l of H.rackLeds)if(rnd()<.02)l.visible=!l.visible;
   if(H.reflector){H.reflector.material.uniforms.time.value=T;H.reflector.material.uniforms.camPos.value.copy(camera.position)}
