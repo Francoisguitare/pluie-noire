@@ -1,0 +1,13 @@
+rules_version = '2';
+// Règles de la base Firestore de Pluie Noire : chaque joueur ne lit et n'écrit que sa propre fiche de sauvegarde.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /saves/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['data', 'at', 'maj'])
+        && request.resource.data.data is string
+        && request.resource.data.data.size() < 20000;
+    }
+  }
+}

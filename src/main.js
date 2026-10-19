@@ -1,0 +1,111 @@
+// Chef d'orchestre : construit le monde dans l'ordre, branche les écrans et les événements, fait tourner la boucle.
+import {THREE,$,P,G,T,tick,state,setState,quality,setQuality,MOBILE,camera,scene,on,emit,lerpAng,clamp} from './core.js';
+import {into,updateFx} from './construire.js';
+import {buildSky,buildCars,updateSky} from './ciel.js';
+import {buildRain,updateRain,rain} from './pluie.js';
+import {buildRue,loadRueCharacters,rueFallback,H} from './lieux/rue.js';
+import {H as HT} from './lieux/toits.js';
+import {H as HTB} from './lieux/traboules.js';
+import * as METIER from './metier.js';
+import {H as HQ} from './lieux/quais.js';
+import {H as HTO} from './lieux/tour.js';
+import {H as HS} from './lieux/sommet.js';
+import {initSparks,updateDrones,killDrone} from './drones.js';
+import {updateGardiens} from './gardiens.js';
+import {updateFaucheuses} from './faucheuse.js';
+import {updateCameras} from './cameras.js';
+import {update as updateCine,passer as passerCine} from './cinema.js';
+import {updatePlayer,updateHand,handLocked} from './joueur.js';
+import {buildEnv,render} from './rendu.js';
+import {DLG,openDialog,pickChoice} from './histoire/dialogue.js';
+import {ACTIONS} from './histoire/chapitre1.js';
+import './histoire/chapitre3.js';
+import './histoire/chapitre4.js';
+import './histoire/chapitre5.js';
+import {S,chap,newGame,applySave,allerZone,fmtHeure} from './histoire/partie.js';
+import {saveGame,readSave,clearSave,showSaveInfo,lire,exportCode,importCode} from './sauvegarde.js';
+import {toast,detectionHud,fade} from './interface.js';
+import {initAudio,toggleMute,setIndoor} from './son.js';
+import {keys,lock} from './controles.js';
+import {enterZone,zone,zones} from './zones.js';
+import {poseSid} from './personnages.js';
+import {ouvrirTransfert,importDepuisAdresse} from './transfert.js';
+import {ouvrirCompte,initComptes} from './compte.js';
+import {updateAmbiance} from './ambiance.js';
+window.__pnBoot=true;
+
+/* ---------- Écrans ---------- */
+$('play').disabled=true;$('cont').disabled=true;const noteTxt=$('note').textContent;$('note').textContent='Chargement des personnages…';
+const ready=()=>{$('play').disabled=false;$('cont').disabled=false;$('note').textContent=noteTxt};
+let perfProbe=null;
+const DEBUG=/[?&]debug\b/.test(location.search);
+function enterGame(){$('title').hidden=true;$('end').hidden=true;$('pauseMenu').hidden=true;$('hud').hidden=false;$('touch').hidden=!MOBILE;document.body.classList.add('playing');setState('play');perfProbe=DEBUG?null:{t:0,f:0}; // en test, pas de baisse automatique de qualité
+  if(MOBILE){try{const r=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen({navigationUI:'hide'});if(r&&r.catch)r.catch(()=>{})}catch(e){}}else lock()}
+$('play').onclick=()=>{initAudio();clearSave();newGame();enterGame();saveGame();toast('Mara t\'attend sous l\'enseigne violette, à gauche')};
+$('cont').onclick=()=>{const d=readSave();if(!d)return;initAudio();applySave(d);enterGame();toast('Partie reprise')};
+$('again').onclick=()=>{clearSave();newGame();enterGame();saveGame()};
+function pause(){if(state!=='play')return;saveGame();emit('saveNow');setState('paused');document.body.classList.add('paused');$('pauseMenu').hidden=false;if(document.pointerLockElement)document.exitPointerLock()}
+$('resume').onclick=()=>{$('pauseMenu').hidden=true;document.body.classList.remove('paused');setState('play');if(!MOBILE)lock()};
+function toTitle(save){if(save){saveGame();emit('saveNow')}document.body.classList.remove('paused');$('pauseMenu').hidden=true;$('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');setState('title');showSaveInfo();$('title').hidden=false;
+  try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}}
+$('toTitle').onclick=()=>toTitle(true);
+$('endTitre').onclick=()=>{$('end').hidden=true;toTitle(false)};
+// Partie importée (code, QR code, compte) pendant une pause : retour à l'écran titre sans écraser l'import.
+on('partieImportee',()=>{if(state!=='title')toTitle(false)});
+$('transferBtn').onclick=()=>ouvrirTransfert('title');$('pauseTransfer').onclick=()=>ouvrirTransfert('pauseMenu');
+$('compteBtn').onclick=()=>ouvrirCompte('title');$('pauseCompte').onclick=()=>ouvrirCompte('pauseMenu');
+on('pause',pause);
+// Sur ordinateur, perdre le pointeur (touche Échap) ouvre la pause.
+document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&state==='play'&&!MOBILE)pause()});
+on('mute',()=>toast(toggleMute()?'Son coupé':'Son activé'));
+on('cycleQuality',()=>{setQuality(quality==='ultra'?'perf':quality==='perf'?'low':'ultra');toast({ultra:'Graphismes : ultra',perf:'Graphismes : performance',low:'Graphismes : économie'}[quality])});
+on('toast',toast);
+on('teleport',(x,z,yaw,msg)=>{fade(true);setTimeout(()=>{P.pos.set(x,0,z);P.vx=P.vz=0;P.yaw=yaw;P.pitch=0;fade(false);if(msg)toast(msg)},300)});
+
+/* ---------- Monde ---------- */
+// L'ordre des constructions fixe la suite aléatoire : ciel, rue (avec ses drones), pluie, voitures.
+function buildWorld(){into(null);buildSky();buildRue();zones.rue.construite=true;initSparks();buildRain();buildCars();enterZone('rue');emit('quality')}
+function updateNpcs(dt){
+  const pp=state==='title'||state==='end'?camera.position:P.pos;
+  for(const n of zone().npcs){const dx=pp.x-n.x,dz=pp.z-n.z,d=Math.hypot(dx,dz),near=d<6&&state!=='title';
+    n.g.rotation.y=near?lerpAng(n.g.rotation.y,Math.atan2(dx,dz),dt*3):lerpAng(n.g.rotation.y,n.yaw,dt*1.2);
+    if(n.warm!==undefined)n.warm+=((near?0:1)-n.warm)*Math.min(1,dt*2);
+    if(n.mixer)n.mixer.update(dt);if(n.bones)poseSid(n);n.tag.material.opacity=state==='cine'?0:clamp(1-(d-5)/4,0,1);
+    if(n.cig)n.cig.material.color.setRGB(3,.6+Math.sin(T*.8)*.3,.15)}
+}
+const fx={flash:0,alert:0,glitch:0};
+function frame(dt){
+  tick(dt);if(G.grace>0)G.grace-=dt;
+  if(state==='title'||state==='end'){camera.position.set(Math.sin(T*.07)*2.5,3.2+Math.sin(T*.19)*.3,24-Math.sin(T*.05)*3);camera.lookAt(Math.sin(T*.1)*1.5,6,-40)}
+  if(state==='play')updatePlayer(dt);
+  if(state==='cine')updateCine(dt);
+  const z=zone(),actif=state==='play';
+  G.alertLvl=Math.max(updateDrones(dt,actif,z,chap().droneOpts?chap().droneOpts(S):{}),updateGardiens(dt,actif,z),updateFaucheuses(dt,actif,z),updateCameras(dt,actif,z));
+  if(actif){detectionHud(dt,G.alertLvl);
+    // Horloge : une minute de jeu par minute réelle, sans dépasser 5 h 58 avant la fin
+    const avant=Math.floor(S.heure);S.heure=Math.min(S.heure+dt/60,S.fin?24*60:5*60+58);if(Math.floor(S.heure)!==avant)$('heure').textContent=fmtHeure(S.heure)}
+  const inside=(state==='play'||state==='cine')&&z.indoor(P.pos);updateRain(dt,z.pluie&&!inside);setIndoor(inside||!z.pluie);
+  updateFx(dt,z);updateSky(dt);if(z.update)z.update(dt,S);
+  fx.glitch=updateHand(dt);
+  updateAmbiance(dt,z);
+  updateNpcs(dt);for(const f of z.figurants)if(f.mixer)f.mixer.update(dt);
+  fx.flash=G.flash;fx.alert=state==='play'?Math.max(0,G.alertLvl-.3):0;
+  if(perfProbe&&state==='play'){perfProbe.t+=dt;perfProbe.f++;if(perfProbe.t>4){const fps=perfProbe.f/perfProbe.t;perfProbe=null;
+    if(fps<38&&quality!=='low'){const was=quality;setQuality(quality==='ultra'?'perf':'low');toast(quality==='perf'?'Graphismes passés en mode performance':'Graphismes passés en mode économie');if(was==='ultra')perfProbe={t:0,f:0}}}}
+}
+const clock=new THREE.Clock();
+function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.05);frame(dt);render(dt,fx)}
+
+/* ---------- Mode debug (?debug) : accès pour les tests automatiques ---------- */
+if(DEBUG)window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,newGame,applySave,saveGame,readSave,killDrone,zone,zones,handLocked,lire,exportCode,importCode,allerZone,passerCine,
+  get S(){return S},get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB,quais:HQ,tour:HTO,sommet:HS},metier:METIER,
+  step:(n,dt=1/30)=>{for(let i=0;i<n;i++)frame(dt)}};
+
+/* ---------- Démarrage : polices, monde, personnages, boucle ---------- */
+const fonts=document.fonts&&document.fonts.load?Promise.race([Promise.all(['500','600','700'].map(w=>document.fonts.load(`${w} 40px "Saira Condensed"`))),new Promise(r=>setTimeout(r,1500))]):Promise.resolve();
+fonts.catch(()=>{}).then(()=>{
+  buildWorld();newGame();
+  showSaveInfo();initComptes();importDepuisAdresse();
+  loadRueCharacters().then(ready,e=>{console.warn('Personnages :',e);rueFallback();ready()});
+  loop();
+});
