@@ -42,7 +42,8 @@ verifier(await g.pn(()=>!document.getElementById('cible').hidden&&document.getEl
 if(sortie)await capture('coupure-visee');
 let xp0=(await S()).xp;
 await g.pn(()=>window.__pn.emit('couper'));await g.avancer(2);if(sortie)await capture('coupure-arc');
-await g.p.waitForTimeout(250);await g.avancer(14);if(sortie)await capture('coupure-chute');await g.avancer(30);
+// la Coupure touche après un court délai réel (le temps de l'arc) : on l'attend avant de compter les images de la chute
+await g.p.waitForFunction(()=>window.__pn.zone().gardiens[0].neutre,null,{timeout:30000});await g.avancer(14);if(sortie)await capture('coupure-chute');await g.avancer(30);
 s=await S();const d0=await g.pn(()=>{const d=window.__pn.zone().gardiens[0];return{n:d.neutre,rx:d.g.rotation.x,num:d.num}});
 verifier(d0.n&&Math.abs(d0.rx)>1.3,`le Gardien tombe raide (angle ${d0.rx.toFixed(2)})`);
 verifier(s.neutres.length===1&&s.neutres[0].k==='toits:'+d0.num&&s.xp===xp0+45,`neutralisé sans être vu : +45 XP, gardé dans la sauvegarde (${s.xp})`);
@@ -60,7 +61,7 @@ await g.avancer(200);
 const dr=await g.pn(()=>{const d=window.__pn.zone().drones[0];return{x:d.g.position.x,y:d.g.position.y,z:d.g.position.z}});
 await g.pn(([x,y,z])=>{const P=window.__pn.P;P.pos.set(x+5,0,z+5);const dx=x-P.pos.x,dz=z-P.pos.z;P.yaw=Math.atan2(-dx,-dz);P.pitch=Math.atan2(y-1.66,Math.hypot(dx,dz));P.vx=P.vz=0},[dr.x,dr.y,dr.z]);
 await g.pn(()=>{const d=window.__pn.zone().drones[0];d.speed=0});await g.avancer(2);
-xp0=(await S()).xp;await couper();await g.avancer(5);
+xp0=(await S()).xp;await couper();await g.p.waitForFunction(()=>window.__pn.zone().drones[0].dead,null,{timeout:30000}).catch(()=>{});await g.avancer(5);
 verifier(await g.pn(()=>window.__pn.zone().drones[0].dead)&&(await S()).xp===xp0+20,'la Coupure abat le drone : +20 XP');
 
 // Sauvegarde, reprise : le Gardien est toujours à terre ; nouvelle partie : il se relève
@@ -73,7 +74,7 @@ verifier(await g.pn(n=>{const d=window.__pn.zone().tousGardiens.find(d=>d.num===
 // L'arc : avec un rang, la Coupure saute sur le Gardien voisin
 await g.pn(()=>{const pn=window.__pn,Z=pn.zone();pn.S.ameli.arc=1;pn.S.xp=1000;pn.G.grace=1e6;
   const[a,b]=Z.gardiens;a.pos.set(-12,0,-8);b.pos.set(-9,0,-8.5);for(const d of[a,b]){d.yaw=0;d.wait=1e6;d.g.position.copy(d.pos)}});
-await g.avancer(200);await g.placer(-12,-16,viser(-12,-16,-12,-8));await g.avancer(2);await couper();await g.p.waitForTimeout(300);await g.avancer(30);
+await g.avancer(200);await g.placer(-12,-16,viser(-12,-16,-12,-8));await g.avancer(2);await couper();await g.p.waitForFunction(()=>window.__pn.zone().gardiens.every(d=>d.neutre),null,{timeout:30000}).catch(()=>{});await g.avancer(30);
 verifier(await g.pn(()=>window.__pn.zone().gardiens.every(d=>d.neutre)),'arc : deux Gardiens d\'un coup');
 // Écho : repérage à travers les murs
 await g.pn(()=>{const pn=window.__pn;pn.S.ameli.echo=1;pn.zone().drones[0].dead||0});

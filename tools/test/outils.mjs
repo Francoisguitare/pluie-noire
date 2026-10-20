@@ -4,7 +4,7 @@ import http from 'http';import fs from 'fs';import path from 'path';import {crea
 const require=createRequire(import.meta.url);
 const {chromium}=require('playwright'); // installé globalement : lancer avec NODE_PATH=$(npm root -g)
 export const RACINE=path.resolve(path.dirname(new URL(import.meta.url).pathname),'../..');
-const TYPES={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.glb':'model/gltf-binary','.woff2':'font/woff2','.json':'application/json','.png':'image/png','.css':'text/css','.txt':'text/plain','.md':'text/plain'};
+const TYPES={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.glb':'model/gltf-binary','.woff2':'font/woff2','.json':'application/json','.png':'image/png','.css':'text/css','.txt':'text/plain','.md':'text/plain','.webmanifest':'application/manifest+json'};
 export function servir(port=0){return new Promise(res=>{
   const srv=http.createServer((req,rep)=>{let p=decodeURIComponent(new URL(req.url,'http://x').pathname);if(p.endsWith('/'))p+='index.html';
     const f=path.join(RACINE,p);if(!f.startsWith(RACINE)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){rep.writeHead(404);rep.end();return}

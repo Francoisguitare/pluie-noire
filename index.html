@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pluie Noire</title>
+<!-- Installable sur l'écran d'accueil : il s'ouvre alors en plein écran (seule façon sur iPhone) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#07080d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pluie Noire">
+<link rel="apple-touch-icon" href="assets/icones/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icones/icone-192.png">
 <link rel="preload" href="assets/fonts/saira-condensed-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face{font-family:"Saira Condensed";font-weight:400;font-display:swap;src:url(assets/fonts/saira-condensed-latin-400-normal.woff2) format("woff2")}
@@ -128,13 +137,17 @@ body.touch .desk-only{display:none}
 .tbtn{all:unset;position:fixed;pointer-events:auto;touch-action:none;box-sizing:border-box;display:grid;place-items:center;border-radius:50%;
   font:600 13px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:rgba(8,8,10,.5);border:1.5px solid rgba(240,165,58,.55);-webkit-tap-highlight-color:transparent}
 .tbtn.on{background:var(--amber);color:#140e04}
-#tAct{width:78px;height:78px;right:calc(26px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px));font-size:15px}
+/* Commandes tactiles : Agir dans le coin, les autres en arc autour (rayon 118 px, tous les 30°), plus petits ;
+   le reste de la moitié droite de l'écran sert à tourner la caméra. */
+#touch{--sr:env(safe-area-inset-right,0px);--sb:env(safe-area-inset-bottom,0px)}
+.tbtn{background:rgba(8,8,10,.38)}
+#tAct{width:74px;height:74px;right:calc(16px + var(--sr));bottom:calc(16px + var(--sb));font-size:14px}
 #tAct.ready{background:var(--amber);color:#140e04;box-shadow:0 0 22px rgba(240,165,58,.5)}
-#tCrouch{width:58px;height:58px;right:calc(118px + env(safe-area-inset-right,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));font-size:11px}
-#tRun{width:58px;height:58px;right:calc(36px + env(safe-area-inset-right,0px));bottom:calc(122px + env(safe-area-inset-bottom,0px));font-size:11px}
-.tbtn#tFire{display:none;width:84px;height:84px;right:calc(22px + env(safe-area-inset-right,0px));bottom:calc(118px + env(safe-area-inset-bottom,0px));font-size:14px;border-color:rgba(255,90,70,.7)}
+#tFire,#tCoupe,#tCrouch,#tRun{width:56px;height:56px;font-size:11px;letter-spacing:.02em}
+.tbtn#tFire{display:none;right:calc(143px + var(--sr));bottom:calc(25px + var(--sb));border-color:rgba(255,90,70,.75)}
 body.armed .tbtn#tFire{display:grid}
-body.armed #tRun{right:calc(118px + env(safe-area-inset-right,0px));bottom:calc(132px + env(safe-area-inset-bottom,0px))}
+#tCrouch{right:calc(84px + var(--sr));bottom:calc(127px + var(--sb));font-size:10px}
+#tRun{right:calc(25px + var(--sr));bottom:calc(143px + var(--sb))}
 #weap{position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));display:none;gap:12px;align-items:baseline;padding:8px 14px;background:linear-gradient(270deg,rgba(7,7,9,.75),rgba(7,7,9,0));border-right:2px solid var(--amber)}
 body.armed:not(.touch) #weap{display:flex}
 #weap b{font:500 26px/1 var(--f-mono);color:var(--ink)}
@@ -144,7 +157,9 @@ body.touch.armed #cross{display:block}
 #hit::before{left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);clip-path:polygon(0 0,100% 0,100% 30%,0 30%,0 70%,100% 70%,100% 100%,0 100%)}
 #hit::after{top:50%;left:0;right:0;height:2px;transform:translateY(-50%);clip-path:polygon(0 0,30% 0,30% 100%,0 100%,70% 0,100% 0,100% 100%,70% 100%)}
 #hit.on{opacity:1;transition:none}
-#tMenu{width:42px;height:42px;left:50%;margin-left:-21px;top:calc(12px + env(safe-area-inset-top,0px));font-size:16px;border-radius:12px}
+#tMenu,#tPlein{width:42px;height:42px;left:50%;margin-left:-21px;top:calc(8px + env(safe-area-inset-top,0px));font-size:16px;border-radius:12px}
+#tPlein{margin-left:29px}
+body.plein #tPlein,body.sansPlein #tPlein,body.sansPlein .pleinBtn{display:none}
 body.touch #prompt{pointer-events:auto;cursor:pointer}
 body.touch #dialog{left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));width:auto;transform:none;
   bottom:calc(8px + env(safe-area-inset-bottom,0px));max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
@@ -159,9 +174,15 @@ body.touch.dialogue #toast{top:calc(8px + env(safe-area-inset-top,0px))}
 body.touch.dialogue #dialog{max-height:calc(100vh - 58px);max-height:calc(100dvh - 58px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
 body.touch #toast{top:calc(62px + env(safe-area-inset-top,0px))}
 @media (max-height:300px){body.touch #dtxt{font-size:14px}body.touch #dch button{font-size:13px;padding:7px 8px}}
-body.touch .obj{padding:8px 12px 10px}
-body.touch #objs li{font-size:15px}
-body.touch #objs li.sub{font-size:13px}
+body.touch .obj{padding:6px 10px 8px;top:calc(8px + env(safe-area-inset-top,0px));max-width:min(330px,42vw)}
+body.touch #objs{margin-top:6px;gap:3px}
+body.touch #objs li{font-size:14px}
+body.touch #objs li.sub{font-size:12px;padding-left:12px}
+body.touch .stats{top:calc(8px + env(safe-area-inset-top,0px));gap:5px}
+body.touch .stats .lbl{font-size:9px}
+body.touch .cred b{font-size:17px}
+body.touch .det{width:120px}
+body.touch .det .bar{margin-top:4px;height:4px}
 body.touch #cross{display:none}
 #rotate{position:fixed;inset:0;display:none;place-items:center;text-align:center;background:rgba(5,6,10,.92);font:600 22px/1.3 var(--f-display);padding:24px}
 @media (orientation:portrait){body.touch.playing #rotate{display:grid}}
@@ -225,9 +246,19 @@ body:not(.armed) #coupe{bottom:calc(18px + env(safe-area-inset-bottom,0px))}
 #archive[hidden]{display:none}
 #archive .kicker{color:#58e6ff;letter-spacing:.14em;line-height:1.3}
 #archive p{margin:0;font-size:18px;line-height:1.35}
-.tbtn#tCoupe{display:none;width:66px;height:66px;right:calc(192px + env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));font-size:12px;
-  border-color:rgba(88,230,255,.75);background:conic-gradient(rgba(88,230,255,.35) calc(var(--k,1)*360deg),rgba(8,8,10,.5) 0)}
+.tbtn#tCoupe{display:none;right:calc(127px + var(--sr));bottom:calc(84px + var(--sb));
+  border-color:rgba(88,230,255,.75);background:conic-gradient(rgba(88,230,255,.35) calc(var(--k,1)*360deg),rgba(8,8,10,.38) 0)}
 body.coupure .tbtn#tCoupe{display:grid}
+/* Écrans bas (petits téléphones) : arc plus serré, boutons plus petits */
+@media (max-height:370px){
+  #tAct{width:66px;height:66px}
+  #tFire,#tCoupe,#tCrouch,#tRun{width:50px;height:50px;font-size:10px}
+  #tCrouch{font-size:9px}
+  .tbtn#tFire{right:calc(124px + var(--sr));bottom:calc(24px + var(--sb))}
+  .tbtn#tCoupe{right:calc(111px + var(--sr));bottom:calc(74px + var(--sb))}
+  #tCrouch{right:calc(74px + var(--sr));bottom:calc(111px + var(--sb))}
+  #tRun{right:calc(24px + var(--sr));bottom:calc(124px + var(--sb))}
+}
 body.coupure.coupePrete .tbtn#tCoupe{box-shadow:0 0 18px rgba(88,230,255,.55)}
 body.touch.coupure #cross{display:block}
 #pvBadge{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-left:10px;border-radius:10px;background:#58e6ff;color:#06141a;font:600 13px/1 var(--f-mono)}
@@ -357,7 +388,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
       <button class="go" id="play">Entrer dans la nuit</button>
     </div>
     <div class="savehint" id="saveInfo" hidden></div>
-    <div class="liens"><button class="lien" id="transferBtn">Transférer ma partie</button><button class="lien" id="compteBtn" hidden>Mon compte</button></div>
+    <div class="liens"><button class="lien pleinBtn" id="titrePlein">Plein écran</button><button class="lien" id="transferBtn">Transférer ma partie</button><button class="lien" id="compteBtn" hidden>Mon compte</button></div>
     <div class="note" id="note">Une nuit en cinq chapitres, environ une heure et demie. Clavier et souris, ou téléphone en mode paysage. Ta partie est sauvegardée automatiquement.</div>
   </div>
 </div>
@@ -370,14 +401,16 @@ body.touch .carte{min-height:36px;padding:4px 10px}
   <button class="tbtn" id="tFire">Tirer</button>
   <button class="tbtn" id="tCoupe">Couper</button>
   <button class="tbtn" id="tMenu" aria-label="Menu">II</button>
+  <button class="tbtn" id="tPlein" aria-label="Plein écran"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
 </div>
 <div id="pauseMenu" class="screen" hidden>
   <div class="card">
     <div class="kicker">Pause</div>
     <h2>Partie sauvegardée</h2>
     <p class="pitch">Ta progression est enregistrée automatiquement sur cet appareil.</p>
+    <p class="note" id="pleinAide" hidden>Pour jouer en plein écran sur iPhone : bouton Partager, puis « Sur l'écran d'accueil ». Le jeu s'ouvrira alors sans les barres du navigateur.</p>
     <div class="btns"><button class="go" id="resume">Reprendre</button><button class="go alt" id="pausePouvoirs">Pouvoirs<span id="pvBadge" hidden></span></button><button class="go alt" id="toTitle">Écran titre</button></div>
-    <div class="liens"><button class="lien" id="pauseTransfer">Transférer ma partie</button><button class="lien" id="pauseCompte" hidden>Mon compte</button></div>
+    <div class="liens"><button class="lien pleinBtn" id="pausePlein">Plein écran</button><button class="lien" id="pauseTransfer">Transférer ma partie</button><button class="lien" id="pauseCompte" hidden>Mon compte</button></div>
   </div>
 </div>
 <div id="pouvoirs" class="screen" hidden>
