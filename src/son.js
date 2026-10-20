@@ -144,4 +144,6 @@ export function arcSound(k=1){
 // Une armure qui tombe d'un bloc sur le sol : choc sourd et cliquetis de plaques.
 export function chuteArmure(){if(!AC)return;const t=AC.currentTime;nz(t,'lowpass',260,.8,.6,.004,.35);nz(t,'bandpass',900,2,.12,.002,.12);click(t+.03,1400,.06);click(t+.1,900,.05);click(t+.19,1700,.03)}
 export function niveauSound(){if(!AC)return;[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.28,'triangle',.045),i*90))}
+// Le signal de la main K7 près d'une archive : un bip bref, plus aigu quand on s'approche (k de 0 à 1).
+export function bipSignal(k){if(!AC)return;tone(700+k*700,.05,'sine',.012+k*.012)}
 export function archiveSound(){if(!AC)return;tone(1320,.5,'sine',.04,1760);setTimeout(()=>tone(1980,.6,'sine',.025),110)}

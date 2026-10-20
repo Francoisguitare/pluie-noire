@@ -25,9 +25,12 @@ export const S0=()=>({chapter:1,heure:192,quest:false,code:false,credits:80,vent
   tour:false,ascenseur:false,couloir:false,lasersCoupes:false,cle:false,sommet:false,finale:false,cams:[],fin:null,
   // pouvoirs (voir pouvoirs.js) : XP, améliorations achetées, Gardiens neutralisés {k:'zone:num',x,z,yaw,sens}, archives trouvées,
   // dernière étape de l'histoire déjà payée en XP, tutoriel de la Coupure vu
-  xp:0,ameli:{portee:0,recharge:0,discretion:0,arc:0,echo:0},neutres:[],archives:[],xpChap:1,coupureVue:false});
-// Un point de pouvoir tous les XP_NIVEAU points d'expérience.
-export const XP_NIVEAU=150;
+  xp:0,ameli:{portee:0,recharge:0,discretion:0,arc:0,echo:0},neutres:[],archives:[],xpChap:1,coupureVue:false,
+  // exploration (voir exploration.js) : lieux découverts, premières rencontres, dossiers complets, quêtes (sid, rosa, casier), signal déjà expliqué
+  lieux:[],rencontres:[],dossiersFinis:[],quetes:{},signalVu:false});
+// Un point de pouvoir par niveau ; chaque niveau coûte 50 XP de plus que le précédent (100, 150, 200…).
+export const seuilNiveau=n=>100*n+25*n*(n-1);
+export const niveauDe=xp=>{let n=0;while(seuilNiveau(n+1)<=xp)n++;return n};
 export let S=S0();
 
 /* Un chapitre : {zone, objectives(S,L), checkpoint(S) → [x,z,yaw], reset(), apply(S), describe(S), ends} */
@@ -54,7 +57,7 @@ export function finish(k,o={}){
   const sec=Math.round((performance.now()-S.t0)/1000),e=ENDS[k];
   $('endKicker').textContent=o.kicker||'Fin de mission';$('endSaison').textContent=o.saison||'';$('endSaison').hidden=!o.saison;
   $('endTitle').textContent=e[0];$('endText').textContent=typeof e[1]==='function'?e[1]():e[1];
-  $('endStats').textContent=`Temps ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}  ·  Repérages : ${S.spotted}  ·  ${S.credits} crédits restants  ·  Niveau ${Math.floor(S.xp/XP_NIVEAU)}  ·  Archives : ${S.archives.length}`;
+  $('endStats').textContent=`Temps ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}  ·  Repérages : ${S.spotted}  ·  ${S.credits} crédits restants  ·  Niveau ${niveauDe(S.xp)}  ·  Archives : ${S.archives.length}`;
   $('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');emit('clearSave');$('end').hidden=false;tone(220,1.2,'sine',.05,330);
 }
 

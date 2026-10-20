@@ -11,6 +11,7 @@ addEventListener('keydown',e=>{
   if(state==='play'&&e.code==='KeyF'&&!e.repeat)emit('shoot');
   if(state==='play'&&e.code==='KeyR'&&!e.repeat)emit('couper');
   if(e.code==='Tab'){e.preventDefault();if(state==='play'&&!e.repeat)emit('ouvrirPouvoirs')}
+  if(e.code==='KeyJ'&&state==='play'&&!e.repeat)emit('ouvrirDossiers');
   if(state==='play'&&(e.code==='KeyP'||e.code==='Escape')&&!e.repeat)emit('pause');
   if(state==='play'&&e.code==='KeyE'&&G.curInter&&!e.repeat){G.curInter.act()}
   else if(state==='dialogue'&&!e.repeat){
@@ -18,13 +19,21 @@ addEventListener('keydown',e=>{
     if(e.code==='Space'||e.code==='Enter')emit('skipText');
   }
   else if(state==='cine'&&!e.repeat&&(e.code==='Space'||e.code==='Enter'||e.code==='Escape'))emit('skipCine');
+  else if(state==='lecture'&&!e.repeat&&['KeyE','Space','Enter','Escape','KeyF'].includes(e.code))emit('lectureSuite');
 });
 addEventListener('keyup',e=>{keys[e.code]=false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 const cvs=renderer.domElement;let dragging=false;
 export function lookBy(dx,dy){P.yaw-=dx*.0022;P.pitch=clamp(P.pitch-dy*.0022,-1.4,1.4)}
 export function lock(){try{const r=cvs.requestPointerLock();if(r&&r.catch)r.catch(()=>{})}catch(err){}}
-cvs.addEventListener('mousedown',e=>{if(state!=='play')return;if(document.pointerLockElement===cvs){if(e.button===0)emit('shoot');else if(e.button===2)emit('couper');return}dragging=true;lock()});
+// Après une lecture, un dialogue ou l'énigme : on reprend la visée tout seul (il faut être dans le geste du joueur,
+// clic ou touche ; sinon le navigateur refuse et on le dit).
+export function reprendreVisee(){
+  if(MOBILE||document.pointerLockElement===cvs)return;
+  const echec=()=>{if(state==='play')emit('toast','Clique dans la scène pour reprendre la visée')};
+  try{const r=cvs.requestPointerLock();if(r&&r.catch)r.catch(echec)}catch(err){echec()}
+}
+cvs.addEventListener('mousedown',e=>{if(state==='lecture'){emit('lectureSuite');return}if(state!=='play')return;if(document.pointerLockElement===cvs){if(e.button===0)emit('shoot');else if(e.button===2)emit('couper');return}dragging=true;lock()});
 cvs.addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('mouseup',()=>{dragging=false});
 addEventListener('mousemove',e=>{if(state!=='play')return;if(document.pointerLockElement===cvs||dragging)lookBy(e.movementX||0,e.movementY||0)});

@@ -5,13 +5,14 @@ import {tone} from '../son.js';
 import {gesture} from '../personnages.js';
 import {npcBy} from '../zones.js';
 import {toast} from '../interface.js';
+import {reprendreVisee} from '../controles.js';
 
 export const DLG={};
 // Nœuds où le personnage secoue la tête au lieu d'acquiescer
 export const SHAKE=new Set();
 let dlg=null,typeTimer=null,fullText='';
 export function openDialog(key,node){dlg={d:DLG[key],key};document.body.classList.add('dialogue');setState('dialogue');if(document.pointerLockElement)document.exitPointerLock();
-  $('prompt').hidden=true;$('dialog').hidden=false;$('dwho').textContent=dlg.d.name;tone(720,.06,'triangle',.04);showNode(node||dlg.d.entry())}
+  emit('dialogueOuvert',key);$('prompt').hidden=true;$('dialog').hidden=false;$('dwho').textContent=dlg.d.name;tone(720,.06,'triangle',.04);showNode(node||dlg.d.entry())}
 function showNode(id){
   if(id==null){closeDialog();return}
   if(typeof id==='function'){id();return}
@@ -26,10 +27,11 @@ function showNode(id){
 function typeText(t){clearInterval(typeTimer);const el=$('dtxt');let i=0;el.textContent='';
   if(matchMedia('(prefers-reduced-motion:reduce)').matches){el.textContent=t;return}
   typeTimer=setInterval(()=>{i+=2;el.textContent=t.slice(0,i);if(i>=t.length)clearInterval(typeTimer)},16)}
-export function pickChoice(i){if(!dlg||!dlg.choices[i])return;clearInterval(typeTimer);tone(520,.04,'triangle',.03);showNode(dlg.choices[i].go)}
+export function pickChoice(i){if(!dlg||!dlg.choices[i])return;clearInterval(typeTimer);tone(520,.04,'triangle',.03);showNode(dlg.choices[i].go);
+  if(!dlg&&(state==='play'||state==='cine'))reprendreVisee()} // le dialogue est fini : la visée revient sans recliquer
 // Ferme sans rien déclencher (fin de partie, cinématique).
 export function stopDialog(){clearInterval(typeTimer);document.body.classList.remove('dialogue');$('dialog').hidden=true;dlg=null}
-export function closeDialog(){stopDialog();if(state==='dialogue'){setState('play');if(!document.pointerLockElement&&!MOBILE)toast('Clique dans la scène pour reprendre la visée')}emit('dialogClosed');emit('hud');emit('save')}
+export function closeDialog(){stopDialog();if(state==='dialogue')setState('play');emit('dialogClosed');emit('hud');emit('save')}
 export const inDialog=()=>!!dlg;
 on('choice',pickChoice);
 on('skipText',()=>{clearInterval(typeTimer);$('dtxt').textContent=fullText});

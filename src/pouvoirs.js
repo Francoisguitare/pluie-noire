@@ -3,17 +3,16 @@
 // le temps que la main se refroidisse. L'XP (neutralisations, archives cachées, chapitres) donne des points de pouvoir
 // à dépenser dans l'écran « Pouvoirs » (pause, ou Tab) : portée, recharge, discrétion, arc, écho.
 import {THREE,$,V3,P,T,camera,scene,MOBILE,state,on,emit,clamp} from './core.js';
-import {S,XP_NIVEAU} from './histoire/partie.js';
+import {S,niveauDe,seuilNiveau} from './histoire/partie.js';
 import {zone} from './zones.js';
 import {los} from './physique.js';
 import {toast,ouvrirEcran,fermerEcran} from './interface.js';
 import {glow} from './construire.js';
-import {softDot} from './textures.js';
 import {killDrone,burst} from './drones.js';
 import {detruireCamera} from './cameras.js';
 import {neutraliser,relever,remettre,bruitDeChute} from './gardiens.js';
 import {gesteCoupure,boutDesDoigts,handLocked} from './joueur.js';
-import {arcSound,chuteArmure,niveauSound,archiveSound} from './son.js';
+import {arcSound,chuteArmure,niveauSound} from './son.js';
 
 /* ---------- Améliorations : un point par rang ---------- */
 const virgule=v=>String(v).replace('.',',');
@@ -26,7 +25,10 @@ export const AMELIS=[
 ];
 const rang=id=>S.ameli[id]||0;
 const val=id=>AMELIS.find(a=>a.id===id).val[rang(id)];
-export const niveau=()=>Math.floor(S.xp/XP_NIVEAU);
+export const niveau=()=>niveauDe(S.xp);
+export const NB_ARCHIVES=41;
+// portée de l'Écho (0 si pas encore appris) : exploration.js s'en sert pour montrer les archives à travers les murs
+export const porteeEcho=()=>val('echo');
 export const pointsDispo=()=>niveau()-Object.values(S.ameli).reduce((a,b)=>a+b,0);
 // La Coupure arrive au chapitre 3, une fois la rue plongée dans le noir (Mara l'explique dans la cinématique).
 export const coupureDispo=()=>S.chapter>=4||(S.chapter===3&&S.blackout);
@@ -121,50 +123,7 @@ function appliquerNeutres(z){
     else if(!e&&d.neutre){relever(d);remettre(d)}}
 }
 
-/* ---------- Archives cachées : trois par lieu ---------- */
-export const ARCHIVES=[
-  {id:'rue1',zone:'rue',x:-13.5,z:-36.5,titre:'Fiche de paie, usine Helix de Vaise',texte:"Salaire : 900 crédits. Retenue « location prothèse K7 » : 212 crédits. En bas, au stylo : « On ne peut pas rendre une main. »"},
-  {id:'rue2',zone:'rue',x:-5.5,z:33.5,titre:'Un ticket du bar de Kovac',texte:"Au dos, au crayon, l'écriture de Kovac : « Elle tremble le matin. Le docteur d'Helix dit que c'est l'humidité. »"},
-  {id:'rue3',zone:'rue',x:7,z:-51,titre:'Note de service, labo Helix',texte:"« Devant les clients, ne jamais dire coupure. Dire : mise en veille de confort. »"},
-  {id:'toits1',zone:'toits',x:13.4,z:11.4,titre:'Une photo délavée',texte:"L'équipe de nuit de l'usine de Vaise, 2036. Tout le monde sourit. Une main sur deux est déjà une K7."},
-  {id:'toits2',zone:'toits',x:.6,z:-15.3,titre:'Planning des Gardiens, quartier nord',texte:"Ronde de 4 h. Consigne soulignée deux fois : « Pas de témoin. Pas d'image. »"},
-  {id:'toits3',zone:'toits',x:-17.3,z:-33.3,titre:'Mémo de la direction Helix',texte:"« Taux de réclamation K7 : 0,2 %. Taux de coupure : confidentiel. »"},
-  {id:'trab1',zone:'traboules',x:-9.5,z:-36,titre:'Une carte perforée de 1831',texte:"Un canut a gravé dans le carton, à la pointe du couteau : « Vivre en travaillant ou mourir en combattant. »"},
-  {id:'trab2',zone:'traboules',x:-30.5,z:-15,titre:'Une lettre de Varga, jamais envoyée',texte:"« Vous m'aviez promis que personne ne s'en servirait. J'ai fait semblant de vous croire. C'est ça, ma faute. »"},
-  {id:'trab3',zone:'traboules',x:-67.5,z:-47,titre:"Une plaque d'identification",texte:"« Unité de maintenance NOX-3. Contrat expiré en 2039. Ne pas réparer. » Quelqu'un a ajouté au feutre : « Pardon. »"},
-  {id:'quais1',zone:'quais',x:-5.5,z:-32,titre:'Un carnet trempé',texte:"Écrit par quelqu'un qui dort sous le pont : « Les drones ne regardent jamais sous les ponts. Les Gardiens, si. »"},
-  {id:'quais2',zone:'quais',x:6,z:-55.5,titre:'Bon de livraison Helix',texte:"4 000 modules K7.2. Mention spéciale : « Installation sans consentement autorisée par la direction. »"},
-  {id:'quais3',zone:'quais',x:-3,z:-77.5,titre:'Contrat de location K7',texte:"Article 12 : la prothèse est louée à vie. Article 13 : la vie du client n'est pas couverte."},
-  {id:'tour1',zone:'tour',x:-15.5,z:11.5,titre:'Un discours de Saal, brouillon',texte:"« Nous protégeons nos clients. Même contre eux-mêmes. » Rayé trois fois. Réécrit trois fois."},
-  {id:'tour2',zone:'tour',x:100.5,z:2.5,titre:"Rapport d'incident, armurerie",texte:"« Gardien 12 : armure verrouillée en pleine ronde. Cause : même puce de coupure que les K7. Ne pas ébruiter. »"},
-  {id:'tour3',zone:'tour',x:151.5,z:-11.5,titre:'Liste des K7 à griller en priorité',texte:"Syndicalistes, journalistes, deux médecins. Et un matricule souligné en rouge : le tien."},
-  {id:'sommet1',zone:'sommet',x:-21.5,z:-21.5,titre:'Plan de vol de Victor Saal',texte:"Départ 6 h 15, aéroport de Bron. Un seul passager prévu."},
-  {id:'sommet2',zone:'sommet',x:21.5,z:21.5,titre:"Carnet de maintenance de l'antenne",texte:"« Override manuel conçu par l'ingénieure Varga. Ne jamais en parler à la direction. » Signé d'un technicien qui a démissionné le lendemain."},
-  {id:'sommet3',zone:'sommet',x:21.5,z:-21.5,titre:'Un paquet de cigarettes vide',texte:"Coincé sous un boulon, quelques mots au dos : « Si tu lis ça, la tour n'est pas si haute. » Personne ne sait qui l'a écrit."},
-];
-// Une carte mémoire Helix posée au sol : boîtier sombre, liseré cyan, une diode qui clignote (on la repère dans le noir).
-const geoCarte=new THREE.BoxGeometry(.16,.014,.11),geoBande=new THREE.BoxGeometry(.162,.016,.012);
-const matCarte=new THREE.MeshStandardMaterial({color:0x1b1e24,roughness:.35,metalness:.7}),matBande=glow(0x58e6ff,2.2);
-const matPoint=new THREE.SpriteMaterial({map:softDot,color:new THREE.Color(0x58e6ff).multiplyScalar(2),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false});
-function poserArchives(z){
-  if(z.archives)return;z.archives=[];
-  for(const a of ARCHIVES){if(a.zone!==z.id)continue;
-    const g=new THREE.Group();g.position.set(a.x,0,a.z);g.rotation.y=(a.x*7.3+a.z*3.1)%6.28;
-    const c=new THREE.Mesh(geoCarte,matCarte);c.position.y=.008;g.add(c);
-    const b=new THREE.Mesh(geoBande,matBande);b.position.set(0,.009,.045);g.add(b);
-    const p=new THREE.Sprite(matPoint.clone());p.position.set(.05,.05,-.03);p.scale.setScalar(.22);g.add(p);
-    z.root.add(g);z.archives.push({a,g,p});
-    z.inter.push({p:new V3(a.x,0,a.z),r:1.7,on:()=>!S.archives.includes(a.id),label:()=>"Ramasser l'archive",act:()=>ramasser(a)});
-  }
-}
-let archT=null;
-function ramasser(a){
-  if(S.archives.includes(a.id))return;S.archives.push(a.id);archiveSound();
-  $('archKick').textContent=`Archive ${S.archives.length} / ${ARCHIVES.length} · ${a.titre}`;$('archTxt').textContent=a.texte;$('archive').hidden=false;
-  clearTimeout(archT);archT=setTimeout(()=>{$('archive').hidden=true},8000);
-  gagner(50,'archive trouvée');emit('save');
-}
-on('apresCapture',()=>{const z=zone();if(!z)return;poserArchives(z);appliquerNeutres(z)});
+on('apresCapture',()=>{const z=zone();if(z)appliquerNeutres(z)});
 on('partieAppliquee',()=>{const z=zone();if(z)appliquerNeutres(z)});
 
 /* ---------- Affichage : viseur, écho, jauges ---------- */
@@ -172,15 +131,14 @@ const echos=[];
 function marque(i){while(echos.length<=i){const e=document.createElement('i');$('echos').appendChild(e);echos.push(e)}return echos[i]}
 const proj=(x,y,z)=>{_p.set(x,y,z).project(camera);return _p.z<1&&Math.abs(_p.x)<1.2&&Math.abs(_p.y)<1.2?[(_p.x+1)/2*innerWidth,(1-_p.y)/2*innerHeight]:null};
 export function majHud(){
-  const n=niveau(),reste=S.xp-n*XP_NIVEAU,pts=pointsDispo();
-  $('xpNiv').textContent=n;$('xpBar').style.width=(reste/XP_NIVEAU*100).toFixed(1)+'%';
+  const n=niveau(),a=seuilNiveau(n),b=seuilNiveau(n+1),pts=pointsDispo();
+  $('xpNiv').textContent=n;$('xpBar').style.width=((S.xp-a)/(b-a)*100).toFixed(1)+'%';
   $('xpPts').textContent=pts>0?`+${pts}`:'';$('xpPts').title=pts>0?`${pts} point${pts>1?'s':''} de pouvoir à dépenser`:'';$('pvBadge').textContent=pts>0?pts:'';$('pvBadge').hidden=pts<1;
 }
 on('hudRafraichi',majHud);
 let vuDispo=false;
 export function updatePouvoirs(dt){
   const Z=zone();if(!Z)return;
-  // archives : la diode clignote doucement, la carte disparaît une fois ramassée
   if(Z.archives)for(const r of Z.archives){const pris=S.archives.includes(r.a.id);r.g.visible=!pris;if(!pris){const k=.5+.5*Math.sin(T*3+r.a.x);r.p.material.opacity=.35+k*.65;r.p.scale.setScalar(.16+k*.1)}}
   for(const r of arcs)dessinerArc(r,dt);
   const jeu=state==='play',dispo=coupureDispo();
@@ -206,10 +164,10 @@ export function updatePouvoirs(dt){
 /* ---------- L'écran « Pouvoirs » ---------- */
 function remplir(){
   const n=niveau(),pts=pointsDispo();
-  $('pvNiv').textContent=`Niveau ${n} · ${S.xp} XP · prochain point dans ${XP_NIVEAU-(S.xp-n*XP_NIVEAU)} XP`;
+  $('pvNiv').textContent=`Niveau ${n} · ${S.xp} XP · prochain point dans ${seuilNiveau(n+1)-S.xp} XP`;
   $('pvPts').textContent=pts>0?`${pts} point${pts>1?'s':''} à dépenser`:'Aucun point à dépenser';
   $('pvIntro').textContent=coupureDispo()?"Ta main K7 a lu la puce : elle renvoie à Helix ses propres codes de coupure. Vise un Gardien, un drone ou une caméra.":"Ta main K7 garde un secret que tu découvriras bientôt. Les points gagnés t'attendent.";
-  $('pvArch').textContent=`Archives Helix trouvées : ${S.archives.length} / ${ARCHIVES.length} · Gardiens neutralisés : ${S.neutres.length}`;
+  $('pvArch').textContent=`Archives Helix trouvées : ${S.archives.length} / ${NB_ARCHIVES} · Gardiens neutralisés : ${S.neutres.length}`;
   $('pvListe').innerHTML='';
   for(const a of AMELIS){const r=rang(a.id),max=a.val.length-1;
     const li=document.createElement('div');li.className='pvRang';

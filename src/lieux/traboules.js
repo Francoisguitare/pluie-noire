@@ -10,6 +10,7 @@ import {makeZone,constructeurs} from '../zones.js';
 import {makeGardien} from '../gardiens.js';
 import {habiller,nameTag} from '../personnages.js';
 import {canvasTex,mk,texPierre,texPaves} from '../textures.js';
+import {texEcran,matEcran} from '../ordinateurs.js';
 
 // Zones à ciel ouvert : la première cour et la cour des Voraces
 const COURS=[[-10,10,-38,-20],[-50,-30,-46,-14]];
@@ -168,7 +169,7 @@ constructeurs.traboules=()=>{
   {const[c,g]=mk(256,384);g.fillStyle='#c9b48a';g.fillRect(0,0,256,384);g.fillStyle='#3a1010';g.font='700 46px "Saira Condensed",sans-serif';g.textAlign='center';g.fillText('LYON',128,70);g.fillText('1831',128,124);
     g.font='600 28px "Saira Condensed",sans-serif';g.fillText('LES CANUTS',128,330);g.fillStyle='#7a2a20';g.fillRect(48,150,160,140);
     const m=new THREE.Mesh(new THREE.PlaneGeometry(.8,1.2),new THREE.MeshStandardMaterial({map:canvasTex(c),roughness:.95}));m.position.set(-31.98,1.9,-57.5);m.rotation.y=-Math.PI/2;add(m)}
-  H.ecranDecodeur=new THREE.Mesh(new THREE.PlaneGeometry(.6,.4),glow(0x58e6ff,1.4));H.ecranDecodeur.position.set(-33.4,1.25,-52.5);H.ecranDecodeur.rotation.y=-Math.PI/2;H.ecranDecodeur.visible=false;add(H.ecranDecodeur);
+  H.ecranDecodeur=new THREE.Mesh(new THREE.PlaneGeometry(.6,.4),matEcran(texEcran({w:384,h:256,titre:'DÉCODEUR · K7 LIBÉRÉES',coin:'04:51',graine:61,lignes:[['K7-0412 · bras · LIBRE','#7dffc8'],['K7-1187 · main · LIBRE','#7dffc8'],['K7-2290 · œil · LIBRE','#7dffc8'],['K7-3301 · jambe · LIBRE','#7dffc8'],['MISE À JOUR K7.2 · 06:00','#ff4b42']]}),1.3));H.ecranDecodeur.position.set(-33.4,1.25,-52.5);H.ecranDecodeur.rotation.y=-Math.PI/2;H.ecranDecodeur.visible=false;add(H.ecranDecodeur);
   // La porte de l'atelier de Varga (charnière côté nord ; elle s'ouvre vers l'atelier)
   H.porteAtelier=new THREE.Group();H.porteAtelier.position.set(-50.15,0,-54.6);add(H.porteAtelier);
   {const b=new THREE.Mesh(new THREE.BoxGeometry(.1,2.4,1.8),new THREE.MeshStandardMaterial({color:0x3a2416,roughness:.6}));b.position.set(0,1.2,-.9);H.porteAtelier.add(b)}

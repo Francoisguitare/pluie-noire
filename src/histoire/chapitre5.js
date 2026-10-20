@@ -14,6 +14,7 @@ import {lockHand,resetHand} from '../joueur.js';
 import {burst} from '../drones.js';
 import {detruireCamera,reparerCamera} from '../cameras.js';
 import {finSaison,NOMS_FINS} from '../sauvegarde.js';
+import {epilogueArchives} from '../exploration.js';
 import * as Q from '../lieux/quais.js';
 import * as TR from '../lieux/tour.js';
 import * as SO from '../lieux/sommet.js';
@@ -240,16 +241,17 @@ function aube(k){
 }
 function finSaisonUn(){
   const rec={fin:S.fin,forced:S.forced,maraFree:S.maraFree,vargaTestifies:S.vargaTestifies,noxWith:S.noxWith,noxPaid:S.noxPaid,temoignage:S.temoignage,boitier:S.boitier,
-    kovac:S.kovacVerite?'verite':S.kovacPaye?'paye':S.kovacMenace?'menace':null,credits:S.credits,spotted:S.spotted,temps:Math.round((performance.now()-S.t0)/1000)};
+    kovac:S.kovacVerite?'verite':S.kovacPaye?'paye':S.kovacMenace?'menace':null,credits:S.credits,spotted:S.spotted,temps:Math.round((performance.now()-S.t0)/1000),
+    archives:S.archives.length,dossiers:S.dossiersFinis.slice(),quetes:Object.assign({},S.quetes),neutres:S.neutres.length};
   finSaison('1',rec);emit('saveNow');
   finish(S.fin,{kicker:'Fin de la saison 1 · Avant l\'aube',saison:`Ta fin, ${NOMS_FINS[S.fin]}, et tes choix de la nuit sont gardés sur cet appareil (et sur ton compte si tu en as un). La saison 2 reprendra de là.`});
 }
 defineEnds({
-  diffuser:['La ville a vu',"À six heures, l'antenne d'Helix n'a pas diffusé la K7.2. Elle a diffusé le docteur Varga, sur tous les écrans de la ville, et ce que NOX-7 avait enregistré cette nuit. Les K7 de Lyon-Basse ne répondent plus à personne. Ni à Helix, ni à Mara."],
-  saboter:["Le silence de l'antenne","L'antenne est morte et la K7.2 n'est jamais partie. Les mains de Lyon-Basse restent à ceux qui les portent. Helix a déjà commandé une nouvelle antenne, et ton visage est dans tous ses fichiers."],
-  negocier:["Le prix d'une main","Ta main fonctionne. Cinquante mille crédits dorment sur un compte à ton nom. À six heures, dans Lyon-Basse, des centaines d'autres mains se sont arrêtées en même temps. Kovac n'a pas rouvert son bar."],
-  mara:['La main de Mara',"La K7.2 est partie à six heures. Mais la clé, désormais, ce sont Mara et les Nouveaux Canuts qui la tiennent. Elle a promis de ne jamais s'en servir. Tu sais ce que valent ses promesses."],
-  maraForce:['La main de Mara',"Tu as voulu traiter avec Saal. Mara, elle, avait gardé son boîtier : elle a repris ta main, puis la clé. Les K7 n'obéissent plus à Helix, elles obéissent à Mara. Cette nuit, tu n'as jamais eu le choix."],
+  diffuser:['La ville a vu',()=>"À six heures, l'antenne d'Helix n'a pas diffusé la K7.2. Elle a diffusé le docteur Varga, sur tous les écrans de la ville, et ce que NOX-7 avait enregistré cette nuit."+epilogueArchives('diffuser')+" Les K7 de Lyon-Basse ne répondent plus à personne. Ni à Helix, ni à Mara."],
+  saboter:["Le silence de l'antenne",()=>"L'antenne est morte et la K7.2 n'est jamais partie. Les mains de Lyon-Basse restent à ceux qui les portent. Helix a déjà commandé une nouvelle antenne, et ton visage est dans tous ses fichiers."+epilogueArchives('saboter')],
+  negocier:["Le prix d'une main",()=>"Ta main fonctionne. Cinquante mille crédits dorment sur un compte à ton nom. À six heures, dans Lyon-Basse, des centaines d'autres mains se sont arrêtées en même temps. Kovac n'a pas rouvert son bar."+epilogueArchives('negocier')],
+  mara:['La main de Mara',()=>"La K7.2 est partie à six heures. Mais la clé, désormais, ce sont Mara et les Nouveaux Canuts qui la tiennent. Elle a promis de ne jamais s'en servir. Tu sais ce que valent ses promesses."+epilogueArchives('mara')],
+  maraForce:['La main de Mara',()=>"Tu as voulu traiter avec Saal. Mara, elle, avait gardé son boîtier : elle a repris ta main, puis la clé. Les K7 n'obéissent plus à Helix, elles obéissent à Mara. Cette nuit, tu n'as jamais eu le choix."+epilogueArchives('maraForce')],
 });
 
 /* ---------- Mises à jour propres au chapitre, à chaque image ---------- */

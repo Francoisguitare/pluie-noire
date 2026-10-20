@@ -33,6 +33,10 @@ import {ouvrirTransfert,importDepuisAdresse} from './transfert.js';
 import {ouvrirCompte,initComptes} from './compte.js';
 import {updateAmbiance} from './ambiance.js';
 import {updatePouvoirs} from './pouvoirs.js';
+import {majOrdinateurs} from './ordinateurs.js';
+import {updateExploration,brancherHistoire} from './exploration.js';
+import * as EXPLO from './exploration.js';
+brancherHistoire(); // les archives changent certains dialogues (Kovac, Varga, Sid, Rosa)
 import * as POUV from './pouvoirs.js';
 window.__pnBoot=true;
 
@@ -87,7 +91,7 @@ function frame(dt){
     const avant=Math.floor(S.heure);S.heure=Math.min(S.heure+dt/60,S.fin?24*60:5*60+58);if(Math.floor(S.heure)!==avant)$('heure').textContent=fmtHeure(S.heure)}
   const inside=(state==='play'||state==='cine')&&z.indoor(P.pos);updateRain(dt,z.pluie&&!inside);setIndoor(inside||!z.pluie);
   updateFx(dt,z);updateSky(dt);if(z.update)z.update(dt,S);
-  fx.glitch=updateHand(dt);updatePouvoirs(dt);
+  fx.glitch=updateHand(dt);updatePouvoirs(dt);majOrdinateurs(dt);updateExploration(dt);
   updateAmbiance(dt,z);
   updateNpcs(dt);for(const f of z.figurants)if(f.mixer)f.mixer.update(dt);
   fx.flash=G.flash;fx.alert=state==='play'?Math.max(0,G.alertLvl-.3):0;
@@ -99,7 +103,7 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.
 
 /* ---------- Mode debug (?debug) : accès pour les tests automatiques ---------- */
 if(DEBUG)window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,newGame,applySave,saveGame,readSave,killDrone,zone,zones,handLocked,lire,exportCode,importCode,allerZone,passerCine,
-  get S(){return S},pouvoirs:POUV,get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB,quais:HQ,tour:HTO,sommet:HS},metier:METIER,
+  get S(){return S},pouvoirs:POUV,exploration:EXPLO,get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB,quais:HQ,tour:HTO,sommet:HS},metier:METIER,
   step:(n,dt=1/30)=>{for(let i=0;i<n;i++)frame(dt)}};
 
 /* ---------- Démarrage : polices, monde, personnages, boucle ---------- */
