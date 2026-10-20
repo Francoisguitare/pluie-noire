@@ -9,6 +9,7 @@ import {makeGardien,gardienImmobile} from '../gardiens.js';
 import {makeFaucheuse} from '../faucheuse.js';
 import {habiller,nameTag} from '../personnages.js';
 import {canvasTex,mk} from '../textures.js';
+import {texEcran,moniteur} from '../ordinateurs.js';
 
 export const Z=makeZone('sommet',{fog:0x0b0d16,fogD:.011,hemi:.3,envPos:[0,3,4],cielY:-235,
   surfaceAt:p=>Math.hypot(p.x-9,p.z-9)<6.5?'metal':'asphalt'});
@@ -68,7 +69,11 @@ constructeurs.sommet=()=>{
     for(let i=0;i<4;i++)cable(-.6+i*.4,2.2,-8.6,(-.6+i*.4)*.5,8,cz+.4,.5,0)}
   // l'armoire d'émission : écrans, le lecteur de motifs, câbles vers l'antenne
   addBox(-1.6,1.6,-9.2,-8,0,2.2,new THREE.MeshStandardMaterial({color:0x2a2e36,roughness:.4,metalness:.7,envMapIntensity:1}));
+  // écran dessiné en blanc : sa couleur (cyan, puis blanc quand l'override part) vient du matériau
   H.ecranArmoire=new THREE.Mesh(new THREE.PlaneGeometry(1.4,.7),glow(0x58e6ff,1.2));H.ecranArmoire.position.set(-.6,1.6,-7.98);add(H.ecranArmoire);
+  H.ecranArmoire.material.map=texEcran({blanc:true,w:640,h:320,titre:'ÉMISSION K7.2 · ANTENNE PRINCIPALE',coin:'06:00',graine:51,lignes:[['Faisceau : Lyon-Basse, Confluence, Croix-Rousse'],['Puissance : 100 %'],['Override manuel : lecteur de motifs ->'],['Autorisation : direction sécurité']]});H.ecranArmoire.material.needsUpdate=true;
+  {const c=new THREE.Mesh(new THREE.BoxGeometry(1.48,.78,.03),M.darkMetal);c.position.set(-.6,1.6,-8.0);add(c)}
+  moniteur(.95,1.62,-7.99,0,{pied:false,w:.36,h:.22,mode:'courbes',titre:'SIGNAL',coin:'dB',graine:52,lignes:[]});
   H.lecteurAnt=new THREE.Mesh(new THREE.BoxGeometry(.6,.08,.04),glow(0xffb347,1.6));H.lecteurAnt.position.set(.9,1.2,-7.97);add(H.lecteurAnt);
   H.lumArmoire=plight(0x58e6ff,1.2,8,0,1.8,-6.8);
   Z.couverts.push({x0:-2.4,x1:2.4,z0:-14.4,z1:-9.6});

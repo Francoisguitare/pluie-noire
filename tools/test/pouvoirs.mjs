@@ -1,5 +1,5 @@
 // Pouvoirs : la Coupure (Gardien qui tombe, drone, portée, recharge, arc), l'XP et les niveaux, l'écran des améliorations,
-// la sauvegarde des Gardiens neutralisés, la reprise d'une ancienne partie, et les 18 archives cachées (atteignables, ramassées).
+// la sauvegarde des Gardiens neutralisés, la reprise d'une ancienne partie. Les archives sont testées dans exploration.mjs.
 // Usage : NODE_PATH=$(npm root -g) node tools/test/pouvoirs.mjs [dossier-captures]
 import {ouvrir,verifier,viser} from './outils.mjs';
 const sortie=process.argv[2];
@@ -11,25 +11,6 @@ const couper=async()=>{await g.pn(()=>window.__pn.emit('couper'));await g.avance
 // Chapitre 1 : pas encore de Coupure
 let s=await S();verifier(s.xp===0&&s.ameli.portee===0,'nouvelle partie : 0 XP');
 await couper();verifier(!(await g.pn(()=>document.body.classList.contains('coupure'))),'chapitre 1 : pas de Coupure');
-
-// Les archives : chacune atteignable (le joueur repoussé hors des murs reste à portée) et ramassée une fois
-const archives=await g.pn(()=>window.__pn.pouvoirs.ARCHIVES.map(a=>({id:a.id,zone:a.zone,x:a.x,z:a.z})));
-verifier(archives.length===18,'18 archives');
-for(const a of archives){
-  await g.pn(a=>{const pn=window.__pn;if(pn.zone().id!==a.zone)pn.allerZone(a.zone,null,{fondu:false});pn.G.grace=1e6},a);
-  // on se place à 1,2 m, face à l'archive, du côté le plus dégagé
-  const pos=await g.pn(async a=>{const {collide}=await import('/src/physique.js');const V=window.__pn.P.pos.constructor;let best=null;
-    for(let k=0;k<16;k++){const an=k/16*Math.PI*2,p=new V(a.x+Math.sin(an)*1.2,0,a.z+Math.cos(an)*1.2),x=p.x,z=p.z;collide(p,.38);const d=Math.hypot(p.x-x,p.z-z);if(!best||d<best.d)best={x:p.x,z:p.z,d}}
-    return best},a);
-  await g.placer(pos.x,pos.z,viser(pos.x,pos.z,a.x,a.z));await g.avancer(2);
-  const l=await g.pn(()=>{const it=window.__pn.G.curInter;return it?it.label():null});
-  verifier(l==="Ramasser l'archive",`archive ${a.id} (${a.zone}) atteignable${l!=="Ramasser l'archive"?' : '+l:''}`);
-  if(sortie){await g.placer(pos.x+(pos.x-a.x)*1.2,pos.z+(pos.z-a.z)*1.2,viser(pos.x,pos.z,a.x,a.z),-.55);await g.avancer(2);await capture('archive-'+a.id);await g.placer(pos.x,pos.z,viser(pos.x,pos.z,a.x,a.z));await g.avancer(2)}
-  const xp0=(await S()).xp;await g.pn(()=>window.__pn.G.curInter.act());await g.avancer(2);
-  s=await S();verifier(s.archives.includes(a.id)&&s.xp===xp0+50,`  ramassée : +50 XP (${s.xp})`);
-}
-verifier(!(await g.pn(()=>{const it=window.__pn.G.curInter;return it&&it.label()==="Ramasser l'archive"})),'une archive ramassée ne se ramasse plus');
-if(sortie)await capture('archive-carte');
 
 // Chapitre 3 sur les toits : la Coupure
 await g.pn(()=>{const pn=window.__pn;Object.assign(pn.S,{chapter:3,blackout:true,armed:true,ch2:true,xpChap:3,coupureVue:true});pn.allerZone('toits',null,{fondu:false});pn.G.grace=1e6});

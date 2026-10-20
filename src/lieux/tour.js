@@ -10,6 +10,7 @@ import {makeZone,constructeurs} from '../zones.js';
 import {makeGardien} from '../gardiens.js';
 import {makeCamera} from '../cameras.js';
 import {canvasTex,mk} from '../textures.js';
+import {moniteur,clavier,rangeeBaies,cheminCables,dallesPerforees} from '../ordinateurs.js';
 
 export const Z=makeZone('tour',{fog:0x05060a,fogD:.018,hemi:.38,envPos:[0,3,2],ciel:false,pluie:false,indoor:()=>true,
   surfaceAt:()=>'tile'});
@@ -24,11 +25,6 @@ function texVille(r,dense){const W=1024,Hh=1024,[c,g]=mk(W,Hh);g.fillStyle='#020
     for(let yy=y+6;yy<Hh;yy+=9)for(let xx=x+4;xx<x+w-4;xx+=7)if(r()<.3){g.fillStyle=r()<.7?'#ffcf8a':'#9fd8ff';g.globalAlpha=.4+r()*.6;g.fillRect(xx,yy,3,4);g.globalAlpha=1}}
   for(let i=0;i<14;i++){g.fillStyle=['#ff3d9e','#58e6ff','#ffb347','#7dffc8'][i%4];g.globalAlpha=.8;g.fillRect(r()*W,Hh*(.3+r()*.6),18+r()*40,4+r()*6);g.globalAlpha=1}
   return c}
-// Façade des baies de serveurs : unités de 1U, grilles d'aération ; les LED dans la carte d'émission.
-function texBaie(r){const[c,g]=mk(256,256),[e,ge]=mk(256,256);g.fillStyle='#0d0f13';g.fillRect(0,0,256,256);ge.fillStyle='#000';ge.fillRect(0,0,256,256);
-  for(let y=0;y<256;y+=16){g.fillStyle='#181b21';g.fillRect(4,y+1,248,14);g.fillStyle='#22262e';for(let x=40;x<200;x+=6)g.fillRect(x,y+4,3,8);
-    for(let k=0;k<4;k++)if(r()<.75){ge.fillStyle=r()<.7?'#3df0ff':r()<.6?'#4dff8a':'#ffb347';ge.fillRect(10+k*7,y+6,3,3)}}
-  return[c,e]}
 // La main K7 de l'hologramme, en traits, et le slogan
 function texHolo(){const[c,g]=mk(512,1024);g.clearRect(0,0,512,1024);g.strokeStyle='#fff';g.fillStyle='#fff';g.lineWidth=7;g.lineJoin='round';
   const R=(x,y,w,h)=>{g.beginPath();g.roundRect?g.roundRect(x,y,w,h,14):g.rect(x,y,w,h);g.stroke()};
@@ -126,8 +122,10 @@ constructeurs.tour=()=>{
   sol(130,152,-12,12,new THREE.MeshStandardMaterial({color:0x14171c,roughness:.3,metalness:.4,envMapIntensity:.8}));plafond(130,152,-12,12,5,0x0c0e12);
   mur(130,130.3,-12,-1.6,5,M.darkMetal);mur(130,130.3,1.6,12,5,M.darkMetal);mur(130,152,-12.3,-12,5,M.darkMetal);mur(130,152,12,12.3,5,M.darkMetal);mur(152,152.3,-12,12,5,M.darkMetal);
   linteauPorte();function linteauPorte(){mur(130,130.3,-1.6,1.6,5,M.darkMetal,{y0:3.2,collide:false})}
-  {const[c,e]=texBaie(r),tc=canvasTex(c,true),te=canvasTex(e,true);H.baies=new THREE.MeshStandardMaterial({map:tc,emissive:0xffffff,emissiveMap:te,emissiveIntensity:1.6,roughness:.4,metalness:.6,envMapIntensity:.9});
-    for(const z of[-9.5,-6,6,9.5])addBox(133,147,z-.5,z+.5,0,2.4,H.baies,{geo:boxGeoWorldUV(14,2.4,1,2.4)})}
+  // quatre rangées de baies (façades détaillées, diodes qui clignotent), allées froides en dalles perforées, chemins de câbles
+  [-9.5,-6,6,9.5].forEach((z,i)=>{rangeeBaies(133,147,z-.5,z+.5,2.4,{graine:31+i});cheminCables(133,147,z,3.05)});
+  dallesPerforees(133,147,-9,-6.5);dallesPerforees(133,147,6.5,9);
+  for(const z of[-7.75,7.75]){const b=new THREE.Mesh(new THREE.PlaneGeometry(14,.05),glow(0x58e6ff,1.4));b.rotation.x=-Math.PI/2;b.position.set(140,.02,z);add(b)}
   for(const z of[-7.8,7.8]){const l=plight(0x4aa8ff,1.2,12,140,4.2,z)}
   steam(140,.1,-7.8,0x8aa8c8,{n:24,rate:4,a:.06,s1:3,up:.12,life:5,spread:8,wind:.05});steam(140,.1,7.8,0x8aa8c8,{n:24,rate:4,a:.06,s1:3,up:.12,life:5,spread:8,wind:.05});
   // le grand écran du compte à rebours et le pupitre de l'override
@@ -135,6 +133,10 @@ constructeurs.tour=()=>{
     H.lumEcran=plight(0x58e6ff,1.4,12,149,2.6,0)}
   addBox(147.6,148.6,-1.4,1.4,0,1,new THREE.MeshStandardMaterial({color:0x1e2228,roughness:.4,metalness:.6}),{los:false});
   H.lecteur=new THREE.Mesh(new THREE.BoxGeometry(.5,.06,.7),glow(0xffb347,1.2));H.lecteur.position.set(147.9,1.03,0);H.lecteur.rotation.z=.25;add(H.lecteur);
+  // les écrans du pupitre de l'override
+  moniteur(148.35,1,-.95,-Math.PI/2,{w:.6,h:.34,titre:'K7.2 · DIFFUSION',coin:'ANTENNE',teinte:'#ff6a5a',graine:41,lignes:[['Paquet : K7.2-final.bin'],['Cibles : 412 088 prothèses'],['Override : NON ARMÉ','#ffb347'],['Clé tissée requise','#ff6a5a']]});
+  moniteur(148.35,1,.95,-Math.PI/2,{w:.6,h:.34,mode:'courbes',titre:'CHARGE · SALLE 41',coin:'97 %',graine:42,lignes:[]});
+  clavier(147.85,1,-.95,-Math.PI/2);
   // l'escalier du toit, au nord-est
   H.porteToit=addBox(148,150.4,-12.1,-11.95,0,2.5,new THREE.MeshStandardMaterial({color:0x3a1e1e,roughness:.4,metalness:.6}),{});
   neon('TOIT · ACCÈS HÉLIPORT','#ff6a5a',2.2,.32,149.2,2.85,-11.9,0,{weight:600,size:.6,glow:1.4});
@@ -170,5 +172,4 @@ export function majLasers(dt,actif,coupe){
 Z.update=(dt,S)=>{
   if(!H.holo)return;
   H.holo.rotation.y+=dt*.35;H.holoMat.uniforms.time.value=T;H.ruissellement.offset.y+=dt*.12;
-  H.baies.emissiveIntensity=1.4+Math.sin(T*3.1)*.15+Math.sin(T*11.7)*.1;
 };

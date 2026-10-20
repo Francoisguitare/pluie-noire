@@ -4,6 +4,7 @@
 import {$,state,setState,emit,on,MOBILE} from './core.js';
 import {tone,clac} from './son.js';
 import {toast} from './interface.js';
+import {reprendreVisee} from './controles.js';
 
 // La clé à obtenir, telle qu'elle doit apparaître sur le tissu (1 = fil d'or)
 export const CIBLE=['01100000','10011111','10010101','01100100'];
@@ -38,7 +39,7 @@ export function ouvrirMetier(){
 }
 export function fermerMetier(){
   if(!ouvert)return;ouvert=false;clearInterval(tissage);tissage=null;$('metier').hidden=true;document.body.classList.remove('puzzle');
-  if(state==='puzzle'){setState('play');if(!document.pointerLockElement&&!MOBILE)toast('Clique dans la scène pour reprendre la visée')}
+  if(state==='puzzle'){setState('play');reprendreVisee()}
 }
 // Pose une carte (par sa lettre) dans le premier rang libre.
 export function poser(id){if(tissage)return;const c=CARTES.find(c=>c.id===id),i=[0,1,2,3].find(i=>!poses[i]);if(!c||poses.includes(c)||i===undefined)return;poses[i]=c;clac();$('metierMsg').textContent='';afficher()}

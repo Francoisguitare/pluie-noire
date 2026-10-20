@@ -4,7 +4,8 @@
 //
 // cine([{t, cam:{p:[x,y,z], l:[x,y,z], p2, l2, dur, suivre:()=>[x,y,z]}}, {t, fn}, {t, sub:{qui, texte, dur}}, …]) → Promise
 // suivre : la caméra garde l'œil sur un point qui bouge (un appareil, un personnage).
-import {$,camera,state,setState,on,emit,V3} from './core.js';
+import {$,camera,state,setState,on,emit,V3,MOBILE} from './core.js';
+import {toast} from './interface.js';
 
 let cur=null;
 const _l=new V3(),_a=new V3(),_b=new V3();
@@ -14,7 +15,7 @@ export function cine(steps,{apres='play'}={}){
   return new Promise(res=>{
     const evs=steps.filter(s=>s.fn).sort((a,b)=>a.t-b.t),cams=steps.filter(s=>s.cam).sort((a,b)=>a.t-b.t),subs=steps.filter(s=>s.sub).sort((a,b)=>a.t-b.t);
     const fin=Math.max(...steps.map(s=>s.t+(s.cam?s.cam.dur||0:0)+(s.sub?s.sub.dur||0:0)),.1);
-    if(document.pointerLockElement)document.exitPointerLock();
+    // on garde la visée pendant les cinématiques (Espace ou Entrée pour passer) : pas besoin de recliquer après
     cur={tc:0,evs,cams,subs,fin,next:0,res,apres};setState('cine');
     document.body.classList.add('cine');$('cineBars').hidden=false;$('cineSkip').hidden=false;$('cineSub').hidden=true;
     update(0);
@@ -24,6 +25,7 @@ function finir(){
   const c=cur;if(!c)return;cur=null;
   document.body.classList.remove('cine');$('cineBars').hidden=true;$('cineSkip').hidden=true;$('cineSub').hidden=true;
   if(state==='cine')setState(c.apres);emit('cineFin');c.res();
+  if(state==='play'&&!MOBILE&&!document.pointerLockElement)toast('Clique dans la scène pour reprendre la visée');
 }
 export function passer(){if(!cur)return;for(;cur&&cur.next<cur.evs.length;cur.next++)cur.evs[cur.next].fn();finir()}
 on('skipCine',passer);

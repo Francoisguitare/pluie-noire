@@ -4,6 +4,7 @@ import {THREE,V3,rnd,T,on,quality,camera} from '../core.js';
 import {PUD,PUDD,canvasTex,mk,asphaltCanvas,roughCanvas} from '../textures.js';
 import {into,add,pushCol,M,glow,addBox,building,neon,plight,shaft,Particles,steam,cable,acUnit,lamp,bmats,boxGeoWorldUV,spot,shadowPoint,ombre,flushLedges,flamme} from '../construire.js';
 import {makeZone} from '../zones.js';
+import {moniteur,clavier,texEcran,facadeBaies} from '../ordinateurs.js';
 import {makeDrone} from '../drones.js';
 import {nameTag,loadGLB,restInfo,retarget,prepClip,mountChar,findBone,attachTo,cyberize,fallbackChars,preparerModele,habillerSid,MODELES} from '../personnages.js';
 
@@ -139,14 +140,19 @@ addBox(2.8,5.2,-51.5,-50.6,0,.95,M.darkMetal,{los:false});
   addBox(-6.6,-2.6,-51.45,-50.65,0,.86,M.darkMetal,{los:false});addBox(-6.65,-2.55,-51.5,-50.6,.86,.92,top,{collide:false});
   addBox(-7.45,-6.65,-50.2,-46.4,0,.86,M.darkMetal,{los:false});addBox(-7.5,-6.6,-50.25,-46.35,.86,.92,top,{collide:false});
   for(const[x,z,w,d,h]of[[-5.9,-51.05,.5,.4,.45],[-4.6,-51.1,.7,.45,.32],[-3.3,-51.05,.35,.35,.6],[-7.05,-49.4,.45,.5,.38],[-7.05,-47.4,.5,.42,.5]])addBox(x-w/2,x+w/2,z-d/2,z+d/2,.92,.92+h,dev,{collide:false});
-  for(const[x,z,r]of[[-4.6,-50.85,0],[-7.05,-48.3,Math.PI/2]]){const m=new THREE.Mesh(new THREE.PlaneGeometry(.5,.3),glow(0x58e6ff,1.2));m.position.set(x,1.42,z+(r?0:.1));m.rotation.y=r;add(m)}
+  // postes de mesure : moniteurs à courbes (sans tirage rnd : la ville ne doit pas changer)
+  moniteur(-4.6,1.24,-50.9,0,{w:.5,h:.3,mode:'courbes',titre:'SPECTRO · K7-PROTO',coin:'LIVE',graine:11,lignes:[]});
+  moniteur(-7.0,.92,-48.3,Math.PI/2,{w:.5,h:.3,mode:'courbes',titre:'BANC NEURAL 2',coin:'98 %',teinte:'#7dffc8',graine:12,lignes:[]});
   const cyl=new THREE.Mesh(new THREE.CylinderGeometry(.18,.2,.38,20),dev);cyl.position.set(-2.95,1.11,-51.0);add(cyl);
   for(const x of[-5.5,5.5])addBox(x-.15,x+.15,-51.4,-40.6,5.45,5.55,M.darkMetal,{collide:false});
   // Bandes de sécurité autour du socle de la puce
   const[c,g]=mk(512,64);for(let i=0;i<16;i++){g.fillStyle=i%2?'#1a1a1a':'#d9a21b';g.beginPath();g.moveTo(i*32,0);g.lineTo(i*32+32,0);g.lineTo(i*32+16,64);g.lineTo(i*32-16,64);g.fill()}
   const ring=new THREE.Mesh(new THREE.RingGeometry(.66,.82,48,1),new THREE.MeshStandardMaterial({map:canvasTex(c,true),roughness:.6}));ring.rotation.x=-Math.PI/2;ring.position.set(0,.02,-49);add(ring)}
-const screen=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.62),glow(0x3fd8ff,1.4));screen.position.set(4,1.35,-50.85);add(screen);
-addBox(3.42,4.58,-51.0,-50.9,1.0,1.7,M.darkMetal,{collide:false});
+// Le terminal du labo : deux écrans, un clavier, la messagerie de Varga ouverte
+moniteur(3.75,.95,-50.95,0,{w:.78,h:.44,titre:'HELIX · MESSAGERIE INTERNE',coin:'NON LU',graine:13,lignes:[['De : Dr Ilse Varga'],['À : Direction sécurité'],['Objet : K7, désactivation à distance','#ffb347'],[''],['La fonction est opérationnelle','#8fb8c8'],['sur 100 % du parc…','#8fb8c8'],['[CONFIDENTIEL]','#ff4b42']]});
+moniteur(4.72,.95,-50.85,-.35,{w:.42,h:.3,mode:'courbes',titre:'K7 · PARC ACTIF',coin:'412 088',graine:14,lignes:[]});
+clavier(3.8,.95,-50.72,0);
+facadeBaies(5.592,0,-44.25,4.5,2.6,-Math.PI/2,21);
 const pedestal=new THREE.Mesh(new THREE.CylinderGeometry(.45,.55,1,24),M.lab);pedestal.position.set(0,.5,-49);add(pedestal);
 const pedRing=new THREE.Mesh(new THREE.TorusGeometry(.46,.02,8,40),glow(0x58e6ff,2.5));pedRing.rotation.x=Math.PI/2;pedRing.position.set(0,1.0,-49);add(pedRing);
 pushCol({x0:-.5,x1:.5,z0:-49.5,z1:-48.5,los:false,off:false});
