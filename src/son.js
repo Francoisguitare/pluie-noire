@@ -1,10 +1,12 @@
 // Tout le son est synthétisé en direct (Web Audio) : fond de pluie, bourdonnement, effets, pas.
 export let AC=null;
-let out=null,noiseBuf=null,muted=false,room=null,rainG=null,rainLP=null,rainIn=false;
+let out=null,noiseBuf=null,muted=false,room=null,rainG=null,rainLP=null,rainIn=false,etouffe=null,maitre=null;
+// out (le monde) → etouffe (filtre : pause, lecture) → maitre (coupure du son, touche M) → haut-parleurs ; la musique entre dans maitre.
 export function initAudio(){
   if(AC){AC.resume&&AC.resume();return}
   try{
-    AC=new(window.AudioContext||window.webkitAudioContext)();out=AC.createGain();out.gain.value=.7;out.connect(AC.destination);
+    AC=new(window.AudioContext||window.webkitAudioContext)();out=AC.createGain();out.gain.value=.7;
+    etouffe=AC.createBiquadFilter();etouffe.type='lowpass';etouffe.frequency.value=20000;maitre=AC.createGain();out.connect(etouffe);etouffe.connect(maitre);maitre.connect(AC.destination);
     noiseBuf=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
     // Réverbération courte pour les intérieurs (labo)
     const ir=AC.createBuffer(2,AC.sampleRate*.7|0,AC.sampleRate);for(let c=0;c<2;c++){const b=ir.getChannelData(c);for(let i=0;i<b.length;i++)b[i]=(Math.random()*2-1)*Math.pow(1-i/b.length,3.2)}
@@ -16,7 +18,10 @@ export function initAudio(){
     const hg=AC.createGain();hg.gain.value=.03;hum.connect(hl);hl.connect(hg);hg.connect(out);hum.start();
   }catch(e){AC=null}
 }
-export function toggleMute(){muted=!muted;if(out)out.gain.value=muted?0:.7;return muted}
+export function toggleMute(){muted=!muted;if(maitre)maitre.gain.value=muted?0:1;return muted}
+// Pour musique.js : le bus du monde, le bus final, le bruit blanc ; et le filtre qui étouffe le monde (pause, lecture).
+export const busMonde=()=>out,busMaitre=()=>maitre,bruitBlanc=()=>noiseBuf;
+export function etouffer(f){if(etouffe)etouffe.frequency.setTargetAtTime(f,AC.currentTime,.25)}
 // La pluie s'étouffe à l'intérieur.
 let pluieK=1;
 export function setIndoor(v){if(!rainG||v===rainIn)return;rainIn=v;const t=AC.currentTime;rainG.gain.setTargetAtTime((v?.035:.1)*pluieK,t,.3);rainLP.frequency.setTargetAtTime(v?800:2600,t,.3)}

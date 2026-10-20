@@ -11,7 +11,7 @@ export const DLG={};
 // Nœuds où le personnage secoue la tête au lieu d'acquiescer
 export const SHAKE=new Set();
 let dlg=null,typeTimer=null,fullText='';
-export function openDialog(key,node){dlg={d:DLG[key],key};document.body.classList.add('dialogue');setState('dialogue');if(document.pointerLockElement)document.exitPointerLock();
+export function openDialog(key,node){dlg={d:DLG[key],key};document.body.classList.add('dialogue');setState('dialogue'); // la souris reste verrouillée : curseur dessiné (controles.js)
   emit('dialogueOuvert',key);$('prompt').hidden=true;$('dialog').hidden=false;$('dwho').textContent=dlg.d.name;tone(720,.06,'triangle',.04);showNode(node||dlg.d.entry())}
 function showNode(id){
   if(id==null){closeDialog();return}

@@ -31,6 +31,8 @@ function installerRue(){
   rue3.liste={gardiens:[rue3.g1,rue3.g2],faucheuses:[rue3.fau]};
   activerRue(false);return rue3;
 }
+// Créés dès le chargement du jeu (cachés) : leurs lampes existent déjà, rien à recompiler au black-out.
+export const prechargerRue3=()=>installerRue();
 // Présence des ennemis du chapitre 3 dans la rue (absents aux chapitres 1 et 2).
 function activerRue(on){
   const Z=RUE.Z;if(!rue3)return;
