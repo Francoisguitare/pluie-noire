@@ -34,7 +34,7 @@ const gun=new THREE.Group();gun.visible=false;camera.add(gun);
 })();
 const muzzle=new THREE.Mesh(new THREE.PlaneGeometry(.09,.09),new THREE.MeshBasicMaterial({map:softDot,color:new THREE.Color(0xffb070).multiplyScalar(1.4),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false}));
 muzzle.position.set(0,.02,-.31);muzzle.visible=false;gun.add(muzzle);
-let fireCD=0,gunKick=0,flashT=0,armed=false;
+let fireCD=0,gunKick=0,flashT=0,armed=false,gunBas=0; // gunBas : le pistolet descend hors de l'écran pendant la Coupure
 export function setArmed(v){armed=v;gun.visible=v;document.body.classList.toggle('armed',v)}
 const _dir=new V3(),_o=new V3(),_v=new V3();
 export function shoot(){
@@ -90,8 +90,10 @@ export function boutDesDoigts(v){return v.set(.1,-.07,-.5).applyMatrix4(camera.m
 // Renvoie l'intensité du glitch d'écran à appliquer.
 export function updateHand(dt){
   kPulse=Math.max(0,kPulse-dt*1.5);
-  gun.visible=armed&&state!=='cine'&&kPulse<=0; // pas d'arme à l'écran pendant les cinématiques ni pendant la Coupure
-  const kVeut=kLock||kPulse>0;kShow+=((kVeut?1:0)-kShow)*Math.min(1,dt*(kLock?4:kPulse>0?9:5));kHand.visible=kShow>.03;kLockT+=dt;
+  // La Coupure : le pistolet plonge d'abord hors de l'écran, la main K7 ne monte qu'ensuite, et l'arme ne revient qu'une fois la main redescendue.
+  gunBas+=((kPulse>0||kShow>.03?1:0)-gunBas)*Math.min(1,dt*(kPulse>0?22:10));
+  gun.visible=armed&&state!=='cine'&&gunBas<.5; // pas d'arme à l'écran pendant les cinématiques
+  const kVeut=kLock||(kPulse>0&&(!armed||gunBas>.5));kShow+=((kVeut?1:0)-kShow)*Math.min(1,dt*(kLock?4:kPulse>0?11:7));kHand.visible=kShow>.03;kLockT+=dt;
   const spasm=kLock?Math.max(0,1-kLockT/1.1):0;
   if(kLock)$('vig').style.opacity=(.35+spasm*.4).toFixed(2);
   if(kHand.visible){
@@ -127,7 +129,7 @@ export function updatePlayer(dt){
   camera.position.set(P.pos.x,1.66-.62*P.crouch+bob,P.pos.z);
   fireCD-=dt;
   if(gun.visible){gunKick=Math.max(0,gunKick-dt*7);const mm=Math.min(1,mv/4),bx=Math.sin(P.stepPh)*.009*mm,by=(1-Math.abs(Math.sin(P.stepPh)))*.007*mm;
-    gun.position.set((MOBILE?.19:.16)+bx,-.15-by+gunKick*.012,-.34+gunKick*.05);gun.rotation.set(gunKick*.32,0,0);
+    gun.position.set((MOBILE?.19:.16)+bx,-.15-by+gunKick*.012-gunBas*.3,-.34+gunKick*.05);gun.rotation.set(gunKick*.32-gunBas*.7,0,0);
     if(flashT>0){flashT-=dt;if(flashT<=0)muzzle.visible=false}}camera.rotation.set(P.pitch,P.yaw,Math.sin(P.stepPh)*.004*Math.min(1,mv/4));
   let best=null,bd=1e9;const fx=-sy,fz=-cy;
   for(const it of Z.inter){if(it.on&&!it.on())continue;const dx=it.p.x-P.pos.x,dz=it.p.z-P.pos.z,d=Math.hypot(dx,dz);if(d>it.r)continue;

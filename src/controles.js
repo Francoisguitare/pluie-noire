@@ -30,6 +30,28 @@ addEventListener('mouseup',()=>{dragging=false});
 addEventListener('mousemove',e=>{if(state!=='play')return;if(document.pointerLockElement===cvs||dragging)lookBy(e.movementX||0,e.movementY||0)});
 document.addEventListener('pointerlockerror',()=>emit('toast','Maintiens le clic gauche et bouge la souris pour regarder'));
 
+/* ---------- Plein écran ---------- */
+// Demandé tout de suite, dans le geste du joueur : le navigateur refuse s'il s'est passé trop de temps depuis le toucher.
+// Sur iPhone, Safari ne le permet pas : le jeu installé sur l'écran d'accueil s'ouvre sans barres (manifeste).
+const racine=document.documentElement;
+export const pleinPossible=!!(racine.requestFullscreen||racine.webkitRequestFullscreen);
+export const enPlein=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+const installe=matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches||navigator.standalone===true;
+export function pleinEcran(on=!enPlein()){
+  try{
+    if(on&&!enPlein()){const f=racine.requestFullscreen||racine.webkitRequestFullscreen;if(!f)return;const r=f.call(racine,{navigationUI:'hide'});
+      const paysage=()=>{try{const o=screen.orientation;if(MOBILE&&o&&o.lock)o.lock('landscape').catch(()=>{})}catch(e){}};
+      if(r&&r.then)r.then(()=>{paysage();majPlein()},()=>{});else paysage()}
+    else if(!on&&enPlein()){const r=(document.exitFullscreen||document.webkitExitFullscreen).call(document);if(r&&r.then)r.then(majPlein,()=>{})}
+  }catch(e){}
+}
+function majPlein(){const p=enPlein();document.body.classList.toggle('plein',p);for(const b of document.querySelectorAll('.pleinBtn'))b.textContent=p?'Quitter le plein écran':'Plein écran'}
+document.body.classList.toggle('sansPlein',!pleinPossible||installe);
+$('pleinAide').hidden=pleinPossible||installe||!MOBILE;
+// l'événement ne part pas partout (certains navigateurs) : on vérifie aussi à chaque redimensionnement
+document.addEventListener('fullscreenchange',majPlein);document.addEventListener('webkitfullscreenchange',majPlein);addEventListener('resize',majPlein);
+for(const b of document.querySelectorAll('.pleinBtn'))b.onclick=()=>pleinEcran();
+
 /* ---------- Commandes tactiles ---------- */
 export const TC={on:false,x:0,y:0,id:null,ox:0,oy:0,look:null,lx:0,ly:0,crouch:false,run:false};
 const stick=$('stick'),knob=$('knob');
@@ -67,4 +89,5 @@ if(MOBILE){
   tap($('tFire'),()=>emit('shoot'));
   tap($('tCoupe'),()=>emit('couper'));
   tap($('tMenu'),()=>{if(state==='play')emit('pause')});
+  tap($('tPlein'),()=>pleinEcran(true));
 }

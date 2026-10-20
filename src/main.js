@@ -26,7 +26,7 @@ import {S,chap,newGame,applySave,allerZone,fmtHeure} from './histoire/partie.js'
 import {saveGame,readSave,clearSave,showSaveInfo,lire,exportCode,importCode} from './sauvegarde.js';
 import {toast,detectionHud,fade} from './interface.js';
 import {initAudio,toggleMute,setIndoor} from './son.js';
-import {keys,lock} from './controles.js';
+import {keys,lock,pleinEcran} from './controles.js';
 import {enterZone,zone,zones} from './zones.js';
 import {poseSid,pivoter} from './personnages.js';
 import {ouvrirTransfert,importDepuisAdresse} from './transfert.js';
@@ -42,14 +42,13 @@ const ready=()=>{$('play').disabled=false;$('cont').disabled=false;$('note').tex
 let perfProbe=null;
 const DEBUG=/[?&]debug\b/.test(location.search);
 function enterGame(){$('title').hidden=true;$('end').hidden=true;$('pauseMenu').hidden=true;$('hud').hidden=false;$('touch').hidden=!MOBILE;document.body.classList.add('playing');setState('play');perfProbe=DEBUG?null:{t:0,f:0}; // en test, pas de baisse automatique de qualité
-  if(MOBILE){try{const r=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen({navigationUI:'hide'});if(r&&r.catch)r.catch(()=>{})}catch(e){}}else lock()}
-$('play').onclick=()=>{initAudio();clearSave();newGame();enterGame();saveGame();toast('Mara t\'attend sous l\'enseigne violette, à gauche')};
-$('cont').onclick=()=>{const d=readSave();if(!d)return;initAudio();applySave(d);enterGame();toast('Partie reprise')};
-$('again').onclick=()=>{clearSave();newGame();enterGame();saveGame()};
+  if(!MOBILE)lock()}
+$('play').onclick=()=>{if(MOBILE)pleinEcran(true);initAudio();clearSave();newGame();enterGame();saveGame();toast('Mara t\'attend sous l\'enseigne violette, à gauche')};
+$('cont').onclick=()=>{const d=readSave();if(!d)return;if(MOBILE)pleinEcran(true);initAudio();applySave(d);enterGame();toast('Partie reprise')};
+$('again').onclick=()=>{if(MOBILE)pleinEcran(true);clearSave();newGame();enterGame();saveGame()};
 function pause(){if(state!=='play')return;saveGame();emit('saveNow');setState('paused');document.body.classList.add('paused');$('pauseMenu').hidden=false;if(document.pointerLockElement)document.exitPointerLock()}
-$('resume').onclick=()=>{$('pauseMenu').hidden=true;document.body.classList.remove('paused');setState('play');if(!MOBILE)lock()};
-function toTitle(save){if(save){saveGame();emit('saveNow')}document.body.classList.remove('paused');$('pauseMenu').hidden=true;$('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');setState('title');showSaveInfo();$('title').hidden=false;
-  try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}}
+$('resume').onclick=()=>{if(MOBILE)pleinEcran(true);$('pauseMenu').hidden=true;document.body.classList.remove('paused');setState('play');if(!MOBILE)lock()};
+function toTitle(save){if(save){saveGame();emit('saveNow')}document.body.classList.remove('paused');$('pauseMenu').hidden=true;$('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');setState('title');showSaveInfo();$('title').hidden=false;}
 $('toTitle').onclick=()=>toTitle(true);
 $('endTitre').onclick=()=>{$('end').hidden=true;toTitle(false)};
 // Partie importée (code, QR code, compte) pendant une pause : retour à l'écran titre sans écraser l'import.

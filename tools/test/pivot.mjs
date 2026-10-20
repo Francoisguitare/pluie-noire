@@ -1,4 +1,4 @@
-// Écran de chargement, puis PNJ qui pivotent vers Ash en faisant des pas (Mara, Nox, Kovac, Sid).
+// Écran de chargement, plein écran, puis PNJ qui pivotent vers Ash en faisant des pas (Mara, Nox, Kovac, Sid).
 // Usage : NODE_PATH=$(npm root -g) node tools/test/pivot.mjs [dossier-captures]
 import {ouvrir,verifier,viser} from './outils.mjs';
 import {createRequire} from 'module';
@@ -14,8 +14,15 @@ const sortie=process.argv[2];
   await p.waitForSelector('#chargement',{state:'hidden',timeout:180000});
   verifier(!(await p.isDisabled('#play')),'écran de chargement retiré, bouton Jouer actif');
   await b.close();srv.close()}
-// 2. Les PNJ pivotent en faisant des pas
-const g=await ouvrir();await g.jouer();await g.avancer(5);
+// 2. Le plein écran depuis l'écran titre (ordinateur)
+const g=await ouvrir();
+verifier(await g.pn(()=>!document.getElementById('titrePlein').hidden&&getComputedStyle(document.getElementById('titrePlein')).display!=='none'),'écran titre : bouton « Plein écran »');
+await g.p.click('#titrePlein');await g.p.waitForFunction(()=>!!document.fullscreenElement,null,{timeout:10000}).catch(()=>{});
+verifier(await g.pn(()=>!!document.fullscreenElement&&document.getElementById('titrePlein').textContent==='Quitter le plein écran'),'plein écran activé, le bouton propose d\'en sortir');
+await g.p.click('#titrePlein');await g.p.waitForFunction(()=>!document.fullscreenElement,null,{timeout:10000}).catch(()=>{});
+verifier(await g.pn(()=>!document.fullscreenElement),'sortie du plein écran');
+// 3. Les PNJ pivotent en faisant des pas
+await g.jouer();await g.avancer(5);
 for(const k of['mara','nox','kovac','sid']){
   const n=await g.pn(k=>{const n=window.__pn.zone().npcs.find(n=>n.key===k);return{x:n.x,z:n.z,yaw:n.yaw}},k);
   // Ash arrive dans son dos (ou sur le côté si un mur l'en empêche) : le PNJ doit se retourner
