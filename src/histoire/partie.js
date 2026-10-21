@@ -3,12 +3,13 @@ import {$,P,G,state,setState,on,emit} from '../core.js';
 import {setCredits,setObjectives} from '../interface.js';
 import {tone} from '../son.js';
 import {stopDialog} from './dialogue.js';
-import {zone,enterZone,assurerZone} from '../zones.js';
+import {zone,zones,enterZone,assurerZone} from '../zones.js';
+import {compilerZone,stabiliserLumieres} from '../compilation.js';
 import {THREE,scene,V3} from '../core.js';
 import {buildEnv} from '../rendu.js';
 import {showSky,setHemiBase,placerCiel} from '../ciel.js';
 import {rain} from '../pluie.js';
-import {fade} from '../interface.js';
+import {fade,chargement,finChargement} from '../interface.js';
 import {resetDrones} from '../drones.js';
 import {collide} from '../physique.js';
 import {setArmed,resetHand} from '../joueur.js';
@@ -81,6 +82,7 @@ export function applySave(d){
 }
 
 /* ---------- Changer de zone ---------- */
+export const NOMS_LIEUX={rue:'la rue',toits:'les toits',traboules:'les traboules',quais:'les quais de Saône',tour:'la tour Helix',sommet:'le toit de la tour'};
 // Construit la zone si besoin, applique son ambiance (brouillard, ciel, pluie, lumière, reflets) et place le joueur.
 // spawn : [x,z,yaw] ou null pour ne pas bouger le joueur. fondu : passage au noir.
 export function allerZone(id,spawn,{fondu=true,ensuite=null}={}){
@@ -91,10 +93,18 @@ export function allerZone(id,spawn,{fondu=true,ensuite=null}={}){
     scene.environment=z.env;
     if(spawn){P.pos.set(spawn[0],0,spawn[1]);P.yaw=spawn[2]||0;P.pitch=0;P.vx=P.vz=0}
     resetDrones(z);emit('apresCapture');G.grace=Math.max(G.grace,1.5);
+    // premier passage : tout le lieu est préparé d'un coup (pas de gel ensuite) ; sinon, on rattache les nouvelles lumières
+    if(!z.compilee)compilerZone(z);else stabiliserLumieres(z);
     if(ensuite)ensuite();
   };
   if(!fondu){faire();return}
-  fade(true);setTimeout(()=>{faire();emit('save');setTimeout(()=>fade(false),120)},350);
+  const neuf=!(zones[id]&&zones[id].compilee);
+  fade(true);setTimeout(()=>{
+    if(!neuf){faire();emit('save');setTimeout(()=>fade(false),120);return}
+    // un lieu jamais vu : écran de chargement le temps de le construire et de le préparer
+    chargement('Chargement : '+(NOMS_LIEUX[id]||id)+'…');
+    setTimeout(()=>{faire();emit('save');finChargement();setTimeout(()=>fade(false),120)},60);
+  },350);
 }
 // L'heure du HUD avance avec le temps réel et saute aux moments clés de l'histoire (jamais au-delà de 5 h 58 avant la fin).
 export function heure(min){S.heure=Math.max(S.heure,min)}

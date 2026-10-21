@@ -33,7 +33,6 @@ function afficher(){
 }
 export function ouvrirMetier(){
   if(ouvert)return;ouvert=true;poses=[];tissage=null;setState('puzzle');document.body.classList.add('puzzle');
-  if(document.pointerLockElement)document.exitPointerLock();
   grille($('metierTissu'),CIBLE.map(r=>'0'.repeat(r.length)),'');$('metierMsg').textContent='';afficher();$('metier').hidden=false;
   tone(300,.15,'triangle',.03);
 }

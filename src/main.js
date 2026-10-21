@@ -22,9 +22,9 @@ import {ACTIONS} from './histoire/chapitre1.js';
 import './histoire/chapitre3.js';
 import './histoire/chapitre4.js';
 import './histoire/chapitre5.js';
-import {S,chap,newGame,applySave,allerZone,fmtHeure} from './histoire/partie.js';
+import {S,chap,newGame,applySave,allerZone,fmtHeure,NOMS_LIEUX} from './histoire/partie.js';
 import {saveGame,readSave,clearSave,showSaveInfo,lire,exportCode,importCode} from './sauvegarde.js';
-import {toast,detectionHud,fade} from './interface.js';
+import {toast,detectionHud,fade,chargement,finChargement} from './interface.js';
 import {initAudio,toggleMute,setIndoor} from './son.js';
 import {keys,lock,pleinEcran} from './controles.js';
 import {enterZone,zone,zones} from './zones.js';
@@ -35,6 +35,9 @@ import {updateAmbiance} from './ambiance.js';
 import {updatePouvoirs} from './pouvoirs.js';
 import {majOrdinateurs} from './ordinateurs.js';
 import {updateExploration,brancherHistoire} from './exploration.js';
+import {compilerZone,suivreLumieres,signatureLumieres} from './compilation.js';
+import {updateMusique} from './musique.js';
+import {prechargerRue3} from './histoire/chapitre3.js';
 import * as EXPLO from './exploration.js';
 brancherHistoire(); // les archives changent certains dialogues (Kovac, Varga, Sid, Rosa)
 import * as POUV from './pouvoirs.js';
@@ -48,7 +51,11 @@ const DEBUG=/[?&]debug\b/.test(location.search);
 function enterGame(){$('title').hidden=true;$('end').hidden=true;$('pauseMenu').hidden=true;$('hud').hidden=false;$('touch').hidden=!MOBILE;document.body.classList.add('playing');setState('play');perfProbe=DEBUG?null:{t:0,f:0}; // en test, pas de baisse automatique de qualité
   if(!MOBILE)lock()}
 $('play').onclick=()=>{if(MOBILE)pleinEcran(true);initAudio();clearSave();newGame();enterGame();saveGame();toast('Mara t\'attend sous l\'enseigne violette, à gauche')};
-$('cont').onclick=()=>{const d=readSave();if(!d)return;if(MOBILE)pleinEcran(true);initAudio();applySave(d);enterGame();toast('Partie reprise')};
+$('cont').onclick=()=>{const d=readSave();if(!d)return;if(MOBILE)pleinEcran(true);initAudio();
+  const reprendre=()=>{applySave(d);enterGame();toast('Partie reprise')};
+  // partie sauvegardée ailleurs que dans la rue : le lieu est construit et préparé derrière l'écran de chargement
+  const z=zones[d.zone||'rue'];if(z&&z.compilee){reprendre();return}
+  chargement('Reprise de ta partie : '+(NOMS_LIEUX[d.zone]||'')+'…');setTimeout(()=>{reprendre();finChargement()},60)};
 $('again').onclick=()=>{if(MOBILE)pleinEcran(true);clearSave();newGame();enterGame();saveGame()};
 function pause(){if(state!=='play')return;saveGame();emit('saveNow');setState('paused');document.body.classList.add('paused');$('pauseMenu').hidden=false;if(document.pointerLockElement)document.exitPointerLock()}
 $('resume').onclick=()=>{if(MOBILE)pleinEcran(true);$('pauseMenu').hidden=true;document.body.classList.remove('paused');setState('play');if(!MOBILE)lock()};
@@ -91,7 +98,7 @@ function frame(dt){
     const avant=Math.floor(S.heure);S.heure=Math.min(S.heure+dt/60,S.fin?24*60:5*60+58);if(Math.floor(S.heure)!==avant)$('heure').textContent=fmtHeure(S.heure)}
   const inside=(state==='play'||state==='cine')&&z.indoor(P.pos);updateRain(dt,z.pluie&&!inside);setIndoor(inside||!z.pluie);
   updateFx(dt,z);updateSky(dt);if(z.update)z.update(dt,S);
-  fx.glitch=updateHand(dt);updatePouvoirs(dt);majOrdinateurs(dt);updateExploration(dt);
+  fx.glitch=updateHand(dt);updatePouvoirs(dt);majOrdinateurs(dt);updateExploration(dt);suivreLumieres(z);updateMusique(dt);
   updateAmbiance(dt,z);
   updateNpcs(dt);for(const f of z.figurants)if(f.mixer)f.mixer.update(dt);
   fx.flash=G.flash;fx.alert=state==='play'?Math.max(0,G.alertLvl-.3):0;
@@ -103,7 +110,7 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.
 
 /* ---------- Mode debug (?debug) : accès pour les tests automatiques ---------- */
 if(DEBUG)window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,newGame,applySave,saveGame,readSave,killDrone,zone,zones,handLocked,lire,exportCode,importCode,allerZone,passerCine,
-  get S(){return S},pouvoirs:POUV,exploration:EXPLO,get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB,quais:HQ,tour:HTO,sommet:HS},metier:METIER,
+  get S(){return S},pouvoirs:POUV,exploration:EXPLO,signatureLumieres,programmes:()=>renderer.info.programs.length,textures:()=>renderer.info.memory.textures,get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB,quais:HQ,tour:HTO,sommet:HS},metier:METIER,
   step:(n,dt=1/30)=>{for(let i=0;i<n;i++)frame(dt)}};
 
 /* ---------- Démarrage : polices, monde, personnages, boucle ---------- */
@@ -118,8 +125,12 @@ fonts.catch(()=>{}).then(async()=>{
   etape('Arrivée des personnages…',.3);
   await loadRueCharacters(v=>etape('Arrivée des personnages…',.3+v*.6)).catch(e=>{console.warn('Personnages :',e);rueFallback()});
   etape('Préparation des lumières…',.94);await souffle();
-  try{renderer.compile(scene,camera)}catch(e){}
+  // les Gardiens et la Faucheuse du black-out existent dès maintenant (cachés), puis toute la rue est préparée
+  prechargerRue3();compilerZone(zones.rue);
   // la boucle ne démarre qu'ici : pendant le chargement, rien ne se dessine derrière l'écran
-  loop();etape('Prêt.',1);ready();
+  loop();etape('Premières images…',.98);
+  // les deux premières images (ombres, textures, post-traitement) sont les plus lourdes : on les dessine sous l'écran de chargement
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  etape('Prêt.',1);ready();
   setTimeout(()=>{$('chargement').classList.add('fini');setTimeout(()=>{$('chargement').hidden=true},700)},250);
 }).catch(e=>{console.error(e);window.pnEchec&&window.pnEchec("Le jeu n'a pas pu se charger. Recharge la page.")});

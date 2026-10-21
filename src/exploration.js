@@ -142,6 +142,14 @@ function murProche(z,x,zz,max=1.6){
     if(d<1e-3||d>max)continue;if(!best||d<best.d)best={d,px,pz,nx:(x-px)/d,nz:(zz-pz)/d}}
   return best;
 }
+// Hauteur du sol sous (x,z) : un rayon vers le bas, lancé à hauteur de genou (trottoirs, marches ; pas les tables).
+const rayon=new THREE.Raycaster(),BAS=new THREE.Vector3(0,-1,0),_n=new THREE.Vector3();
+function solSous(z,x,zz){
+  z.root.updateMatrixWorld(true);rayon.set(new THREE.Vector3(x,.6,zz),BAS);rayon.far=2;rayon.camera=camera; // la caméra : exigée pour les sprites
+  for(const h of rayon.intersectObject(z.root,true)){const o=h.object;if(!o.isMesh||(o.material&&o.material.transparent)||!h.face)continue;
+    _n.copy(h.face.normal).transformDirection(o.matrixWorld);if(_n.y>.7)return h.point.y}
+  return 0;
+}
 function texGraffiti(tag,graine){
   const[c,g]=mk(512,288);g.clearRect(0,0,512,288);const lignes=tag.split('\n'),col=['#ff3d6a','#58e6ff','#ffd23a','#e8e8e8'][graine%4];
   g.textAlign='center';g.textBaseline='middle';const fs=Math.min(64,Math.floor(470/Math.max(...lignes.map(l=>l.length))*1.7));
@@ -165,7 +173,8 @@ function poserArchives(z){
   ARCHIVES.forEach((a,i)=>{if(a.zone!==z.id)return;
     const g=new THREE.Group(),r={a,g,p:null};let forme=a.forme;const mur=murProche(z,a.x,a.z);
     if((forme==='graffiti'||forme==='affiche')&&!mur)forme='carte';
-    if(forme==='carte'){g.position.set(a.x,0,a.z);g.rotation.y=(a.x*7.3+a.z*3.1)%6.28;
+    const y0=forme==='graffiti'||forme==='affiche'?0:solSous(z,a.x,a.z);
+    if(forme==='carte'){g.position.set(a.x,y0,a.z);g.rotation.y=(a.x*7.3+a.z*3.1)%6.28;
       const c=new THREE.Mesh(geoCarte,matCarte);c.position.y=.008;g.add(c);const b=new THREE.Mesh(geoBande,matBande);b.position.set(0,.009,.045);g.add(b);
       r.p=new THREE.Sprite(matPoint.clone());r.p.position.set(.05,.05,-.03);r.p.scale.setScalar(.22);g.add(r.p)}
     else if(forme==='graffiti'||forme==='affiche'){
@@ -175,7 +184,7 @@ function poserArchives(z){
       g.position.set(mur.px+mur.nx*.03,graff?1.75:1.5,mur.pz+mur.nz*.03);g.rotation.y=Math.atan2(mur.nx,mur.nz);g.add(m);
       r.p=new THREE.Sprite(matPoint.clone());r.p.position.set(w/2-.05,-h/2+.05,.02);r.p.scale.setScalar(.16);g.add(r.p)}
     else{ // répondeur ou écran : posés face à l'espace libre
-      const yaw=mur?Math.atan2(mur.nx,mur.nz):0;g.position.set(a.x,0,a.z);g.rotation.y=yaw;
+      const yaw=mur?Math.atan2(mur.nx,mur.nz):0;g.position.set(a.x,y0,a.z);g.rotation.y=yaw;
       const socle=new THREE.Mesh(new THREE.BoxGeometry(.5,forme==='ecran'?.9:.5,.4),M.darkMetal);socle.position.y=forme==='ecran'?.45:.25;g.add(socle);
       if(forme==='repondeur'){const b=new THREE.Mesh(new THREE.BoxGeometry(.24,.07,.17),new THREE.MeshStandardMaterial({color:0x22252b,roughness:.5,metalness:.4}));b.position.y=.535;g.add(b);
         r.p=new THREE.Sprite(matPointRouge.clone());r.p.position.set(.07,.58,.06);r.p.scale.setScalar(.12);g.add(r.p)}
@@ -204,7 +213,7 @@ function pageSuivante(premiere){
   if(!premiere)tone(560,.04,'triangle',.025);
   const p=pages.shift();if(!p){fermer();return}
   $('lecKick').textContent=p.kicker||'';$('lecTitre').textContent=p.titre||'';$('lecTexte').textContent=p.texte||'';$('lecture').classList.toggle('revelation',!!p.revelation);
-  $('lecPied').textContent=(pages.length?'Suite':'Fermer')+(MOBILE?' : touche l\'écran':' : E, Espace ou clic');$('lecture').hidden=false;$('lecture').scrollTop=0;
+  $('lecPied').textContent=(pages.length?'Suite':'Fermer')+(MOBILE?' : touche l\'écran':' : E, Espace ou clic')+(p.relire?(MOBILE?' · à relire dans Dossiers (menu II)':' · à relire dans Dossiers (touche J)'):'');$('lecture').hidden=false;$('lecture').scrollTop=0;
 }
 function fermer(){ouverte=false;$('lecture').hidden=true;document.body.classList.remove('lecture');if(state==='lecture')setState('play');emit('save');refreshHud()}
 on('lectureSuite',()=>{if(ouverte)pageSuivante()});
@@ -216,7 +225,7 @@ function ramasser(a){
   const d=dossier(a.dossier),L=deDossier(a.dossier),n=L.filter(x=>trouvee(x.id)).length;
   const lot=[{kicker:`Archive ${S.archives.length} / ${ARCHIVES.length} · ${d.titre} (${n}/${L.length})`,titre:a.titre,texte:a.texte}];
   if(n===L.length&&!S.dossiersFinis.includes(d.id)){S.dossiersFinis.push(d.id);lot.push({kicker:`Dossier complet · ${d.titre}`,titre:'Ce que le dossier révèle',texte:d.revelation,revelation:true})}
-  lire(lot);gagner(50,'archive trouvée');
+  lot[lot.length-1].relire=true;lire(lot);gagner(50,'archive trouvée');
   if(lot.length>1)setTimeout(()=>gagner(150,'dossier complet'),700);
 }
 

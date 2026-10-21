@@ -33,10 +33,23 @@ export function reprendreVisee(){
   const echec=()=>{if(state==='play')emit('toast','Clique dans la scène pour reprendre la visée')};
   try{const r=cvs.requestPointerLock();if(r&&r.catch)r.catch(echec)}catch(err){echec()}
 }
-cvs.addEventListener('mousedown',e=>{if(state==='lecture'){emit('lectureSuite');return}if(state!=='play')return;if(document.pointerLockElement===cvs){if(e.button===0)emit('shoot');else if(e.button===2)emit('couper');return}dragging=true;lock()});
+cvs.addEventListener('mousedown',e=>{if(state==='lecture'){emit('lectureSuite');return}if(avecCurseur()){if(e.button===0)cliquerCurseur();return}if(state!=='play')return;if(document.pointerLockElement===cvs){if(e.button===0)emit('shoot');else if(e.button===2)emit('couper');return}dragging=true;lock()});
 cvs.addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('mouseup',()=>{dragging=false});
-addEventListener('mousemove',e=>{if(state!=='play')return;if(document.pointerLockElement===cvs||dragging)lookBy(e.movementX||0,e.movementY||0)});
+addEventListener('mousemove',e=>{if(avecCurseur()){bougerCurseur(e.movementX||0,e.movementY||0);return}if(state!=='play')return;if(document.pointerLockElement===cvs||dragging)lookBy(e.movementX||0,e.movementY||0)});
+/* ---------- Curseur dessiné ----------
+   Pendant un dialogue ou l'énigme du métier, la souris reste verrouillée : un curseur dessiné suit ses mouvements et
+   clique sur les réponses. À la fin, la visée reprend aussitôt, sans recliquer dans la scène. */
+const curseur=$('curseur');let cx=innerWidth/2,cy=innerHeight*.7,survol=null,affiche=false;
+const avecCurseur=()=>(state==='dialogue'||state==='puzzle')&&document.pointerLockElement===cvs;
+function viser(){curseur.style.transform=`translate(${cx}px,${cy}px)`;const el=document.elementFromPoint(cx,cy),b=el&&el.closest('button');
+  if(b!==survol){if(survol)survol.classList.remove('survol');survol=b;if(b)b.classList.add('survol')}}
+function bougerCurseur(dx,dy){cx=clamp(cx+dx,2,innerWidth-2);cy=clamp(cy+dy,2,innerHeight-2);viser()}
+function cliquerCurseur(){const el=document.elementFromPoint(cx,cy),b=el&&el.closest('button');if(b&&!b.disabled)b.click()}
+// le curseur apparaît sur la première réponse
+function centrer(){const b=document.querySelector('#dialog:not([hidden]) #dch button, #metier:not([hidden]) button');
+  if(b){const r=b.getBoundingClientRect();cx=r.left+Math.min(40,r.width/2);cy=r.top+r.height/2}else{cx=innerWidth/2;cy=innerHeight*.7}viser()}
+setInterval(()=>{const v=avecCurseur();if(v&&!affiche)centrer();if(!v&&survol){survol.classList.remove('survol');survol=null}affiche=v;curseur.hidden=!v},80);
 document.addEventListener('pointerlockerror',()=>emit('toast','Maintiens le clic gauche et bouge la souris pour regarder'));
 
 /* ---------- Plein écran ---------- */

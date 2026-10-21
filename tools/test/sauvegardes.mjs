@@ -4,7 +4,7 @@ const sortie=process.argv[2];
 // 1. Ancien format converti
 let g=await ouvrir({largeur:960,hauteur:540});
 await g.pn(()=>{localStorage.clear();localStorage.setItem('pluie-noire-save-v1',JSON.stringify({S:{quest:true,code:true,credits:20,chip:true,door:true,spotted:1,dd:[false,false,false],elapsed:120000},p:[0,-45,3.1],at:Date.now()-3600e3}))});
-await g.p.reload();await g.p.waitForSelector('#play:not([disabled])',{timeout:180000});
+await g.p.reload({timeout:180000});await g.p.waitForSelector('#play:not([disabled])',{timeout:180000});await g.p.waitForSelector('#chargement',{state:'hidden',timeout:60000});await g.p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
 const conv=await g.pn(()=>({v2:!!localStorage.getItem('pluie-noire-v2'),v1:!!localStorage.getItem('pluie-noire-save-v1'),cont:!document.getElementById('cont').hidden,info:document.getElementById('saveInfo').textContent}));
 verifier(conv.v2&&!conv.v1,'ancienne sauvegarde convertie au format 2');
 verifier(conv.cont&&/puce récupérée/.test(conv.info)&&/il y a 1 h/.test(conv.info),'écran titre : « '+conv.info+' »');

@@ -276,6 +276,10 @@ body.touch .card.pouvoirs .pitch{font-size:16px}
 body.touch .pvRang{padding:8px 10px}
 body.touch .pvRang p{font-size:13px}
 
+#curseur{position:fixed;left:0;top:0;width:0;height:0;z-index:40;pointer-events:none}
+#curseur::before{content:"";position:absolute;left:-2px;top:-2px;width:0;height:0;border-left:14px solid var(--amber);border-bottom:14px solid transparent;filter:drop-shadow(0 0 4px rgba(0,0,0,.9));transform:rotate(-12deg);transform-origin:2px 2px}
+#dch button.survol{background:rgba(240,165,58,.18);box-shadow:inset 2px 0 0 var(--amber)}
+#metier button.survol{outline:2px solid var(--amber);outline-offset:2px}
 /* Exploration : lecture des archives, signal de la main, annonces, dossiers */
 #lecture{position:fixed;inset:0;display:grid;place-items:center;background:rgba(3,5,8,.62);z-index:12;padding:24px;overflow:auto;cursor:pointer}
 .lecCarte{max-width:640px;width:100%;box-sizing:border-box;background:var(--panel);border-left:2px solid #58e6ff;padding:20px 24px;display:grid;gap:10px}
@@ -377,6 +381,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
   <div id="toast"></div>
 </div>
 <div id="vig"></div>
+<div id="curseur" hidden></div>
 
 <div id="lecture" hidden><div class="lecCarte"><div class="kicker" id="lecKick"></div><h3 id="lecTitre"></h3><p id="lecTexte"></p><div class="note" id="lecPied"></div></div></div>
 
@@ -448,7 +453,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
     <p class="pitch">Ta progression est enregistrée automatiquement sur cet appareil.</p>
     <p class="note" id="pleinAide" hidden>Pour jouer en plein écran sur iPhone : bouton Partager, puis « Sur l'écran d'accueil ». Le jeu s'ouvrira alors sans les barres du navigateur.</p>
     <div class="btns"><button class="go" id="resume">Reprendre</button><button class="go alt" id="pausePouvoirs">Pouvoirs<span id="pvBadge" hidden></span></button><button class="go alt" id="pauseDossiers">Dossiers</button><button class="go alt" id="toTitle">Écran titre</button></div>
-    <div class="liens"><button class="lien pleinBtn" id="pausePlein">Plein écran</button><button class="lien" id="pauseTransfer">Transférer ma partie</button><button class="lien" id="pauseCompte" hidden>Mon compte</button></div>
+    <div class="liens"><button class="lien" id="pauseMusique">Musique : oui</button><button class="lien pleinBtn" id="pausePlein">Plein écran</button><button class="lien" id="pauseTransfer">Transférer ma partie</button><button class="lien" id="pauseCompte" hidden>Mon compte</button></div>
   </div>
 </div>
 <div id="dossiers" class="screen" hidden>

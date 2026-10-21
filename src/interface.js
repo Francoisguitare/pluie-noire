@@ -16,6 +16,10 @@ export function detectionHud(dt,maxS){
   beepT-=dt;if(maxS>.12&&beepT<=0){tone(760+maxS*700,.07,'square',.025);beepT=.6-maxS*.45}
 }
 export function fade(on){$('fade').classList.toggle('on',on)}
+// L'écran de chargement, réutilisé en cours de partie (premier passage dans un lieu, reprise d'une partie).
+let finT=null;
+export function chargement(texte,k=.6){clearTimeout(finT);const c=$('chargement');c.hidden=false;c.classList.remove('fini');$('lstep').textContent=texte;$('lbar').style.width=(k*100)+'%'}
+export function finChargement(){$('lbar').style.width='100%';const c=$('chargement');c.classList.add('fini');finT=setTimeout(()=>{c.hidden=true},650)}
 // Question à deux réponses, par-dessus tout le reste. Renvoie une promesse : true si l'on accepte.
 export function ask(titre,texte,oui='Oui',non='Annuler'){return new Promise(res=>{
   $('askTitle').textContent=titre;$('askText').textContent=texte;$('askYes').textContent=oui;$('askNo').textContent=non;$('askNo').hidden=!non;$('ask').hidden=false;

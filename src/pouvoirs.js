@@ -139,7 +139,6 @@ on('hudRafraichi',majHud);
 let vuDispo=false;
 export function updatePouvoirs(dt){
   const Z=zone();if(!Z)return;
-  if(Z.archives)for(const r of Z.archives){const pris=S.archives.includes(r.a.id);r.g.visible=!pris;if(!pris){const k=.5+.5*Math.sin(T*3+r.a.x);r.p.material.opacity=.35+k*.65;r.p.scale.setScalar(.16+k*.1)}}
   for(const r of arcs)dessinerArc(r,dt);
   const jeu=state==='play',dispo=coupureDispo();
   document.body.classList.toggle('coupure',dispo&&jeu);
