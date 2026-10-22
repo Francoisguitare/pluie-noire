@@ -3,9 +3,11 @@
 // première fois. Sous Windows (Direct3D), cela peut figer l'écran plusieurs dizaines de secondes. Donc :
 //  1. chaque lumière portée par un objet est rattachée à la racine de son lieu, et suit un repère laissé à sa place ;
 //     quand l'objet est caché, elle reste dans la scène mais s'éteint (intensité 0) : leur nombre ne change jamais ;
-//  2. chaque lieu est préparé une fois en entier, objets cachés compris (compilerZone), derrière l'écran de chargement.
+//  2. chaque lieu est préparé une fois en entier, objets cachés compris (compilerZone), derrière l'écran de chargement,
+//     pour la cible où la scène se dessine vraiment (celle du post-traitement, et celle des reflets du sol).
 import {THREE,scene,camera,renderer} from './core.js';
 import {zones} from './zones.js';
+import {composer} from './rendu.js';
 
 const visible=o=>{for(;o;o=o.parent)if(!o.visible)return false;return true};
 export function stabiliserLumieres(z){
@@ -31,7 +33,15 @@ export function compilerZone(z){
   const autres=[];for(const id in zones){const r=zones[id].root;if(zones[id]!==z&&r.visible){r.visible=false;autres.push(r)}}
   const v0=z.root.visible;z.root.visible=true;
   z.root.traverse(o=>{if(o!==z.root)montrer(o)});camera.traverse(o=>{if(o!==camera)montrer(o)});for(const g of globaux)g.traverse(montrer);
-  try{renderer.compile(scene,camera)}catch(e){console.warn('compilation',e)}
+  // Les programmes dépendent de l'encodage de la cible : la scène se dessine dans celle du post-traitement (linéaire),
+  // pas à l'écran ; les reflets du sol, dans la leur (que Reflector met à l'encodage de sortie, sRGB, à chaque image).
+  // Une compilation par encodage utilisé.
+  const cibles=[composer?composer.renderTarget1:null];
+  z.root.traverse(o=>{if(o.type==='Reflector'){const c=o.getRenderTarget();c.texture.encoding=renderer.outputEncoding;cibles.push(c)}});
+  const avant=renderer.getRenderTarget(),faits=new Set();
+  for(const c of cibles){const e=c?c.texture.encoding:renderer.outputEncoding;if(faits.has(e))continue;faits.add(e);
+    renderer.setRenderTarget(c);try{renderer.compile(scene,camera)}catch(x){console.warn('compilation',x)}}
+  renderer.setRenderTarget(avant);
   for(const o of caches)o.visible=false;for(const r of autres)r.visible=true;z.root.visible=v0;
   z.compilee=true;
 }

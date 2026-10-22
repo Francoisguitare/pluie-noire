@@ -26,6 +26,11 @@ import {S,chap,newGame,applySave,allerZone,fmtHeure,NOMS_LIEUX} from './histoire
 import {saveGame,readSave,clearSave,showSaveInfo,lire,exportCode,importCode,majPoints,dernierPoint,resume,pointDeSauvegarde} from './sauvegarde.js';
 import {toast,detectionHud,fade,chargement,finChargement,ask} from './interface.js';
 import {updateCombat,chargerPoint,blesser,trace} from './combat.js';
+import {completion,texteCompletion} from './completion.js';
+import {updateRadios} from './radios.js';
+import {installerHabitantsRue} from './habitants.js';
+import {installerCuriositesRue,updateCuriosites} from './curiosites.js';
+import {fenetresRue,majFenetres} from './fenetres.js';
 import {initAudio,toggleMute,setIndoor} from './son.js';
 import {keys,lock,pleinEcran} from './controles.js';
 import {enterZone,zone,zones} from './zones.js';
@@ -59,7 +64,8 @@ $('cont').onclick=()=>{const d=readSave();if(!d)return;if(MOBILE)pleinEcran(true
   chargement('Reprise de ta partie : '+(NOMS_LIEUX[d.zone]||'')+'…');setTimeout(()=>{reprendre();finChargement()},60)};
 $('again').onclick=()=>{if(MOBILE)pleinEcran(true);clearSave();newGame();enterGame();saveGame()};
 function pause(){if(state!=='play')return;saveGame();emit('saveNow');setState('paused');document.body.classList.add('paused');$('pauseMenu').hidden=false;if(document.pointerLockElement)document.exitPointerLock();
-  const d=dernierPoint();$('pointInfo').hidden=!d;$('pausePoint').hidden=!d;if(d)$('pointInfo').textContent='Dernier point de sauvegarde : '+resume(d)}
+  const d=dernierPoint();$('pointInfo').hidden=!d;$('pausePoint').hidden=!d;if(d)$('pointInfo').textContent='Dernier point de sauvegarde : '+resume(d);
+  $('pauseCompletion').textContent=texteCompletion()}
 // Revenir au dernier point de sauvegarde (on demande d'abord : ce qui a été fait depuis est perdu).
 $('pausePoint').onclick=async()=>{const d=dernierPoint();if(!d)return;
   if(!await ask('Revenir au dernier point de sauvegarde ?',`Point de sauvegarde ${resume(d)}. Ce que tu as fait depuis sera perdu.`,'Revenir','Annuler'))return;
@@ -105,7 +111,7 @@ function frame(dt){
     const avant=Math.floor(S.heure);S.heure=Math.min(S.heure+dt/60,S.fin?24*60:5*60+58);if(Math.floor(S.heure)!==avant)$('heure').textContent=fmtHeure(S.heure)}
   const inside=(state==='play'||state==='cine')&&z.indoor(P.pos);updateRain(dt,z.pluie&&!inside);setIndoor(inside||!z.pluie);
   updateFx(dt,z);updateSky(dt);if(z.update)z.update(dt,S);
-  fx.glitch=Math.max(updateHand(dt),G.choc*.5);updatePouvoirs(dt);majOrdinateurs(dt);updateExploration(dt);suivreLumieres(z);updateMusique(dt);
+  fx.glitch=Math.max(updateHand(dt),G.choc*.5);updatePouvoirs(dt);majOrdinateurs(dt);updateExploration(dt);updateRadios(dt);updateCuriosites(dt);majFenetres();suivreLumieres(z);updateMusique(dt);
   updateAmbiance(dt,z);
   updateNpcs(dt);for(const f of z.figurants)if(f.mixer)f.mixer.update(dt);
   fx.flash=G.flash;fx.alert=state==='play'?Math.max(0,G.alertLvl-.3):0;
@@ -117,7 +123,7 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.
 
 /* ---------- Mode debug (?debug) : accès pour les tests automatiques ---------- */
 if(DEBUG)window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,newGame,applySave,saveGame,readSave,killDrone,zone,zones,handLocked,lire,exportCode,importCode,allerZone,passerCine,
-  get S(){return S},pouvoirs:POUV,combat:{blesser,chargerPoint,dernierPoint,pointDeSauvegarde,trace},on,exploration:EXPLO,signatureLumieres,programmes:()=>renderer.info.programs.length,textures:()=>renderer.info.memory.textures,get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB,quais:HQ,tour:HTO,sommet:HS},metier:METIER,
+  get S(){return S},pouvoirs:POUV,combat:{blesser,chargerPoint,dernierPoint,pointDeSauvegarde,trace},on,completion,exploration:EXPLO,signatureLumieres,programmes:()=>renderer.info.programs.length,textures:()=>renderer.info.memory.textures,get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB,quais:HQ,tour:HTO,sommet:HS},metier:METIER,
   step:(n,dt=1/30)=>{for(let i=0;i<n;i++)frame(dt)}};
 
 /* ---------- Démarrage : polices, monde, personnages, boucle ---------- */
@@ -133,7 +139,7 @@ fonts.catch(()=>{}).then(async()=>{
   await loadRueCharacters(v=>etape('Arrivée des personnages…',.3+v*.6)).catch(e=>{console.warn('Personnages :',e);rueFallback()});
   etape('Préparation des lumières…',.94);await souffle();
   // les Gardiens et la Faucheuse du black-out existent dès maintenant (cachés), puis toute la rue est préparée
-  prechargerRue3();compilerZone(zones.rue);
+  prechargerRue3();installerHabitantsRue();installerCuriositesRue();fenetresRue(zones.rue);compilerZone(zones.rue);
   // la boucle ne démarre qu'ici : pendant le chargement, rien ne se dessine derrière l'écran
   loop();etape('Premières images…',.98);
   // les deux premières images (ombres, textures, post-traitement) sont les plus lourdes : on les dessine sous l'écran de chargement

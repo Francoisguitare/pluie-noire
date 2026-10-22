@@ -10,6 +10,7 @@ import {toast} from './interface.js';
 import {killDrone,burst} from './drones.js';
 import {toucheGardien} from './gardiens.js';
 import {detruireCamera} from './cameras.js';
+import {toucheFaucheuse} from './faucheuse.js';
 
 /* ---------- Arme (P-9 silencieux) ---------- */
 const gun=new THREE.Group();gun.visible=false;camera.add(gun);
@@ -47,8 +48,13 @@ export function shoot(){
   for(const l of Z.lumieres){if(!l.on||!l.cassable)continue;const t=vise(l.hx,l.hy,l.hz,.3);if(t<bt){best=l;bt=t;kind='lampe'}}
   for(const g of Z.gardiens){const t=vise(g.pos.x,1.2,g.pos.z,.42);if(t<bt&&los(_o.x,_o.z,g.pos.x,g.pos.z)){best=g;bt=t;kind='gardien'}}
   for(const c of Z.cameras){if(c.mort)continue;const t=vise(c.x,c.y,c.z,.3);if(t<bt&&los(_o.x,_o.z,c.x,c.z)){best=c;bt=t;kind='camera'}}
+  // la Faucheuse, dans le ciel : ses réacteurs (sous les anneaux) d'abord, sinon la coque
+  for(const f of Z.faucheuses){if(f.abattue||f.chute||!f.g.visible)continue;let pris=false;
+    for(const r of f.reacteurs){r.getWorldPosition(_v);const t=vise(_v.x,_v.y,_v.z,1.1);if(t<bt){best={f,reac:true,p:_v.clone()};bt=t;kind='faucheuse';pris=true}}
+    if(!pris){const p=f.g.position,t=vise(p.x,p.y,p.z,1.7);if(t<bt){best={f,reac:false,p:p.clone()};bt=t;kind='faucheuse'}}}
   if(!best)return;const b=best;
-  setTimeout(()=>{if(kind==='drone')killDrone(b);else if(kind==='lampe'){eteindre(b);_v.set(b.hx,b.hy,b.hz);burst(_v,40);verreSound();emit('lampeCassee',b)}else if(kind==='camera')detruireCamera(b);else toucheGardien(b)},40+bt*6);
+  setTimeout(()=>{if(kind==='drone')killDrone(b);else if(kind==='lampe'){eteindre(b);_v.set(b.hx,b.hy,b.hz);burst(_v,40);verreSound();emit('lampeCassee',b)}else if(kind==='camera')detruireCamera(b);
+    else if(kind==='faucheuse')toucheFaucheuse(b.f,b.reac,b.p);else toucheGardien(b)},40+bt*6);
 }
 on('shoot',shoot);
 

@@ -21,6 +21,10 @@ await g.pn(()=>window.__pn.passerCine());await g.avancer(5);m=await stable(m,'fi
 // Un échange de tirs : canon d'épaule et son éclair, traînées (Gardien, Faucheuse), blessure
 await g.pn(()=>{const pn=window.__pn,z=pn.zone();pn.G.grace=0;pn.emit('tirGardien',z.gardiens[0],true);pn.emit('tirGardien',z.gardiens[1],false);pn.emit('tirFaucheuse',z.faucheuses[0],true);pn.combat.blesser(1,0,0);pn.G.grace=1e6});await g.avancer(1);
 m=await stable(m,'un échange de tirs');
+// La Faucheuse abattue : fumée, chute, explosion, épave en flammes, feu
+await g.pn(async()=>{const {toucheFaucheuse}=await import('/src/faucheuse.js');const f=window.__pn.zone().faucheuses[0];while(f.pv>0)toucheFaucheuse(f,true,f.g.position.clone())});
+for(let i=0;i<30&&await g.pn(()=>!!window.__pn.zone().faucheuses[0].chute);i++)await g.avancer(10);
+m=await stable(m,'une Faucheuse abattue');
 // La Coupure
 await g.pn(()=>window.__pn.emit('couper'));await g.avancer(5);m=await stable(m,'la Coupure');
 // Chaque nouveau lieu est préparé à l'arrivée : ensuite, plus rien à compiler

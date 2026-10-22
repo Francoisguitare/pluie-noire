@@ -1,4 +1,4 @@
-// Exploration : les 41 archives (atteignables, lues sans lâcher la partie, une capture chacune), les dossiers complets,
+// Exploration : les 90 archives (atteignables, lues sans lâcher la partie, une capture chacune), les onze dossiers complets,
 // l'écran « Dossiers », le signal de la main K7, l'Écho, les lieux découverts, les premières rencontres, le casier des
 // quais, et ce que les archives changent aux dialogues (Kovac, Varga, Sid, Rosa) et à l'épilogue.
 // Usage : NODE_PATH=$(npm root -g) node tools/test/exploration.mjs [dossier-captures]
@@ -16,9 +16,9 @@ verifier(await g.pn(()=>!document.getElementById('signal').hidden),'signal de la
 let s=await S();verifier(s.signalVu,'le signal est expliqué une fois');
 
 const archives=await g.pn(()=>window.__pn.exploration.ARCHIVES.map(a=>({id:a.id,zone:a.zone,dossier:a.dossier,forme:a.forme})));
-verifier(archives.length===41,'41 archives');
+verifier(archives.length===90,'90 archives');
 const dossiers=await g.pn(()=>window.__pn.exploration.DOSSIERS.map(d=>d.id));
-verifier(dossiers.length===6&&dossiers.every(d=>archives.filter(a=>a.dossier===d).length>=5),'six dossiers d\'au moins cinq archives');
+verifier(dossiers.length===11&&dossiers.every(d=>archives.filter(a=>a.dossier===d).length>=5),'onze dossiers d\'au moins cinq archives');
 for(const a of archives){
   await g.pn(a=>{const pn=window.__pn;if(pn.zone().id!==a.zone)pn.allerZone(a.zone,null,{fondu:false});pn.G.grace=1e6},a);
   // on se place à 1,2 m du point d'interaction, du côté le plus dégagé, face à lui
@@ -35,12 +35,14 @@ for(const a of archives){
   await fermerLecture();await g.p.waitForTimeout(800);await g.avancer(2);
   s=await S();verifier(s.archives.includes(a.id)&&s.xp>=xp0+50&&await etat()==='play',`  lue : ${s.xp-xp0} XP`);
 }
-s=await S();verifier(s.dossiersFinis.length===6,'six dossiers complets : '+s.dossiersFinis.join(', '));
+s=await S();verifier(s.dossiersFinis.length===11,'onze dossiers complets : '+s.dossiersFinis.join(', '));
 verifier(!(await g.pn(()=>window.__pn.zone().inter.some(i=>i.archive&&(!i.on||i.on())))),'une archive lue ne se relit pas sur place');
 
-// L'écran « Dossiers » (touche J)
+// L'écran « Dossiers » (touche J), avec le pourcentage de la partie
 await g.pn(()=>window.__pn.emit('ouvrirDossiers'));await g.avancer(1);
-verifier(await g.pn(()=>!document.getElementById('dossiers').hidden&&document.querySelectorAll('#dosListe details.dossier.complet').length===6),'écran Dossiers : six dossiers complets, révélations');
+verifier(await g.pn(()=>!document.getElementById('dossiers').hidden&&document.querySelectorAll('#dosListe details.dossier.complet').length===11),'écran Dossiers : onze dossiers complets, révélations');
+const pc=await g.pn(()=>({tete:document.getElementById('dosTete').textContent,rangs:[...document.querySelectorAll('#dosProgres .pRang')].map(r=>r.textContent),c:window.__pn.completion()}));
+verifier(/^Partie terminée à \d+ %$/.test(pc.tete)&&pc.rangs.some(t=>/Archives.*90 \/ 90/.test(t))&&pc.c.det.find(d=>d.id==='dossiers').fait===11,`progression : « ${pc.tete} », ${pc.rangs.length} catégories`);
 if(sortie){await g.pn(()=>{const d=document.querySelector('#dosListe details.dossier');d.open=true;d.querySelector('details.piece').open=true});await capture('dossiers')}
 await g.p.click('#dosRetour');await g.p.click('#resume');await g.avancer(1);
 
@@ -79,6 +81,23 @@ await g.pn(()=>{const pn=window.__pn;pn.S.archives.push('toits1');pn.openDialog(
 verifier(await g.pn(()=>/Vaise, 2036/.test(document.getElementById('dtxt').textContent)||window.__pn.S.quetes.sid),'Sid retrouve sa photo');
 s=await S();verifier(s.quetes.sid,'quête de Sid faite');
 
+// Les radios des Gardiens : à moins de 9 m d'un Gardien qui ne t'a pas vu, on entend son canal, jusqu'au bout
+// (le dialogue de Sid, resté ouvert, se ferme d'abord : en dialogue, le temps des radios s'arrête)
+await g.pn(async()=>{const {closeDialog}=await import('/src/histoire/dialogue.js');closeDialog()});
+await g.pn(()=>{const pn=window.__pn;Object.assign(pn.S,{chapter:4});pn.allerZone('traboules',null,{fondu:false});pn.G.grace=1e6;pn.G.danger=0});await g.avancer(2);
+const suivre=()=>g.pn(()=>{const pn=window.__pn,d=pn.zone().gardiens[0];pn.P.pos.set(d.pos.x+2.5,0,d.pos.z+2.5);pn.G.danger=0});
+const r0=(await S()).radios.length;
+for(let i=0;i<40&&await g.pn(()=>document.getElementById('radio').hidden);i++){await suivre();await g.avancer(10)}
+verifier(await g.pn(()=>!document.getElementById('radio').hidden&&/./.test(document.getElementById('radioTxt').textContent)),"radio : le canal des Gardiens s'ouvre");
+await capture('radio');
+for(let i=0;i<80&&(await S()).radios.length===r0;i++){await suivre();await g.avancer(15)}
+s=await S();verifier(s.radios.length===r0+1,"écoute entendue jusqu'au bout : "+s.radios.slice(-1));
+// 100 % : toute l'histoire, tout trouvé, tout le monde rencontré, toutes les quêtes, tous les pouvoirs au maximum
+const cent=await g.pn(async()=>{const pn=window.__pn,E=pn.exploration,A=pn.pouvoirs.AMELIS,S=pn.S,{CURIOSITES}=await import('/src/curiosites.js');
+  Object.assign(S,{ch2:true,chapter:5,fin:'diffuser',archives:E.ARCHIVES.map(a=>a.id),dossiersFinis:E.DOSSIERS.map(d=>d.id),lieux:E.LIEUX.map(l=>l.id),rencontres:Object.keys(E.PERSONNES),
+    quetes:Object.fromEntries(E.QUETES.map(q=>[q.id,true])),ameli:Object.fromEntries(A.map(a=>[a.id,a.val.length-1])),faucheuses:['rue:0','toits:0','quais:0'],radios:E.RADIOS.map(r=>r.id),curiosites:CURIOSITES.map(c=>c.id)});
+  const plein=pn.completion().pct;S.lieux.pop();const presque=pn.completion().pct;return{plein,presque}});
+verifier(cent.plein===100&&cent.presque<100,`100 % quand tout est fait (${cent.plein} %), moins s'il manque un lieu (${cent.presque} %)`);
 // L'épilogue de « Diffuser » cite les dossiers complets
 const ep=await g.pn(()=>{const pn=window.__pn;pn.S.dossiersFinis=['gardien12','varga'];return pn.exploration.epilogueArchives('diffuser')});
 verifier(/Gardien 12/.test(ep)&&/Varga/.test(ep),'épilogue : Nox diffuse les dossiers complets');

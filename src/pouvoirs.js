@@ -11,8 +11,11 @@ import {glow} from './construire.js';
 import {killDrone,burst} from './drones.js';
 import {detruireCamera} from './cameras.js';
 import {neutraliser,relever,remettre,bruitDeChute} from './gardiens.js';
+import {coupureFaucheuse} from './faucheuse.js';
 import {gesteCoupure,boutDesDoigts,handLocked} from './joueur.js';
 import {globaux} from './compilation.js';
+import {categorie} from './completion.js';
+import {ARCHIVES} from './archives.js';
 import {arcSound,chuteArmure,niveauSound} from './son.js';
 
 /* ---------- Améliorations : un point par rang ---------- */
@@ -27,7 +30,7 @@ export const AMELIS=[
 const rang=id=>S.ameli[id]||0;
 const val=id=>AMELIS.find(a=>a.id===id).val[rang(id)];
 export const niveau=()=>niveauDe(S.xp);
-export const NB_ARCHIVES=41;
+categorie({id:'pouvoirs',nom:'Pouvoirs au maximum',poids:8,fait:()=>AMELIS.reduce((n,a)=>n+rang(a.id),0),total:()=>AMELIS.reduce((n,a)=>n+a.val.length-1,0)});
 // portée de l'Écho (0 si pas encore appris) : exploration.js s'en sert pour montrer les archives à travers les murs
 export const porteeEcho=()=>val('echo');
 export const pointsDispo=()=>niveau()-Object.values(S.ameli).reduce((a,b)=>a+b,0);
@@ -53,13 +56,14 @@ function cibles(Z){
   for(const g of Z.gardiens)if(!g.neutre&&g.g.visible)L.push({k:'gardien',o:g,x:g.pos.x,y:1.25,z:g.pos.z,r:.5,s:g.s});
   for(const d of Z.drones)if(!d.dead&&d.g.visible)L.push({k:'drone',o:d,x:d.g.position.x,y:d.g.position.y,z:d.g.position.z,r:.55,s:d.s});
   for(const c of Z.cameras)if(!c.mort)L.push({k:'camera',o:c,x:c.x,y:c.y,z:c.z,r:.35,s:c.s});
+  for(const f of Z.faucheuses)if(!f.abattue&&!f.chute&&f.g.visible){const p=f.g.position;L.push({k:'faucheuse',o:f,x:p.x,y:p.y,z:p.z,r:2.4,s:f.s,ciel:true})}
   return L;
 }
 // La cible sous le viseur, avec un peu d'aide à la visée ; même hors de portée (le viseur le dit).
 function viser(){
   camera.getWorldDirection(_d);camera.getWorldPosition(_o);let best=null,bs=1e9;
   for(const c of cibles(zone())){_v.set(c.x,c.y,c.z).sub(_o);const t=_v.dot(_d);if(t<.8||t>45)continue;const off=_v.addScaledVector(_d,-t).length();
-    if(off>c.r+t*.04)continue;const sc=t+off*10;if(sc<bs&&los(_o.x,_o.z,c.x,c.z)){best=c;bs=sc;c.dist=Math.hypot(c.x-_o.x,c.z-_o.z)}}
+    if(off>c.r+t*.04)continue;const sc=t+off*10;if(sc<bs&&(c.ciel||los(_o.x,_o.z,c.x,c.z))){best=c;bs=sc;c.dist=Math.hypot(c.x-_o.x,c.y-_o.y,c.z-_o.z)}}
   return best;
 }
 
@@ -103,11 +107,12 @@ function frapper(c,depuis,rebonds,deja){
   setTimeout(()=>{if(state!=='play')return;appliquer(c);
     if(rebonds>0){const n=voisin(c,deja);if(n){arcSound(.6);frapper(n,new V3(c.x,c.y,c.z),rebonds-1,deja)}}},110);
 }
-function voisin(c,deja){let b=null,bd=7;for(const o of cibles(zone())){if(deja.has(o.o))continue;const d=Math.hypot(o.x-c.x,o.z-c.z);if(d<bd&&los(c.x,c.z,o.x,o.z)){b=o;bd=d}}return b}
+function voisin(c,deja){if(c.ciel)return null;let b=null,bd=7;for(const o of cibles(zone())){if(deja.has(o.o)||o.ciel)continue;const d=Math.hypot(o.x-c.x,o.z-c.z);if(d<bd&&los(c.x,c.z,o.x,o.z)){b=o;bd=d}}return b}
 function appliquer(c){
   const Z=zone();burst(_v.set(c.x,c.y,c.z),45);
   if(c.k==='drone'){killDrone(c.o);return}
   if(c.k==='camera'){detruireCamera(c.o);return}
+  if(c.k==='faucheuse'){coupureFaucheuse(c.o,_v.clone());return}
   const g=c.o;if(g.neutre)return;
   const discret=g.s<.25&&g.etat!=='enquete'&&g.etat!=='fouille'&&g.etat!=='combat';
   // il tombe à l'opposé d'Ash
@@ -166,8 +171,8 @@ function remplir(){
   const n=niveau(),pts=pointsDispo();
   $('pvNiv').textContent=`Niveau ${n} · ${S.xp} XP · prochain point dans ${seuilNiveau(n+1)-S.xp} XP`;
   $('pvPts').textContent=pts>0?`${pts} point${pts>1?'s':''} à dépenser`:'Aucun point à dépenser';
-  $('pvIntro').textContent=coupureDispo()?"Ta main K7 a lu la puce : elle renvoie à Helix ses propres codes de coupure. Vise un Gardien, un drone ou une caméra.":"Ta main K7 garde un secret que tu découvriras bientôt. Les points gagnés t'attendent.";
-  $('pvArch').textContent=`Archives Helix trouvées : ${S.archives.length} / ${NB_ARCHIVES} · Gardiens neutralisés : ${S.neutres.length}`;
+  $('pvIntro').textContent=coupureDispo()?"Ta main K7 a lu la puce : elle renvoie à Helix ses propres codes de coupure. Vise un Gardien, un drone, une caméra, ou une Faucheuse à portée.":"Ta main K7 garde un secret que tu découvriras bientôt. Les points gagnés t'attendent.";
+  $('pvArch').textContent=`Archives Helix trouvées : ${S.archives.length} / ${ARCHIVES.length} · Gardiens neutralisés : ${S.neutres.length}`;
   $('pvListe').innerHTML='';
   for(const a of AMELIS){const r=rang(a.id),max=a.val.length-1;
     const li=document.createElement('div');li.className='pvRang';

@@ -242,6 +242,25 @@ export const LOOKS={
       if(/Beard/.test(nm)){o.visible=false;return}
       const c=/Outfit_Top/.test(nm)?0x404654:/Outfit_Bottom/.test(nm)?0x2c3038:/Headwear/.test(nm)?0x2a2c32:/Footwear/.test(nm)?0x18181a:null;
       if(c!==null){o.material=o.material.clone();o.material.color.setHex(c)}})}},
+  // Les habitants (habitants.js). Lou, 13 ans : sweat bordeaux trop grand, cheveux noirs, pas d'implant.
+  lou:{modele:'michelle',env:.7,mat:teinte({cheveux:[.03,.025,.025],pantalon:[.03,.035,.05],haut:[.2,.03,.05],rouge:[.18,.03,.05]}),apres:n=>{coiffer(n);vetir(n,{col:0x4a1420})}},
+  // Josette Delorme, la marchande de bugnes : cheveux blancs, blouse claire, main gauche K7
+  josette:{modele:'michelle',env:.7,mat:teinte({cheveux:[.55,.54,.52],pantalon:[.05,.05,.06],haut:[.12,.16,.26],rouge:[.12,.12,.13]}),
+    apres:n=>{coiffer(n,{chignon:0xcfcac2});vetir(n,{col:0xd6d0c2,long:true,sauf:'Left',ouvert:.2});cyberize(n,{arm:'Left',r1:.05,r2:.044,col:0xffb347})}},
+  // Mme Ferro, la dame aux pigeons : cheveux blancs, long manteau sombre
+  ferro:{modele:'michelle',env:.7,mat:teinte({cheveux:[.6,.6,.58],pantalon:[.03,.03,.04],haut:[.05,.04,.06],rouge:[.1,.06,.08]}),apres:n=>{coiffer(n,{foulard:0x5a3a4a});vetir(n,{col:0x2a2630,long:true,ouvert:.12,prof:.95})}},
+  // Léa Ferrand, la sœur du Gardien 12 : veste de pluie, cheveux châtains
+  lea:{modele:'michelle',env:.8,mat:teinte({cheveux:[.12,.07,.04],pantalon:[.03,.035,.05],haut:[.1,.12,.12],rouge:[.1,.1,.11]}),apres:n=>{coiffer(n,{chignon:0x2a1a10});vetir(n,{col:0x2c3a44})}},
+  // Claire, l'agente d'entretien de la tour : blouse grise d'Helix
+  claire:{modele:'michelle',env:.9,mat:teinte({cheveux:[.2,.07,.03],pantalon:[.05,.05,.06],haut:[.15,.15,.16],rouge:[.1,.1,.11]}),apres:n=>{coiffer(n,{chignon:0x3a1408});vetir(n,{col:0x7d838b,long:true,ouvert:.15})}},
+  // Gaspard, le vieux canut : le modèle de Sid, veste de velours brune, chapeau
+  gaspard:{modele:'sid',env:.7,pose:true,apres:n=>{n.root.traverse(o=>{if(!o.isMesh)return;const nm=o.name;
+      const c=/Outfit_Top/.test(nm)?0x4a3524:/Outfit_Bottom/.test(nm)?0x2e2a26:/Headwear/.test(nm)?0x1c1a18:/Beard/.test(nm)?0xe0dcd4:null;
+      if(c!==null){o.material=o.material.clone();o.material.color.setHex(c)}})}},
+  // Marius, le passeur : le modèle de Sid en caban bleu marine, bras gauche K7
+  marius:{modele:'sid',env:.8,pose:true,apres:n=>{n.root.traverse(o=>{if(!o.isMesh)return;const nm=o.name;
+      const c=/Outfit_Top/.test(nm)?0x1c2638:/Outfit_Bottom/.test(nm)?0x23252a:/Headwear/.test(nm)?0x15181f:/Beard/.test(nm)?0x5a5048:null;
+      if(c!==null){o.material=o.material.clone();o.material.color.setHex(c)}});cyberize(n,{arm:'Left',r1:.052,r2:.045,col:0x58e6ff})}},
   // Figurante : une canuse en bleu de travail, bras droit K7
   canut:{modele:'michelle',env:.7,mat:teinte({cheveux:[.12,.045,.02],pantalon:[.02,.03,.06],haut:[.18,.24,.34],rouge:[.06,.06,.065]}),
     apres:n=>{coiffer(n,{foulard:0x7a2a22});vetir(n,{col:0x24344e,sauf:'Right'});cyberize(n,{arm:'Right',r1:.05,r2:.044,col:0xffb347})}},

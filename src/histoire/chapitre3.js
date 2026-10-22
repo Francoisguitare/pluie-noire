@@ -36,7 +36,7 @@ export const prechargerRue3=()=>installerRue();
 // Présence des ennemis du chapitre 3 dans la rue (absents aux chapitres 1 et 2).
 function activerRue(on){
   const Z=RUE.Z;if(!rue3)return;
-  for(const k of['gardiens','faucheuses'])for(const e of rue3.liste[k]){const i=Z[k].indexOf(e);if(on&&i<0)Z[k].push(e);if(!on&&i>=0)Z[k].splice(i,1);e.g.visible=on;if(e.cone)e.cone.visible=on&&!e.neutre}
+  for(const k of['gardiens','faucheuses'])for(const e of rue3.liste[k]){const i=Z[k].indexOf(e);if(on&&i<0)Z[k].push(e);if(!on&&i>=0)Z[k].splice(i,1);e.g.visible=on;if(e.cone)e.cone.visible=on&&!e.neutre&&!e.abattue}
   Z.couverts.length=0;if(on)Z.couverts.push({x0:6,x1:9.4,z0:0,z1:10},{x0:-6.2,x1:-4.4,z0:16.4,z1:18.6},{x0:-6.2,x1:-4.6,z0:3.4,z1:6.6},{x0:-6.2,x1:-4.7,z0:24.6,z1:30.4},{x0:-14,x1:-9,z0:-30,z1:-12});
 }
 // Mara et Sid quittent la rue après le black-out.

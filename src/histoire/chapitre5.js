@@ -15,6 +15,7 @@ import {burst} from '../drones.js';
 import {detruireCamera,reparerCamera} from '../cameras.js';
 import {finSaison,NOMS_FINS} from '../sauvegarde.js';
 import {epilogueArchives} from '../exploration.js';
+import {completion} from '../completion.js';
 import * as Q from '../lieux/quais.js';
 import * as TR from '../lieux/tour.js';
 import * as SO from '../lieux/sommet.js';
@@ -242,7 +243,7 @@ function aube(k){
 function finSaisonUn(){
   const rec={fin:S.fin,forced:S.forced,maraFree:S.maraFree,vargaTestifies:S.vargaTestifies,noxWith:S.noxWith,noxPaid:S.noxPaid,temoignage:S.temoignage,boitier:S.boitier,
     kovac:S.kovacVerite?'verite':S.kovacPaye?'paye':S.kovacMenace?'menace':null,credits:S.credits,spotted:S.spotted,temps:Math.round((performance.now()-S.t0)/1000),
-    archives:S.archives.length,dossiers:S.dossiersFinis.slice(),quetes:Object.assign({},S.quetes),neutres:S.neutres.length};
+    archives:S.archives.length,dossiers:S.dossiersFinis.slice(),quetes:Object.assign({},S.quetes),neutres:S.neutres.length,completion:completion().pct,morts:S.morts};
   finSaison('1',rec);emit('saveNow');
   finish(S.fin,{kicker:'Fin de la saison 1 · Avant l\'aube',saison:`Ta fin, ${NOMS_FINS[S.fin]}, et tes choix de la nuit sont gardés sur cet appareil (et sur ton compte si tu en as un). La saison 2 reprendra de là.`});
 }

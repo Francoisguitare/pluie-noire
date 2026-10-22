@@ -194,3 +194,30 @@ export function chuteJoueur(){
 export function armement(d){if(!AC)return;const t=AC.currentTime,k=1/(1+d/8);click(t,1300,.07*k);click(t+.09,1800,.06*k);const f=nz(t+.03,'bandpass',900,3,.08*k,.02,.25);f.frequency.setValueAtTime(700,t+.03);f.frequency.linearRampToValueAtTime(1500,t+.28)}
 // L'alarme d'une caméra.
 export function alarme(){if(!AC)return;for(let i=0;i<4;i++)setTimeout(()=>tone(i%2?700:940,.2,'square',.022),i*210)}
+// Une Faucheuse qui s'écrase : le choc, la boule de feu, la tôle qui retombe.
+export function explosion(d){
+  if(!AC)return;const t=AC.currentTime+Math.min(.2,d/340),k=1/(1+d/25);
+  nz(t,'lowpass',140,.7,1.1*k,.006,1.6);nz(t,'lowpass',600,.6,.5*k,.004,.7);nz(t+.02,'highpass',1800,.6,.2*k,.002,.25);
+  const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.setValueAtTime(70,t);o.frequency.exponentialRampToValueAtTime(24,t+1.2);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.5*k,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+1.4);o.connect(g);g.connect(out);o.start(t);o.stop(t+1.5);
+  for(let i=0;i<9;i++)click(t+.3+Math.random()*1.4,900+Math.random()*2200,.04*k);
+}
+// Une radio de Gardien qui s'ouvre ou qui coupe : un souffle et un déclic.
+export function gresillement(k=1){if(!AC)return;const t=AC.currentTime;nz(t,'bandpass',1900,1.2,.05*k,.004,.16);nz(t+.05,'bandpass',3200,2,.03*k,.003,.08);click(t+.18,1500,.025*k)}
+
+/* ---------- Curiosités ---------- */
+// La sonnerie d'une vieille cabine : un 440 Hz battu, une seconde et demie (v : 0 loin, 1 tout près).
+export function sonnerie(v){if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain(),am=AC.createOscillator(),ag=AC.createGain();
+  o.type='sine';o.frequency.value=440;am.frequency.value=25;ag.gain.value=.5;am.connect(ag);const k=AC.createGain();k.gain.value=.5;ag.connect(k.gain);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.03*v,t+.02);g.gain.setValueAtTime(.03*v,t+1.4);g.gain.exponentialRampToValueAtTime(.0001,t+1.5);
+  o.connect(k);k.connect(g);g.connect(out);o.start(t);am.start(t);o.stop(t+1.55);am.stop(t+1.55)}
+// Un écran qui déraille : bourdonnement et friture.
+export function bourdon(){if(!AC)return;const t=AC.currentTime;tone(118,.22,'square',.025,90);nz(t,'bandpass',3200,2,.06,.002,.18)}
+// Deux notes de boîte à musique.
+export function boiteAMusique(){if(!AC)return;tone(1568,.7,'sine',.018);setTimeout(()=>tone(1175,.9,'sine',.014),420)}
+// Trois coups, de l'intérieur d'une armure.
+export function cognement(){if(!AC)return;const t=AC.currentTime;for(let i=0;i<3;i++){const k=t+i*.55;nz(k,'lowpass',180,.8,.32,.003,.12);nz(k+.002,'bandpass',1100,4,.05,.002,.05)}}
+// Des mains de métal qui se cognent au vent.
+export function cliquetis(v){if(!AC)return;const t=AC.currentTime;for(let i=0;i<2+Math.floor(Math.random()*3);i++)click(t+Math.random()*.25,2200+Math.random()*2400,.02*v)}
+// Un petit servomoteur (une tête qui tourne).
+export function servo(){if(!AC)return;const t=AC.currentTime,f=nz(t,'bandpass',800,6,.035,.03,.35);f.frequency.setValueAtTime(700,t);f.frequency.linearRampToValueAtTime(1400,t+.35)}

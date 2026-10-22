@@ -223,7 +223,10 @@ textarea,input{font:400 13px/1.4 var(--f-mono);color:var(--ink);background:rgba(
 textarea{resize:vertical;word-break:break-all}
 textarea:focus,input:focus{outline:none;border-color:var(--amber)}
 .qr{background:#fff;padding:6px;justify-self:start;line-height:0}
-.qr img{width:min(210px,46vw);height:auto;image-rendering:pixelated}
+.qr img{width:min(210px,46vw);height:auto;image-rendering:pixelated;cursor:zoom-in}
+/* le QR code agrandi (une partie avancée donne un code long, donc un QR code très fin) */
+.qr.grand{position:fixed;inset:0;justify-self:stretch;align-self:stretch;z-index:20;display:grid;place-items:center;background:#fff;cursor:zoom-out}
+.qr.grand img{width:min(94vw,94vh);cursor:zoom-out}
 .form{display:grid;gap:8px}
 .card a{color:var(--amber)}
 #ask{z-index:10;background:rgba(5,6,10,.9)}
@@ -337,6 +340,30 @@ details.piece{margin:4px 0 4px 8px}
 details.piece>summary{cursor:pointer;font:500 15px/1.3 var(--f-display);color:#bfefff}
 details.piece p{margin:6px 0 8px 14px;white-space:pre-wrap;font-size:15px;line-height:1.45}
 p.manque{margin:4px 0 4px 8px;font:500 12px/1.3 var(--f-mono);color:var(--ink-dim)}
+/* Écoutes radio des Gardiens */
+#radio{position:fixed;left:calc(20px + env(safe-area-inset-left,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));width:min(430px,42vw);box-sizing:border-box;
+  padding:9px 14px;background:rgba(8,12,16,.78);border-left:2px solid #9fb4c8;display:grid;gap:5px;pointer-events:none}
+#radio .kicker{color:#9fb4c8;letter-spacing:.16em}
+#radioTxt p{margin:0;font:500 14px/1.35 var(--f-mono);color:var(--ink)}
+#radioTxt p:first-child:not(:last-child){opacity:.55}
+#radioTxt b{color:#9fb4c8;font-weight:500;margin-right:4px}
+#radioTxt b::after{content:" :"}
+body.touch #radio{left:50%;transform:translateX(-50%);bottom:auto;top:calc(104px + env(safe-area-inset-top,0px));width:min(440px,52vw)}
+body.touch #radioTxt p{font-size:12px}
+details.dossier.radios{border-left-color:#9fb4c8}
+details.piece p.ligne{margin:2px 0 2px 14px}
+details.piece p.ligne b{color:#9fb4c8;font-weight:500}
+/* Progression de la partie (écran Dossiers) */
+.progres{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 22px;margin-bottom:6px}
+.pRang{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font:500 12px/1.2 var(--f-mono);color:var(--ink-dim)}
+.pRang b{font:600 15px/1 var(--f-display);letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
+.pRang .bar{height:4px;background:rgba(88,230,255,.14);position:relative;overflow:hidden;min-width:40px}
+.pRang .bar i{position:absolute;inset:0 auto 0 0;background:#58e6ff}
+.pRang.fini .bar i{background:var(--amber)}
+.pRang.fini em{color:var(--amber)}
+.pRang em{font-style:normal;font-variant-numeric:tabular-nums}
+.statsline.grand{font-size:20px}
+@media (max-width:640px){.progres{grid-template-columns:1fr}}
 p.revelation{margin:10px 0 4px;padding:10px 12px;border-left:2px solid var(--amber);white-space:pre-wrap;font-style:italic;font-size:15px;line-height:1.45}
 
 /* Écran de chargement */
@@ -394,6 +421,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
   <div id="coupe"><span class="lbl">Coupure · R</span><div class="bar"><i id="coupeBar"></i></div></div>
   <div id="signal" hidden><i></i><i></i><i></i><i></i><span>Signal K7</span></div>
   <div id="annonce" hidden><div class="kicker">Haut-parleurs Helix</div><p id="annonceTxt"></p></div>
+  <div id="radio" hidden><div class="kicker">Radio Helix · canal des Gardiens</div><div id="radioTxt"></div></div>
   <div id="coups"><i></i><i></i><i></i><i></i></div>
   <div id="cross"></div>
   <div id="hit"></div>
@@ -476,6 +504,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
     <h2>Partie sauvegardée</h2>
     <p class="pitch">Ta partie est enregistrée sur cet appareil. Si tu tombes, tu repars du dernier point de sauvegarde.</p>
     <p class="savehint" id="pointInfo" hidden></p>
+    <div class="statsline" id="pauseCompletion"></div>
     <p class="note" id="pleinAide" hidden>Pour jouer en plein écran sur iPhone : bouton Partager, puis « Sur l'écran d'accueil ». Le jeu s'ouvrira alors sans les barres du navigateur.</p>
     <div class="btns"><button class="go" id="resume">Reprendre</button><button class="go alt" id="pausePouvoirs">Pouvoirs<span id="pvBadge" hidden></span></button><button class="go alt" id="pauseDossiers">Dossiers</button><button class="go alt" id="pausePoint">Dernier point de sauvegarde</button><button class="go alt" id="toTitle">Écran titre</button></div>
     <div class="liens"><button class="lien" id="pauseMusique">Musique : oui</button><button class="lien pleinBtn" id="pausePlein">Plein écran</button><button class="lien" id="pauseTransfer">Transférer ma partie</button><button class="lien" id="pauseCompte" hidden>Mon compte</button></div>
@@ -487,6 +516,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
     <h2>Dossiers</h2>
     <p class="pitch">Ce que tu as trouvé cette nuit, rangé par histoire. Chaque dossier complet révèle quelque chose. Ta main K7 frémit quand une archive est proche.</p>
     <div class="statsline" id="dosTete"></div>
+    <div id="dosProgres" class="progres"></div>
     <div id="dosListe"></div>
     <div class="btns"><button class="go alt" id="dosRetour">Retour</button></div>
   </div>
@@ -510,6 +540,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
     <div class="kicker" id="endKicker">Fin de mission</div>
     <h2 id="endTitle"></h2>
     <p class="pitch" id="endText"></p>
+    <div class="statsline grand" id="endCompletion"></div>
     <div class="statsline" id="endStats"></div>
     <p class="note" id="endSaison" hidden></p>
     <div class="btns"><button class="go" id="again">Rejouer</button><button class="go alt" id="endTitre">Écran titre</button></div>
@@ -521,7 +552,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
     <h2>Transférer ma partie</h2>
     <div id="transferNone" class="pitch" hidden>Pas encore de partie à transférer sur cet appareil.</div>
     <div id="transferOut" class="card" style="padding:0;gap:12px">
-      <p class="pitch">Sur ton autre appareil, scanne ce QR code avec l'appareil photo. Ou copie le code et colle-le là-bas.</p>
+      <p class="pitch">Sur ton autre appareil, scanne ce QR code avec l'appareil photo (touche-le pour l'agrandir). Ou copie le code et colle-le là-bas.</p>
       <div class="qr"><img id="qrImg" alt="QR code de ta partie" hidden></div>
       <textarea id="codeOut" readonly rows="3" aria-label="Code de ta partie"></textarea>
       <div class="btns"><button class="go alt" id="copyCode">Copier le code</button></div>
