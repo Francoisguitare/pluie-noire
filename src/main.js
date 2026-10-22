@@ -26,6 +26,7 @@ import {S,chap,newGame,applySave,allerZone,fmtHeure,NOMS_LIEUX} from './histoire
 import {saveGame,readSave,clearSave,showSaveInfo,lire,exportCode,importCode,majPoints,dernierPoint,resume,pointDeSauvegarde} from './sauvegarde.js';
 import {toast,detectionHud,fade,chargement,finChargement,ask} from './interface.js';
 import {updateCombat,chargerPoint,blesser,trace} from './combat.js';
+import {completion,texteCompletion} from './completion.js';
 import {initAudio,toggleMute,setIndoor} from './son.js';
 import {keys,lock,pleinEcran} from './controles.js';
 import {enterZone,zone,zones} from './zones.js';
@@ -59,7 +60,8 @@ $('cont').onclick=()=>{const d=readSave();if(!d)return;if(MOBILE)pleinEcran(true
   chargement('Reprise de ta partie : '+(NOMS_LIEUX[d.zone]||'')+'…');setTimeout(()=>{reprendre();finChargement()},60)};
 $('again').onclick=()=>{if(MOBILE)pleinEcran(true);clearSave();newGame();enterGame();saveGame()};
 function pause(){if(state!=='play')return;saveGame();emit('saveNow');setState('paused');document.body.classList.add('paused');$('pauseMenu').hidden=false;if(document.pointerLockElement)document.exitPointerLock();
-  const d=dernierPoint();$('pointInfo').hidden=!d;$('pausePoint').hidden=!d;if(d)$('pointInfo').textContent='Dernier point de sauvegarde : '+resume(d)}
+  const d=dernierPoint();$('pointInfo').hidden=!d;$('pausePoint').hidden=!d;if(d)$('pointInfo').textContent='Dernier point de sauvegarde : '+resume(d);
+  $('pauseCompletion').textContent=texteCompletion()}
 // Revenir au dernier point de sauvegarde (on demande d'abord : ce qui a été fait depuis est perdu).
 $('pausePoint').onclick=async()=>{const d=dernierPoint();if(!d)return;
   if(!await ask('Revenir au dernier point de sauvegarde ?',`Point de sauvegarde ${resume(d)}. Ce que tu as fait depuis sera perdu.`,'Revenir','Annuler'))return;
@@ -117,7 +119,7 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.
 
 /* ---------- Mode debug (?debug) : accès pour les tests automatiques ---------- */
 if(DEBUG)window.__pn={P,G,camera,scene,keys,DLG,ACTIONS,openDialog,pickChoice,newGame,applySave,saveGame,readSave,killDrone,zone,zones,handLocked,lire,exportCode,importCode,allerZone,passerCine,
-  get S(){return S},pouvoirs:POUV,combat:{blesser,chargerPoint,dernierPoint,pointDeSauvegarde,trace},on,exploration:EXPLO,signatureLumieres,programmes:()=>renderer.info.programs.length,textures:()=>renderer.info.memory.textures,get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB,quais:HQ,tour:HTO,sommet:HS},metier:METIER,
+  get S(){return S},pouvoirs:POUV,combat:{blesser,chargerPoint,dernierPoint,pointDeSauvegarde,trace},on,completion,exploration:EXPLO,signatureLumieres,programmes:()=>renderer.info.programs.length,textures:()=>renderer.info.memory.textures,get state(){return state},emit,H:{rue:H,toits:HT,traboules:HTB,quais:HQ,tour:HTO,sommet:HS},metier:METIER,
   step:(n,dt=1/30)=>{for(let i=0;i<n;i++)frame(dt)}};
 
 /* ---------- Démarrage : polices, monde, personnages, boucle ---------- */

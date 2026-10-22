@@ -13,6 +13,7 @@ import {DLG} from './histoire/dialogue.js';
 import {gagner,porteeEcho} from './pouvoirs.js';
 import {moniteur} from './ordinateurs.js';
 import {archiveSound,bipSignal,annonce,tone} from './son.js';
+import {categorie,completion} from './completion.js';
 
 /* ====================================================================================================
    Les dossiers et leurs archives
@@ -279,6 +280,14 @@ function lieux(Z){for(const l of LIEUX){if(l.zone!==Z.id||S.lieux.includes(l.id)
   if(Math.hypot(P.pos.x-l.x,P.pos.z-l.z)<l.r){S.lieux.push(l.id);gagner(25,'lieu découvert : '+l.nom.replace(/^./,c=>c.toLowerCase()));emit('save')}}}
 // Première conversation avec chaque personnage
 const PERSONNES={mara:'Mara',nox:'NOX-7',kovac:'Kovac',sid:'Sid',rosa:'Rosa Delorme',varga:'Ilse Varga',saal:'Victor Saal'};
+// Les quêtes (S.quetes) : la photo de Sid, la carte de Jean Delorme pour Rosa, le casier des quais.
+export const QUETES=[{id:'sid',nom:'La photo de Sid'},{id:'rosa',nom:'La carte de Jean Delorme'},{id:'casier',nom:'Le casier 7 des quais'}];
+// Ce que l'exploration compte dans le pourcentage de la partie
+categorie({id:'archives',nom:'Archives',poids:30,fait:()=>S.archives.filter(id=>ARCHIVES.some(a=>a.id===id)).length,total:()=>ARCHIVES.length});
+categorie({id:'dossiers',nom:'Dossiers complets',poids:10,fait:()=>S.dossiersFinis.length,total:()=>DOSSIERS.length});
+categorie({id:'lieux',nom:'Lieux découverts',poids:8,fait:()=>S.lieux.length,total:()=>LIEUX.length});
+categorie({id:'rencontres',nom:'Rencontres',poids:6,fait:()=>S.rencontres.length,total:()=>Object.keys(PERSONNES).length});
+categorie({id:'quetes',nom:'Quêtes',poids:8,fait:()=>QUETES.filter(q=>S.quetes[q.id]).length,total:()=>QUETES.length});
 on('dialogueOuvert',k=>{const d=DLG[k];if(!d)return;const nom=(d.name||'').toLowerCase();
   const qui=Object.keys(PERSONNES).find(p=>nom.includes(p));if(!qui||S.rencontres.includes(qui))return;
   S.rencontres.push(qui);setTimeout(()=>gagner(20,'rencontre : '+PERSONNES[qui]),300)});
@@ -331,7 +340,9 @@ on('apresCapture',()=>{const z=zone();if(z)poserArchives(z)});
    ==================================================================================================== */
 function remplirDossiers(){
   const L=$('dosListe');L.innerHTML='';
-  $('dosTete').textContent=`${S.archives.length} archive${S.archives.length>1?'s':''} sur ${ARCHIVES.length} · ${S.dossiersFinis.length} dossier${S.dossiersFinis.length>1?'s':''} complet${S.dossiersFinis.length>1?'s':''} sur ${DOSSIERS.length}`;
+  // la progression de la partie, catégorie par catégorie
+  const c=completion();$('dosTete').textContent=`Partie terminée à ${c.pct} %`;
+  $('dosProgres').innerHTML=c.det.map(d=>`<div class="pRang${d.fait>=d.total?' fini':''}"><b>${d.nom}</b><span class="bar"><i style="width:${(d.fait/d.total*100).toFixed(1)}%"></i></span><em>${d.fait} / ${d.total}</em></div>`).join('');
   for(const d of DOSSIERS){const A=deDossier(d.id),n=A.filter(a=>trouvee(a.id)).length;
     const det=document.createElement('details');det.className='dossier'+(n===A.length?' complet':'');
     const sum=document.createElement('summary');sum.innerHTML=`<b></b><span class="pips">${A.map(a=>`<i class="${trouvee(a.id)?'on':''}"></i>`).join('')}</span><em>${n} / ${A.length}</em>`;sum.querySelector('b').textContent=d.titre;det.appendChild(sum);

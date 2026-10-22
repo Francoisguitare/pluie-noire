@@ -14,6 +14,7 @@ import {resetDrones} from '../drones.js';
 import {collide} from '../physique.js';
 import {setArmed,resetHand} from '../joueur.js';
 import {accroupir} from '../controles.js';
+import {categorie,completion} from '../completion.js';
 
 // Tous les drapeaux de l'histoire (voir docs/histoire.md). Ajouter les nouveaux ici, avec leur valeur de départ.
 export const S0=()=>({chapter:1,heure:192,quest:false,code:false,credits:80,ventTip:false,chip:false,door:false,spotted:0,t0:0,noxPaid:false,ch2:false,armed:false,dd:[false,false,false],gate:false,battery:false,decoded:false,forced:false,
@@ -34,6 +35,8 @@ export const S0=()=>({chapter:1,heure:192,quest:false,code:false,credits:80,vent
   morts:0,combatVu:false});
 // Un point de pouvoir par niveau ; chaque niveau coûte 50 XP de plus que le précédent (100, 150, 200…).
 export const seuilNiveau=n=>100*n+25*n*(n-1);
+// L'histoire dans le pourcentage de la partie : les cinq chapitres, le dernier compte à la fin choisie.
+categorie({id:'histoire',nom:'Chapitres',poids:20,fait:()=>[S.ch2,S.chapter>=3,S.chapter>=4,S.chapter>=5,!!S.fin].filter(Boolean).length,total:()=>5});
 export const niveauDe=xp=>{let n=0;while(seuilNiveau(n+1)<=xp)n++;return n};
 export let S=S0();
 
@@ -56,6 +59,7 @@ export function finish(k,o={}){
   const sec=Math.round((performance.now()-S.t0)/1000),e=ENDS[k];
   $('endKicker').textContent=o.kicker||'Fin de mission';$('endSaison').textContent=o.saison||'';$('endSaison').hidden=!o.saison;
   $('endTitle').textContent=e[0];$('endText').textContent=typeof e[1]==='function'?e[1]():e[1];
+  $('endCompletion').textContent=`Partie terminée à ${completion().pct} %`;
   $('endStats').textContent=`Temps ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}  ·  Repérages : ${S.spotted}  ·  Chutes : ${S.morts}  ·  ${S.credits} crédits restants  ·  Niveau ${niveauDe(S.xp)}  ·  Archives : ${S.archives.length}`;
   $('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');emit('clearSave');$('end').hidden=false;tone(220,1.2,'sine',.05,330);
 }

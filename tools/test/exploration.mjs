@@ -38,9 +38,11 @@ for(const a of archives){
 s=await S();verifier(s.dossiersFinis.length===6,'six dossiers complets : '+s.dossiersFinis.join(', '));
 verifier(!(await g.pn(()=>window.__pn.zone().inter.some(i=>i.archive&&(!i.on||i.on())))),'une archive lue ne se relit pas sur place');
 
-// L'écran « Dossiers » (touche J)
+// L'écran « Dossiers » (touche J), avec le pourcentage de la partie
 await g.pn(()=>window.__pn.emit('ouvrirDossiers'));await g.avancer(1);
 verifier(await g.pn(()=>!document.getElementById('dossiers').hidden&&document.querySelectorAll('#dosListe details.dossier.complet').length===6),'écran Dossiers : six dossiers complets, révélations');
+const pc=await g.pn(()=>({tete:document.getElementById('dosTete').textContent,rangs:[...document.querySelectorAll('#dosProgres .pRang')].map(r=>r.textContent),c:window.__pn.completion()}));
+verifier(/^Partie terminée à \d+ %$/.test(pc.tete)&&pc.rangs.some(t=>/Archives.*41 \/ 41/.test(t))&&pc.c.det.find(d=>d.id==='dossiers').fait===6,`progression : « ${pc.tete} », ${pc.rangs.length} catégories`);
 if(sortie){await g.pn(()=>{const d=document.querySelector('#dosListe details.dossier');d.open=true;d.querySelector('details.piece').open=true});await capture('dossiers')}
 await g.p.click('#dosRetour');await g.p.click('#resume');await g.avancer(1);
 
@@ -79,6 +81,12 @@ await g.pn(()=>{const pn=window.__pn;pn.S.archives.push('toits1');pn.openDialog(
 verifier(await g.pn(()=>/Vaise, 2036/.test(document.getElementById('dtxt').textContent)||window.__pn.S.quetes.sid),'Sid retrouve sa photo');
 s=await S();verifier(s.quetes.sid,'quête de Sid faite');
 
+// 100 % : toute l'histoire, tout trouvé, tout le monde rencontré, toutes les quêtes, tous les pouvoirs au maximum
+const cent=await g.pn(()=>{const pn=window.__pn,E=pn.exploration,A=pn.pouvoirs.AMELIS,S=pn.S;
+  Object.assign(S,{ch2:true,chapter:5,fin:'diffuser',archives:E.ARCHIVES.map(a=>a.id),dossiersFinis:E.DOSSIERS.map(d=>d.id),lieux:E.LIEUX.map(l=>l.id),rencontres:['mara','nox','kovac','sid','rosa','varga','saal'],
+    quetes:Object.fromEntries(E.QUETES.map(q=>[q.id,true])),ameli:Object.fromEntries(A.map(a=>[a.id,a.val.length-1]))});
+  const plein=pn.completion().pct;S.lieux.pop();const presque=pn.completion().pct;return{plein,presque}});
+verifier(cent.plein===100&&cent.presque<100,`100 % quand tout est fait (${cent.plein} %), moins s'il manque un lieu (${cent.presque} %)`);
 // L'épilogue de « Diffuser » cite les dossiers complets
 const ep=await g.pn(()=>{const pn=window.__pn;pn.S.dossiersFinis=['gardien12','varga'];return pn.exploration.epilogueArchives('diffuser')});
 verifier(/Gardien 12/.test(ep)&&/Varga/.test(ep),'épilogue : Nox diffuse les dossiers complets');

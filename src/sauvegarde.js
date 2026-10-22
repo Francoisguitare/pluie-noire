@@ -64,7 +64,7 @@ export function decrire(d){
   return`Sauvegarde ${resume(d.partie)}`;
 }
 export function showSaveInfo(){const d=lire(),p=d.partie;$('cont').hidden=!p;$('play').textContent=p?'Nouvelle partie':'Entrer dans la nuit';$('play').classList.toggle('alt',!!p);
-  if(!p){const f=d.saisons['1'];$('saveInfo').hidden=!f;if(f)$('saveInfo').textContent=`Saison 1 terminée · ${NOMS_FINS[f.fin]||f.fin}. Ta fin est gardée pour la saison 2.`;return}
+  if(!p){const f=d.saisons['1'];$('saveInfo').hidden=!f;if(f)$('saveInfo').textContent=`Saison 1 terminée · ${NOMS_FINS[f.fin]||f.fin}${f.completion!=null?` · ${f.completion} %`:''}. Ta fin est gardée pour la saison 2.`;return}
   $('saveInfo').textContent=decrire(d);$('saveInfo').hidden=false}
 addEventListener('pagehide',saveGame);document.addEventListener('visibilitychange',()=>{if(document.hidden)saveGame()});
 

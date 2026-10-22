@@ -13,6 +13,7 @@ import {detruireCamera} from './cameras.js';
 import {neutraliser,relever,remettre,bruitDeChute} from './gardiens.js';
 import {gesteCoupure,boutDesDoigts,handLocked} from './joueur.js';
 import {globaux} from './compilation.js';
+import {categorie} from './completion.js';
 import {arcSound,chuteArmure,niveauSound} from './son.js';
 
 /* ---------- Améliorations : un point par rang ---------- */
@@ -28,6 +29,7 @@ const rang=id=>S.ameli[id]||0;
 const val=id=>AMELIS.find(a=>a.id===id).val[rang(id)];
 export const niveau=()=>niveauDe(S.xp);
 export const NB_ARCHIVES=41;
+categorie({id:'pouvoirs',nom:'Pouvoirs au maximum',poids:8,fait:()=>AMELIS.reduce((n,a)=>n+rang(a.id),0),total:()=>AMELIS.reduce((n,a)=>n+a.val.length-1,0)});
 // portée de l'Écho (0 si pas encore appris) : exploration.js s'en sert pour montrer les archives à travers les murs
 export const porteeEcho=()=>val('echo');
 export const pointsDispo=()=>niveau()-Object.values(S.ameli).reduce((a,b)=>a+b,0);
