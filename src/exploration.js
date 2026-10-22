@@ -173,7 +173,7 @@ export const LIEUX=[
 function lieux(Z){for(const l of LIEUX){if(l.zone!==Z.id||S.lieux.includes(l.id))continue;
   if(Math.hypot(P.pos.x-l.x,P.pos.z-l.z)<l.r){S.lieux.push(l.id);gagner(25,'lieu découvert : '+l.nom.replace(/^./,c=>c.toLowerCase()));emit('save')}}}
 // Première conversation avec chaque personnage
-const PERSONNES={mara:'Mara',nox:'NOX-7',kovac:'Kovac',sid:'Sid',rosa:'Rosa Delorme',varga:'Ilse Varga',saal:'Victor Saal',
+export const PERSONNES={mara:'Mara',nox:'NOX-7',kovac:'Kovac',sid:'Sid',rosa:'Rosa Delorme',varga:'Ilse Varga',saal:'Victor Saal',
   lou:'Lou',josette:'Josette',ferro:'Mme Ferro',léa:'Léa Ferrand',gaspard:'Gaspard',marius:'Marius',claire:'Claire'};
 // Les quêtes (S.quetes) : la photo de Sid, la carte de Jean Delorme pour Rosa, le casier des quais ; et celles des habitants
 // (habitants.js) : le message de Josette pour Rosa, les pigeons de Mme Ferro, ce que Léa cherche dans la tour.

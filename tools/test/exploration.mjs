@@ -93,9 +93,9 @@ await capture('radio');
 for(let i=0;i<80&&(await S()).radios.length===r0;i++){await suivre();await g.avancer(15)}
 s=await S();verifier(s.radios.length===r0+1,"écoute entendue jusqu'au bout : "+s.radios.slice(-1));
 // 100 % : toute l'histoire, tout trouvé, tout le monde rencontré, toutes les quêtes, tous les pouvoirs au maximum
-const cent=await g.pn(()=>{const pn=window.__pn,E=pn.exploration,A=pn.pouvoirs.AMELIS,S=pn.S;
-  Object.assign(S,{ch2:true,chapter:5,fin:'diffuser',archives:E.ARCHIVES.map(a=>a.id),dossiersFinis:E.DOSSIERS.map(d=>d.id),lieux:E.LIEUX.map(l=>l.id),rencontres:['mara','nox','kovac','sid','rosa','varga','saal'],
-    quetes:Object.fromEntries(E.QUETES.map(q=>[q.id,true])),ameli:Object.fromEntries(A.map(a=>[a.id,a.val.length-1])),faucheuses:['rue:0','toits:0','quais:0'],radios:E.RADIOS.map(r=>r.id)});
+const cent=await g.pn(async()=>{const pn=window.__pn,E=pn.exploration,A=pn.pouvoirs.AMELIS,S=pn.S,{CURIOSITES}=await import('/src/curiosites.js');
+  Object.assign(S,{ch2:true,chapter:5,fin:'diffuser',archives:E.ARCHIVES.map(a=>a.id),dossiersFinis:E.DOSSIERS.map(d=>d.id),lieux:E.LIEUX.map(l=>l.id),rencontres:Object.keys(E.PERSONNES),
+    quetes:Object.fromEntries(E.QUETES.map(q=>[q.id,true])),ameli:Object.fromEntries(A.map(a=>[a.id,a.val.length-1])),faucheuses:['rue:0','toits:0','quais:0'],radios:E.RADIOS.map(r=>r.id),curiosites:CURIOSITES.map(c=>c.id)});
   const plein=pn.completion().pct;S.lieux.pop();const presque=pn.completion().pct;return{plein,presque}});
 verifier(cent.plein===100&&cent.presque<100,`100 % quand tout est fait (${cent.plein} %), moins s'il manque un lieu (${cent.presque} %)`);
 // L'épilogue de « Diffuser » cite les dossiers complets
