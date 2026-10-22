@@ -32,7 +32,11 @@ export const S0=()=>({chapter:1,heure:192,quest:false,code:false,credits:80,vent
   // exploration (voir exploration.js) : lieux découverts, premières rencontres, dossiers complets, quêtes (sid, rosa, casier), signal déjà expliqué
   lieux:[],rencontres:[],dossiersFinis:[],quetes:{},signalVu:false,
   // combat (voir combat.js) : chutes (retours au dernier point de sauvegarde), premier échange de tirs déjà expliqué
-  morts:0,combatVu:false});
+  morts:0,combatVu:false,
+  // Faucheuses abattues (« lieu:rang », voir faucheuse.js)
+  faucheuses:[],
+  // écoutes radio entendues jusqu'au bout (voir radios.js)
+  radios:[]});
 // Un point de pouvoir par niveau ; chaque niveau coûte 50 XP de plus que le précédent (100, 150, 200…).
 export const seuilNiveau=n=>100*n+25*n*(n-1);
 // L'histoire dans le pourcentage de la partie : les cinq chapitres, le dernier compte à la fin choisie.

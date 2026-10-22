@@ -27,6 +27,7 @@ import {saveGame,readSave,clearSave,showSaveInfo,lire,exportCode,importCode,majP
 import {toast,detectionHud,fade,chargement,finChargement,ask} from './interface.js';
 import {updateCombat,chargerPoint,blesser,trace} from './combat.js';
 import {completion,texteCompletion} from './completion.js';
+import {updateRadios} from './radios.js';
 import {initAudio,toggleMute,setIndoor} from './son.js';
 import {keys,lock,pleinEcran} from './controles.js';
 import {enterZone,zone,zones} from './zones.js';
@@ -107,7 +108,7 @@ function frame(dt){
     const avant=Math.floor(S.heure);S.heure=Math.min(S.heure+dt/60,S.fin?24*60:5*60+58);if(Math.floor(S.heure)!==avant)$('heure').textContent=fmtHeure(S.heure)}
   const inside=(state==='play'||state==='cine')&&z.indoor(P.pos);updateRain(dt,z.pluie&&!inside);setIndoor(inside||!z.pluie);
   updateFx(dt,z);updateSky(dt);if(z.update)z.update(dt,S);
-  fx.glitch=Math.max(updateHand(dt),G.choc*.5);updatePouvoirs(dt);majOrdinateurs(dt);updateExploration(dt);suivreLumieres(z);updateMusique(dt);
+  fx.glitch=Math.max(updateHand(dt),G.choc*.5);updatePouvoirs(dt);majOrdinateurs(dt);updateExploration(dt);updateRadios(dt);suivreLumieres(z);updateMusique(dt);
   updateAmbiance(dt,z);
   updateNpcs(dt);for(const f of z.figurants)if(f.mixer)f.mixer.update(dt);
   fx.flash=G.flash;fx.alert=state==='play'?Math.max(0,G.alertLvl-.3):0;

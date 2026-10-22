@@ -337,6 +337,19 @@ details.piece{margin:4px 0 4px 8px}
 details.piece>summary{cursor:pointer;font:500 15px/1.3 var(--f-display);color:#bfefff}
 details.piece p{margin:6px 0 8px 14px;white-space:pre-wrap;font-size:15px;line-height:1.45}
 p.manque{margin:4px 0 4px 8px;font:500 12px/1.3 var(--f-mono);color:var(--ink-dim)}
+/* Écoutes radio des Gardiens */
+#radio{position:fixed;left:calc(20px + env(safe-area-inset-left,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));width:min(430px,42vw);box-sizing:border-box;
+  padding:9px 14px;background:rgba(8,12,16,.78);border-left:2px solid #9fb4c8;display:grid;gap:5px;pointer-events:none}
+#radio .kicker{color:#9fb4c8;letter-spacing:.16em}
+#radioTxt p{margin:0;font:500 14px/1.35 var(--f-mono);color:var(--ink)}
+#radioTxt p:first-child:not(:last-child){opacity:.55}
+#radioTxt b{color:#9fb4c8;font-weight:500;margin-right:4px}
+#radioTxt b::after{content:" :"}
+body.touch #radio{left:50%;transform:translateX(-50%);bottom:auto;top:calc(104px + env(safe-area-inset-top,0px));width:min(440px,52vw)}
+body.touch #radioTxt p{font-size:12px}
+details.dossier.radios{border-left-color:#9fb4c8}
+details.piece p.ligne{margin:2px 0 2px 14px}
+details.piece p.ligne b{color:#9fb4c8;font-weight:500}
 /* Progression de la partie (écran Dossiers) */
 .progres{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 22px;margin-bottom:6px}
 .pRang{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font:500 12px/1.2 var(--f-mono);color:var(--ink-dim)}
@@ -405,6 +418,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
   <div id="coupe"><span class="lbl">Coupure · R</span><div class="bar"><i id="coupeBar"></i></div></div>
   <div id="signal" hidden><i></i><i></i><i></i><i></i><span>Signal K7</span></div>
   <div id="annonce" hidden><div class="kicker">Haut-parleurs Helix</div><p id="annonceTxt"></p></div>
+  <div id="radio" hidden><div class="kicker">Radio Helix · canal des Gardiens</div><div id="radioTxt"></div></div>
   <div id="coups"><i></i><i></i><i></i><i></i></div>
   <div id="cross"></div>
   <div id="hit"></div>

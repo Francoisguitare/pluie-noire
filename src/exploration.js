@@ -15,114 +15,8 @@ import {moniteur} from './ordinateurs.js';
 import {archiveSound,bipSignal,annonce,tone} from './son.js';
 import {categorie,completion} from './completion.js';
 
-/* ====================================================================================================
-   Les dossiers et leurs archives
-   ==================================================================================================== */
-export const DOSSIERS=[
-  {id:'vaise',titre:'Les mains de Vaise',intro:"L'usine Helix de Vaise, ses cadences, ses accidents. Et ce qu'on vend ensuite à ceux qui y ont laissé une main.",
-    revelation:"La nuit de l'accident d'Ash, la ligne 4 tournait trente pour cent plus vite que d'habitude. La note qui l'ordonne porte la signature de Victor Saal : « Il nous faut des porteurs K7 dans le quartier. Les accidents ont un coût. Les prothèses ont un prix. »\n\nTa main n'est pas un accident. C'est une vente."},
-  {id:'gardien12',titre:'Le Gardien 12',intro:"Un agent d'Helix dont l'armure s'est refermée sur lui, en pleine ronde. Personne ne l'a revu.",
-    revelation:"Le Gardien 12 s'appelait Théo Ferrand. Il avait compris que les armures portaient le même kill-switch que les K7, et il comptait le dire. Helix l'a éteint dans sa propre coquille, puis l'a rangé à l'étage -3 de la tour, « en maintenance définitive ».\n\nLa Coupure que porte ta main, c'est son cauchemar retourné contre ceux qui l'ont inventé."},
-  {id:'varga',titre:'Le dossier Varga',intro:"Comment une ingénieure qui voulait rendre aux gens la sensation de la pluie a fini par dessiner un interrupteur.",
-    revelation:"Ilse Varga a conçu la coupure pour arrêter une prothèse folle, une seule, en cas d'urgence. On lui a demandé de la rendre silencieuse, puis collective, puis permanente. Elle a obéi trois fois.\n\nLa quatrième, elle a caché l'override dans un tissu, sur un métier de 1801, en se disant que seul quelqu'un qui sait regarder les mains le trouverait."},
-  {id:'nox',titre:'Ce que Nox a enregistré',intro:"NOX-7 dit que tout enregistrer, c'est son défaut de fabrication. Ses fichiers racontent autre chose.",
-    revelation:"La série NOX n'a jamais eu de défaut. Elle a été retirée parce qu'elle ne savait pas oublier : ses mémoires ne s'effaçaient pas, et Helix ne pouvait pas se le permettre. Toutes les unités ont été broyées. Sauf une, qui s'est cachée dans la rue et a continué d'écouter.\n\nCette nuit, la seule mémoire que Helix n'a pas pu effacer marche à côté de toi."},
-  {id:'saal',titre:'Victor Saal',intro:"Le directeur de la sécurité ne hausse jamais la voix. Ses papiers non plus.",
-    revelation:"Victor Saal n'a aucun implant. Son dossier médical dit pourquoi : une main gauche perdue en 2019, jamais remplacée. Helix lui a proposé une K7 de direction, gratuite. Il a refusé par écrit.\n\nIl sait exactement ce qu'il y a dedans. Il n'en a jamais voulu pour lui."},
-  {id:'canuts',titre:'Les Nouveaux Canuts',intro:"1831, 1834, 2041. À la Croix-Rousse, on se transmet les révoltes comme des outils.",
-    revelation:"Les Nouveaux Canuts sont deux cent douze. Ils ont racheté leurs pièces détachées une à une, au marché noir, pour ne plus rien devoir à Helix. Ils ont cotisé pour payer Mara, pour payer la puce, pour payer cette nuit.\n\nIls ne t'ont jamais vu. Ils ont tous misé sur toi."},
-];
-// forme : carte (au sol), graffiti et affiche (sur le mur le plus proche), repondeur, ecran. tag : ce qui est écrit sur le mur.
-export const ARCHIVES=[
-  // ---------- la rue ----------
-  {id:'rue1',dossier:'vaise',zone:'rue',x:-13.5,z:-36.5,forme:'carte',titre:'Fiche de paie, usine Helix de Vaise',
-    texte:"Salaire net : 900 crédits.\nRetenue « location prothèse K7, main droite » : 212 crédits.\nRetenue « maintenance obligatoire » : 48 crédits.\nRetenue « assurance cadence » : 30 crédits.\n\nEn bas, au stylo, une écriture qui appuie trop fort : « On ne peut pas rendre une main. J'ai demandé. »"},
-  {id:'rue2',dossier:'vaise',zone:'rue',x:-5.5,z:33.5,forme:'carte',titre:'Un ticket du bar de Kovac',
-    texte:"Un ticket de caisse froissé : deux bols de nouilles, une bière.\n\nAu dos, au crayon, l'écriture de Kovac : « Elle tremble le matin. Le docteur d'Helix dit que c'est l'humidité. L'humidité, à Lyon-Basse. Il se fout de moi. »\n\nKovac n'aimerait pas savoir que quelqu'un a lu ça. Ou peut-être que si."},
-  {id:'rue3',dossier:'saal',zone:'rue',x:7,z:-51,forme:'ecran',titre:'Note de service, labo Helix',
-    texte:"DE : V. Saal, direction sécurité\nÀ : tout le personnel de laboratoire\n\n« Devant les clients, ne jamais dire coupure. Dire : mise en veille de confort. Ne jamais dire kill-switch. Dire : protocole de bienveillance. Tout manquement sera traité comme une fuite. »\n\nQuelqu'un a ajouté, dans la marge du fichier : « Bienveillance. Il ose. »"},
-  {id:'rue4',dossier:'vaise',zone:'rue',x:-13.5,z:-6.5,forme:'graffiti',tag:'VAISE 2039\nILS ONT PRIS NOS MAINS\nON GARDE LES POINGS',titre:'Un graffiti dans la ruelle',
-    texte:"« VAISE 2039. ILS ONT PRIS NOS MAINS. ON GARDE LES POINGS. »\n\nEn dessous, plus petit, une liste de prénoms, chacun suivi d'un mot : « bras », « main », « main », « œil », « jambe », « main ». Le dernier prénom a été effacé à la ponceuse. On devine encore : « main droite »."},
-  {id:'rue5',dossier:'gardien12',zone:'rue',x:7.5,z:-30.5,forme:'affiche',tag:'AVIS DE RECHERCHE\nAGENT G-12',titre:'Avis de recherche Helix',
-    texte:"AVIS DE RECHERCHE — HELIX SÉCURITÉ\nAgent G-12, armure de patrouille, matricule effacé.\nN'a pas regagné son poste depuis le 3 mars.\n« Toute personne en contact avec l'agent doit le signaler. Ne pas l'approcher. Ne pas l'écouter. »\n\nNe pas l'écouter. Sur un avis de recherche. Quelqu'un chez Helix avait peur de ce qu'il pouvait dire."},
-  {id:'rue6',dossier:'canuts',zone:'rue',x:-7,z:-41,forme:'graffiti',tag:'1831 · 1834 · 2041',titre:'Trois dates sur un mur',
-    texte:"« 1831 · 1834 · 2041 », à la bombe rouge, avec une navette de tisserand dessinée en dessous.\n\nLes deux premières dates, ce sont les révoltes des canuts de la Croix-Rousse. La troisième, c'est cette année. Quelqu'un, dans ce quartier, a déjà décidé que ce serait une révolte."},
-  {id:'rue7',dossier:'varga',zone:'rue',x:-6,z:-50,forme:'ecran',titre:'Journal de labo, I. Varga',
-    texte:"Interface K7, jour 412.\n« La patiente 31 a pleuré quand elle a senti la pluie sur ses doigts neufs. Elle a dit : je croyais que je n'aurais plus jamais froid aux mains. J'ai dû sortir du labo.\n\nC'est pour ça que je fais ce métier. Je l'écris ici pour m'en souvenir, au cas où on me demanderait un jour de faire autre chose. »"},
-  {id:'rue8',dossier:'nox',zone:'rue',x:5.5,z:11.5,forme:'repondeur',titre:'Enregistrement NOX-7 n° 0001',
-    texte:"(Une voix synthétique, plus jeune que celle de Nox.)\n« Unité NOX-7, première journée de service. Rue des Tanneurs, Lyon-Basse. Tâches : nettoyer, réparer, écouter les plaintes des résidents et les transmettre à Helix.\n\nRemarque personnelle : les résidents ne se plaignent jamais à moi. Ils me parlent. Je ne sais pas s'il faut le transmettre. »\n\n(Bip.) Fichier daté de 2033."},
-  // ---------- les toits ----------
-  {id:'toits1',dossier:'vaise',zone:'toits',x:13.4,z:11.4,forme:'carte',quete:'sid',titre:'Une photo délavée',
-    texte:"L'équipe de nuit de l'usine de Vaise, 2036. Une vingtaine de personnes en bleu de travail, devant la ligne 4. Tout le monde sourit. Une main sur deux est déjà une K7.\n\nAu fond, un grand type au bonnet rouge, une bobine de câble sur l'épaule. Son bras est encore en chair et en os. C'est Sid.\n\nIl voudra sans doute la revoir."},
-  {id:'toits2',dossier:'gardien12',zone:'toits',x:.6,z:-15.3,forme:'carte',titre:'Planning des Gardiens, quartier nord',
-    texte:"Ronde de 4 h, toits de la rue des Tanneurs. Six agents, six matricules.\n\nLe sixième, G-12, est rayé. À côté, à la main : « ne plus l'affecter, ordre de la direction ». Et en bas, la consigne de la nuit, soulignée deux fois : « Pas de témoin. Pas d'image. »"},
-  {id:'toits3',dossier:'saal',zone:'toits',x:-17.3,z:-33.3,forme:'carte',titre:'Mémo de la direction Helix',
-    texte:"« Taux de réclamation K7 : 0,2 %. Taux de coupure : confidentiel.\nCoût d'une coupure : 0 crédit.\nCoût d'un procès : 2,4 millions.\nConclusion : il est moins cher de couper que de réparer. »\n\nParaphé V. S., en bas à droite. Une écriture petite, régulière, sans une rature."},
-  {id:'toits4',dossier:'nox',zone:'toits',x:.6,z:7.6,forme:'repondeur',titre:'Enregistrement NOX-7 n° 1180',
-    texte:"(Le bruit de la pluie sur une tôle. Puis la voix de Kovac, très bas, pas du tout bougonne.)\n« Allez. Allez, ma belle. Serre. Serre le verre. … Voilà. Tu vois que tu peux. Demain on recommence. »\n\n(Un silence. La voix de Nox, en commentaire.) « Le résident Kovac parle à sa main droite tous les soirs, sur ce toit. Je n'ai pas transmis. »"},
-  {id:'toits5',dossier:'varga',zone:'toits',x:-4,z:-15.3,forme:'ecran',titre:'Un récepteur de Gardien tombé',
-    texte:"ALERTE INTERNE — PRIORITÉ 1\nDr I. Varga introuvable depuis 03:58.\nDernier signal de son œil K7 : Croix-Rousse, sous la pierre. Signal faible, intermittent.\n« À retrouver vivante si possible. »\n\nSi possible. Le message a été lu par toutes les patrouilles de la nuit."},
-  {id:'toits6',dossier:'canuts',zone:'toits',x:-6.6,z:-20.6,forme:'carte',titre:'Un tract des Nouveaux Canuts',
-    texte:"« Réunion cette nuit, cour des Voraces. Apportez vos outils, pas vos noms.\nLes K7 nous coûtent un tiers du salaire et nous obéissent à moitié. Ça suffit.\nVivre en travaillant ou mourir en combattant.\nOn a juste ajouté les pièces détachées. — R. D. »"},
-  // ---------- les traboules ----------
-  {id:'trab1',dossier:'canuts',zone:'traboules',x:-9.5,z:-36,forme:'carte',quete:'rosa',titre:'Une carte perforée de 1831',
-    texte:"Une vieille carte de métier Jacquard, en carton jauni, glissée dans une fente du mur. Les trous dessinent une fleur.\n\nUn canut a gravé dans le carton, à la pointe du couteau : « Vivre en travaillant ou mourir en combattant. » Et une signature : « J. Delorme ».\n\nDelorme. Comme Rosa."},
-  {id:'trab2',dossier:'varga',zone:'traboules',x:-30.5,z:-15,forme:'carte',titre:'Une lettre de Varga, jamais envoyée',
-    texte:"« Victor,\nvous m'aviez promis que personne ne s'en servirait. Que la coupure dormirait dans la documentation comme un extincteur dans un couloir. J'ai fait semblant de vous croire, parce que c'était plus simple et que mon nom était sur le brevet.\n\nC'est ça, ma faute. Pas de l'avoir dessinée. De vous avoir cru.\n— Ilse »\n\nLa lettre a été pliée et dépliée tant de fois qu'elle se déchire aux plis."},
-  {id:'trab3',dossier:'nox',zone:'traboules',x:-67.5,z:-47,forme:'carte',titre:"Une plaque d'identification",
-    texte:"Une plaque en métal, arrachée d'un châssis : « Unité de maintenance NOX-3. Lyon, presqu'île. Contrat expiré en 2039. Ne pas réparer. »\n\nQuelqu'un a ajouté au feutre, en dessous : « Pardon. »\n\nNOX-3. Il y a donc eu d'autres Nox."},
-  {id:'trab4',dossier:'canuts',zone:'traboules',x:2,z:1,forme:'graffiti',tag:'VIVRE EN TRAVAILLANT\nOU MOURIR EN COMBATTANT',titre:'La devise des canuts',
-    texte:"« Vivre en travaillant ou mourir en combattant. »\n\nLa devise de 1831, repeinte par-dessus une version plus ancienne, presque effacée. Autour, des dizaines de petites marques à la craie, des bâtons groupés par cinq : quelqu'un compte. En bas, la dernière ligne, fraîche : « 212 ».\n\nDeux cent douze quoi ?"},
-  {id:'trab5',dossier:'gardien12',zone:'traboules',x:9.5,z:-21,forme:'graffiti',tag:'G12 ÉTAIT ICI\nILS PEUVENT VOUS ÉTEINDRE AUSSI',titre:'Un message gravé',
-    texte:"« G12 ÉTAIT ICI. ILS PEUVENT VOUS ÉTEINDRE AUSSI. »\n\nGravé dans la pierre, pas peint. Les lettres sont profondes, régulières : la pointe d'un gant d'armure, sans doute. En dessous, une flèche vers le bas et un mot : « TOUR ».\n\nLe message ne s'adresse pas aux habitants du quartier. Il s'adresse aux autres Gardiens."},
-  {id:'trab6',dossier:'nox',zone:'traboules',x:-23,z:-32.5,forme:'repondeur',titre:'Enregistrement NOX-7 n° 2231',
-    texte:"(Une petite fille, sept ou huit ans.)\n« Est-ce que t'as mal, quand il pleut ? »\n\n(La voix de Nox.) « Je ne sais pas. Je n'ai pas de capteur pour ça. »\n\n« Moi, mon bras me fait mal quand il pleut. Maman dit que c'est le bras qui se souvient. »\n\n« Alors moi aussi, peut-être. Je me souviens de tout. »\n\n(Bip. Fichier marqué « ne pas transmettre ».)"},
-  {id:'trab7',dossier:'saal',zone:'traboules',x:-34.5,z:-45.5,forme:'affiche',tag:'SOYEZ ENTIER.',titre:'Une affiche Helix lacérée',
-    texte:"Une grande affiche Helix, collée sur la pierre il y a des années : le visage de Victor Saal, calme, rassurant, sous le slogan « Nous protégeons nos clients ».\n\nQuelqu'un l'a lacérée au couteau et a repeint les yeux en rouge. On a ajouté à la main, sous le slogan : « … même contre eux-mêmes ». C'est la phrase qu'il répète partout."},
-  {id:'trab8',dossier:'varga',zone:'traboules',x:-55,z:-61.5,forme:'carte',titre:'Une photo, dans un tiroir de l\'atelier',
-    texte:"Inauguration de l'usine de Vaise, 2026. Une Ilse Varga de trente ans, sans œil K7, lève une coupe de champagne. À côté d'elle, Victor Saal, déjà en costume sombre, déjà sans un pli.\n\nAu dos, de la main de Varga : « Le jour où j'ai cru qu'on allait réparer les gens. »"},
-  // ---------- les quais ----------
-  {id:'quais1',dossier:'canuts',zone:'quais',x:-5.5,z:-32,forme:'carte',titre:'Un carnet trempé',
-    texte:"Le carnet de quelqu'un qui dort sous le pont.\n« Les drones ne regardent jamais sous les ponts. Les Gardiens, si.\nLes Canuts passent le jeudi avec de la soupe et des pièces détachées. Ils ne demandent pas de nom.\nLa dame aux cheveux gris m'a réparé la jambe pour rien. Elle a dit : on se doit ça. »"},
-  {id:'quais2',dossier:'saal',zone:'quais',x:6,z:-55.5,forme:'carte',titre:'Bon de livraison Helix',
-    texte:"4 000 modules K7.2, livrés au quai de chargement de la tour, 02:40.\nMention spéciale : « Installation sans consentement autorisée par la direction. Les clients seront informés après la mise à jour, s'il y a lieu. »\n\nS'il y a lieu. Signé V. Saal."},
-  {id:'quais3',dossier:'vaise',zone:'quais',x:-3,z:-77.5,forme:'carte',titre:'Contrat de location K7',
-    texte:"Article 12 : la prothèse reste la propriété d'Helix Biotech. Elle est louée au client pour la durée de sa vie.\nArticle 13 : la vie du client n'est pas couverte par le présent contrat.\nArticle 14 : Helix peut, pour la sécurité du client, suspendre à distance tout ou partie des fonctions de la prothèse.\n\nL'article 14 est imprimé en corps 4. Il faut une loupe."},
-  {id:'quais4',dossier:'vaise',zone:'quais',x:6,z:-22,forme:'affiche',tag:'RÉINSERTION K7\nUNE MAIN NEUVE\nUN EMPLOI GARANTI',titre:'Affiche « Réinsertion K7 »',
-    texte:"« Accidenté du travail ? Helix vous tend la main. Réinsertion K7 : une main neuve, un emploi garanti, des mensualités adaptées. Soyez entier. »\n\nEn dessous, quelqu'un a écrit à la craie : « emploi garanti à Vaise, sur la même ligne, à la même cadence ». Et plus bas encore : « menteurs »."},
-  {id:'quais5',dossier:'canuts',zone:'quais',x:6,z:-40,forme:'graffiti',tag:'CONSIGNE 7\n1834',code:'casier',titre:'Un code sous le pont',
-    texte:"« CONSIGNE 7 — 1834 », à la craie, sous l'arche.\n\nEt plus petit : « Pour ceux qui dorment ici. Servez-vous, laissez-en pour les autres. — R. »\n\nLe casier de la consigne fluviale, près du pont. 1834 : l'année de la deuxième révolte des canuts."},
-  {id:'quais6',dossier:'gardien12',zone:'quais',x:-5.5,z:-70.5,forme:'repondeur',titre:'Un message sur un répondeur de quai',
-    texte:"(Une voix de femme, fatiguée, qui essaie de ne pas pleurer.)\n« Théo, c'est Léa. Ils m'ont dit que ton armure avait eu un problème et que tu étais en soins. Ça fait trois semaines. Personne ne veut me dire où.\n\nRappelle-moi. Même pour rien. Même pour me dire que tu ne peux pas. »\n\n(Bip. 47 messages non écoutés sur ce numéro.)"},
-  {id:'quais7',dossier:'varga',zone:'quais',x:6,z:-85.5,forme:'ecran',titre:'Fiche employée, poste de garde',
-    texte:"VARGA, Ilse — ingénieure en chef, interface neurale\nAccès : RÉVOQUÉ à 03:58\nBadge de direction : actif (anomalie à corriger)\nStatut : à retrouver vivante si possible.\nNote de la direction : « Ne pas la laisser parler. Elle sait raconter. »\n\nLe badge est toujours actif. Personne n'a pensé à le couper. C'est lui qui t'ouvre la porte."},
-  // ---------- la tour ----------
-  {id:'tour1',dossier:'saal',zone:'tour',x:-15.5,z:11.5,forme:'carte',titre:'Un discours de Saal, brouillon',
-    texte:"« Nous protégeons nos clients. Même contre eux-mêmes. »\n\nLa phrase est rayée trois fois et réécrite trois fois, à l'identique. Dans la marge : « trop dur ? », puis « non », puis « c'est la vérité, c'est tout ».\n\nPlus bas, un dernier essai jamais rayé : « Ce que nous éteignons, nous l'avons allumé. »"},
-  {id:'tour2',dossier:'gardien12',zone:'tour',x:100.5,z:2.5,forme:'carte',titre:"Rapport d'incident, armurerie",
-    texte:"« Agent G-12 : armure verrouillée en pleine ronde, 3 mars, 04:12. Cause : la même puce de coupure que les K7, intégrée aux armures depuis la série 4.\nL'agent a eu le temps de comprendre. Il l'a dit au micro.\nMesure : enregistrement effacé, agent transféré. Ne pas ébruiter auprès des autres Gardiens. »"},
-  {id:'tour3',dossier:'saal',zone:'tour',x:151.5,z:-11.5,forme:'carte',titre:'Liste des K7 à griller en priorité',
-    texte:"Liste pour la diffusion K7.2, « priorité 1 » :\nsyndicalistes du secteur Vaise, deux journalistes, deux médecins qui ont posé des questions, les membres connus des Nouveaux Canuts.\n\nEt, ajouté à la main en bas de la dernière page, souligné deux fois en rouge : le matricule 7-0412. Ton matricule."},
-  {id:'tour4',dossier:'vaise',zone:'tour',x:15.5,z:11.5,forme:'ecran',titre:"Rapport d'accident, ligne 4",
-    texte:"HELIX — RAPPORT D'ACCIDENT DU TRAVAIL\nSite : Vaise, ligne 4, équipe de nuit.\nVictime : matricule 7-0412.\nLésion : main droite broyée par la presse.\nCadence au moment des faits : 130 % (essai de cadence nocturne).\nRecommandation : proposer une K7 « prix réinsertion » avant toute plainte.\n\n7-0412. C'est toi."},
-  {id:'tour5',dossier:'nox',zone:'tour',x:15.5,z:-11.5,forme:'ecran',titre:'Bon de mise au rebut',
-    texte:"HELIX — LOGISTIQUE\nObjet : série NOX, toutes unités (NOX-1 à NOX-9).\nMotif : mémoire non effaçable. Les unités conservent l'intégralité de leurs enregistrements malgré les remises à zéro.\nDécision : broyage. Ne pas revendre, ne pas recycler.\n\nUnités broyées : 8 sur 9. Unité manquante : NOX-7. « Probablement détruite. Clore le dossier. »"},
-  {id:'tour6',dossier:'gardien12',zone:'tour',x:131,z:11.5,forme:'ecran',titre:'Ordre de transfert',
-    texte:"ORDRE DE TRANSFERT — PERSONNEL\nAgent : G-12, FERRAND Théo.\nDestination : étage -3, « maintenance définitive ».\nArmure : ne pas déverrouiller.\nFamille : informer d'un « problème technique en cours de résolution ».\nValidé : V. Saal.\n\nL'étage -3 n'apparaît sur aucun plan de la tour."},
-  {id:'tour7',dossier:'varga',zone:'tour',x:105,z:-2.5,forme:'carte',titre:'Mémo de Saal à Varga',
-    texte:"« Ilse,\nla fonction de coupure n'est pas une option du produit. C'est le produit. Le reste, c'est de la mécanique.\nSignez le rapport K7.2 avant vendredi. Je préférerais que ce soit vous.\n— V. »\n\nDans le coin, de la main de Varga, au crayon : « non ». Le mail du labo n'était donc pas un coup de tête."},
-  // ---------- le toit de la tour ----------
-  {id:'sommet1',dossier:'saal',zone:'sommet',x:-21.5,z:-21.5,forme:'carte',titre:'Plan de vol de Victor Saal',
-    texte:"Héliport de la tour Helix. Départ prévu : 06:15. Destination : aéroport de Bron, puis Zurich.\nUn seul passager.\nBagage : une mallette, « ne pas ouvrir ».\n\nSaal a prévu de partir juste après la diffusion. Il ne compte pas regarder ce qui se passera dans les rues."},
-  {id:'sommet2',dossier:'varga',zone:'sommet',x:21.5,z:21.5,forme:'carte',titre:"Carnet de maintenance de l'antenne",
-    texte:"« Override manuel conçu par l'ingénieure Varga. Le lecteur ne prend ni code ni badge : il lit un motif tissé. Ne jamais en parler à la direction. »\n\nSigné d'un technicien qui a démissionné le lendemain. Varga n'était donc pas seule. Quelqu'un, ici, l'a aidée à cacher une porte de sortie."},
-  {id:'sommet3',dossier:'canuts',zone:'sommet',x:21.5,z:-21.5,forme:'carte',titre:'Un paquet de cigarettes vide',
-    texte:"Coincé sous un boulon de l'antenne, un paquet de cigarettes vide. Au dos, quelques mots au feutre : « Si tu lis ça, la tour n'est pas si haute. On est déjà montés une fois. — Les 212 »\n\nLes Canuts sont venus ici avant toi. Ils n'ont pas pu aller plus loin. Toi, si."},
-  {id:'sommet4',dossier:'vaise',zone:'sommet',x:-21.5,z:21.5,forme:'carte',titre:'Ton contrat de réinsertion',
-    texte:"Un contrat Helix, dans une pochette au nom de la direction. Le tien. Matricule 7-0412, « réinsertion K7, main droite ».\n\nTa signature, en bas. Tu ne te souvenais pas d'avoir signé si vite, le bras encore dans les bandages. La date : le lendemain de l'accident. Une note agrafée : « client docile, prévoir pour le quartier »."},
-  {id:'sommet5',dossier:'gardien12',zone:'sommet',x:19,z:-9,forme:'carte',titre:'Une note froissée, dans une armure',
-    texte:"Une feuille pliée en huit, coincée dans une plaque d'armure abandonnée près du parapet.\n« Si vous lisez ça, j'ai perdu. L'armure se ferme comme un poing. On n'a même pas le temps d'avoir peur.\nVous qui portez ces coquilles : elles ont le même interrupteur que leurs mains. On est pareils. On l'a toujours été.\n— Théo »"},
-];
+import {DOSSIERS,ARCHIVES,RADIOS} from './archives.js';
+export {DOSSIERS,ARCHIVES,RADIOS};
 const dossier=id=>DOSSIERS.find(d=>d.id===id);
 const deDossier=id=>ARCHIVES.filter(a=>a.dossier===id);
 const trouvee=id=>S.archives.includes(id);
@@ -352,6 +246,14 @@ function remplirDossiers(){
       else{const p=document.createElement('p');p.className='manque';p.textContent=`??? · quelque part : ${NOMS_LIEUX[a.zone]}`;det.appendChild(p)}}
     if(n===A.length){const p=document.createElement('p');p.className='revelation';p.textContent=d.revelation;det.appendChild(p)}
     L.appendChild(det)}
+  // les écoutes radio des Gardiens
+  const nr=RADIOS.filter(r=>S.radios.includes(r.id)).length,det=document.createElement('details');det.className='dossier radios';
+  const sum=document.createElement('summary');sum.innerHTML=`<b>Écoutes radio</b><em>${nr} / ${RADIOS.length}</em>`;det.appendChild(sum);
+  const intro=document.createElement('p');intro.className='dosIntro';intro.textContent="Le canal des Gardiens, entendu en s'approchant sans se faire voir.";det.appendChild(intro);
+  for(const r of RADIOS){if(S.radios.includes(r.id)){const e=document.createElement('details');e.className='piece';const s=document.createElement('summary');s.textContent=r.titre;e.appendChild(s);
+      for(const[qui,t]of r.lignes){const p=document.createElement('p');p.className='ligne';const b=document.createElement('b');b.textContent=qui+' : ';p.appendChild(b);p.appendChild(document.createTextNode(t));e.appendChild(p)}det.appendChild(e)}
+    else{const p=document.createElement('p');p.className='manque';p.textContent=`??? · près d'un Gardien : ${NOMS_LIEUX[r.zone]}`;det.appendChild(p)}}
+  L.appendChild(det);
 }
 export function ouvrirDossiers(){if(state==='play')emit('pause');if(state!=='paused')return;remplirDossiers();ouvrirEcran('dossiers','pauseMenu');$('dosRetour').focus()}
 on('ouvrirDossiers',ouvrirDossiers);
@@ -386,7 +288,8 @@ export function brancherHistoire(){
     act:()=>{if(!S.quetes.rosa){S.quetes.rosa=true;S.credits+=40;refreshHud();setTimeout(()=>gagner(60,'Rosa a retrouvé la carte de Jean Delorme'),400)}},c:()=>[{l:'(Continuer)',go:rosa0()}]};
 }
 // L'épilogue de la fin « Diffuser » : Nox envoie aussi les dossiers complets.
-const RESUMES={vaise:"la vérité sur les accidents de Vaise",gardien12:"le sort du Gardien 12",varga:"les lettres de Varga",nox:"la série NOX broyée",saal:"les notes de Victor Saal",canuts:"la mémoire des Canuts"};
+const RESUMES={vaise:"la vérité sur les accidents de Vaise",gardien12:"le sort du Gardien 12",varga:"les lettres de Varga",nox:"la série NOX broyée",saal:"les notes de Victor Saal",canuts:"la mémoire des Canuts",
+  faucheuse:"l'histoire des Faucheuses",mara:"la mort d'Elias",kovac:"les années d'indic de Kovac",enfants:"l'essai sur les prothèses des enfants",aster:"les messages de Genève"};
 export function epilogueArchives(fin){
   const F=S.dossiersFinis.map(id=>RESUMES[id]).filter(Boolean);
   if(fin==='diffuser'){if(!F.length)return S.archives.length?` Dans le paquet, Nox a glissé aussi les ${S.archives.length} archives Helix que tu avais ramassées.`:'';

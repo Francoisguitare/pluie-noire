@@ -13,7 +13,11 @@ import {dernierPoint} from './sauvegarde.js';
 import {toast,fade,chargement,finChargement} from './interface.js';
 import {globaux} from './compilation.js';
 import {reprendreVisee} from './controles.js';
-import {tone,tirEnnemi,sifflement,ricochet,impactJoueur,taserSon,brulure,coeur,chuteJoueur,armement,alarme} from './son.js';
+import {tone,tirEnnemi,sifflement,ricochet,impactJoueur,taserSon,brulure,coeur,chuteJoueur,armement,alarme,droneHitSound,clac,explosion} from './son.js';
+import {appliquerFaucheuses,cleFaucheuse,ABATTABLES} from './faucheuse.js';
+import {gagner} from './pouvoirs.js';
+import {categorie} from './completion.js';
+import {showHit} from './interface.js';
 
 /* ---------- Traînées des tirs ---------- */
 const TR=[];let trI=0;
@@ -75,6 +79,21 @@ function episode(){
     if(!S.combatVu){S.combatVu=true;toast('Alerte : on te tire dessus. Romps le contact : cours, cache-toi, ou accroupis-toi derrière un obstacle bas.')}}
   G.danger=Math.max(G.danger,6);
 }
+
+/* ---------- Abattre une Faucheuse ---------- */
+on('faucheuseTouchee',(f,p)=>{if(p)burst(p,28);droneHitSound();showHit()});
+on('faucheuseRicoche',(f,p)=>{if(p)burst(p,10);clac()});
+on('faucheuseTombe',f=>{const k=cleFaucheuse(f);if(!S.faucheuses.includes(k))S.faucheuses.push(k);
+  toast('Touchée ! La Faucheuse part en vrille.');tone(160,1.6,'sawtooth',.04,50)});
+// au sol : l'explosion (gare à qui est dessous), l'XP, un point de sauvegarde
+on('faucheuseAbattue',f=>{
+  const p=f.g.position;G.flash=1;burst(_a.set(p.x,1.5,p.z),160);explosion(distance(p.x,p.z));secousse=Math.max(secousse,.8);
+  const d=distance(p.x,p.z);if(d<6)blesser(Math.round(45*(1-d/6))+10,p.x,p.z);
+  gagner(150,'Faucheuse abattue');emit('save');
+});
+const majFaucheuses=()=>{const z=zone();if(z)appliquerFaucheuses(z,S)};
+on('apresCapture',majFaucheuses);on('partieAppliquee',majFaucheuses);
+categorie({id:'faucheuses',nom:'Faucheuses abattues',poids:5,fait:()=>S.faucheuses.filter(k=>ABATTABLES.includes(k)).length,total:()=>ABATTABLES.length});
 
 /* ---------- Blessures ---------- */
 let dernierCoup=-99,sang=0,secousse=0,coeurT=0,coupI=0;

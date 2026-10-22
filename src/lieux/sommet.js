@@ -80,7 +80,7 @@ constructeurs.sommet=()=>{
   // Gardiens de ronde et Faucheuse
   makeGardien(Z,[[-12,7.5],[13,7.5]],{yaw:Math.PI/2,attente:2.2,vue:12});
   makeGardien(Z,[[19,-17],[19,11]],{yaw:0,attente:2,vue:12});
-  H.faucheuse=makeFaucheuse(Z,{cx:0,cz:0,rx:15,rz:15,h:10,v:.07,R:3.4,t0:2.4,lum:7});
+  H.faucheuse=makeFaucheuse(Z,{cx:0,cz:0,rx:15,rz:15,h:10,v:.07,R:3.4,t0:2.4,lum:7,blindee:true}); // celle de Saal : réacteurs carénés
   // Saal et son escorte, au pied de l'antenne
   const pnj=(def,look)=>{const n=Object.assign({h:1.8,yaw:0},def);n.g=new THREE.Group();n.g.position.set(n.x,0,n.z);n.g.rotation.y=n.yaw;n.g.userData.pnj=true;add(n.g);
     n.tag=nameTag(n.name);n.tag.position.set(n.x,n.h+.55,n.z);add(n.tag);n.col=pushCol({x0:n.x-.3,x1:n.x+.3,z0:n.z-.3,z1:n.z+.3,los:false,off:false,pnj:true});
