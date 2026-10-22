@@ -223,7 +223,10 @@ textarea,input{font:400 13px/1.4 var(--f-mono);color:var(--ink);background:rgba(
 textarea{resize:vertical;word-break:break-all}
 textarea:focus,input:focus{outline:none;border-color:var(--amber)}
 .qr{background:#fff;padding:6px;justify-self:start;line-height:0}
-.qr img{width:min(210px,46vw);height:auto;image-rendering:pixelated}
+.qr img{width:min(210px,46vw);height:auto;image-rendering:pixelated;cursor:zoom-in}
+/* le QR code agrandi (une partie avancée donne un code long, donc un QR code très fin) */
+.qr.grand{position:fixed;inset:0;justify-self:stretch;align-self:stretch;z-index:20;display:grid;place-items:center;background:#fff;cursor:zoom-out}
+.qr.grand img{width:min(94vw,94vh);cursor:zoom-out}
 .form{display:grid;gap:8px}
 .card a{color:var(--amber)}
 #ask{z-index:10;background:rgba(5,6,10,.9)}
@@ -549,7 +552,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
     <h2>Transférer ma partie</h2>
     <div id="transferNone" class="pitch" hidden>Pas encore de partie à transférer sur cet appareil.</div>
     <div id="transferOut" class="card" style="padding:0;gap:12px">
-      <p class="pitch">Sur ton autre appareil, scanne ce QR code avec l'appareil photo. Ou copie le code et colle-le là-bas.</p>
+      <p class="pitch">Sur ton autre appareil, scanne ce QR code avec l'appareil photo (touche-le pour l'agrandir). Ou copie le code et colle-le là-bas.</p>
       <div class="qr"><img id="qrImg" alt="QR code de ta partie" hidden></div>
       <textarea id="codeOut" readonly rows="3" aria-label="Code de ta partie"></textarea>
       <div class="btns"><button class="go alt" id="copyCode">Copier le code</button></div>
