@@ -163,11 +163,12 @@ export function majEcranServeurs(heure,etat){const e=H.ecran;if(!e)return;const 
   if(etat==='arme'){g.fillStyle='#ffb347';g.fillText('MOTIF RECONNU · OVERRIDE ARMÉ',512,430);g.fillStyle='#ff6a5a';g.fillText("VALIDATION REQUISE SUR L'ANTENNE",512,490)}
   else{g.fillStyle='#9fb4c8';g.fillText('412 873 PROTHÈSES K7 EN ATTENTE',512,430);g.fillStyle='#58e6ff';g.fillText('SOYEZ ENTIER.',512,490)}
   e.t.needsUpdate=true}
-// Les grilles : allumées une partie de chaque cycle ; un éclair rouge juste avant de s'allumer. Traverser allumé = repéré.
+// Les grilles : allumées une partie de chaque cycle ; un éclair rouge juste avant de s'allumer. Traverser allumé brûle
+// et donne l'alerte (combat.js).
 export function majLasers(dt,actif,coupe){
   for(const l of Z.lasers){const t=(T+l.ph)%l.per,on=!coupe&&t<l.on,pre=!coupe&&!on&&t>l.per-.35;l.actif=on;
     for(const f of l.fx){f.visible=on||(pre&&Math.sin(T*60)>0);f.material.color.setHex(on?0xff2a2a:0xff8080).multiplyScalar(on?3:1.2)}
-    if(actif&&on&&G.grace<=0&&Math.abs(P.pos.x-l.x)<.42&&Math.abs(P.pos.z)<1.6)emit('caught')}
+    if(actif&&on&&G.grace<=0&&Math.abs(P.pos.x-l.x)<.42&&Math.abs(P.pos.z)<1.6)emit('laser',l)}
 }
 Z.update=(dt,S)=>{
   if(!H.holo)return;

@@ -12,6 +12,7 @@ import {killDrone,burst} from './drones.js';
 import {detruireCamera} from './cameras.js';
 import {neutraliser,relever,remettre,bruitDeChute} from './gardiens.js';
 import {gesteCoupure,boutDesDoigts,handLocked} from './joueur.js';
+import {globaux} from './compilation.js';
 import {arcSound,chuteArmure,niveauSound} from './son.js';
 
 /* ---------- Améliorations : un point par rang ---------- */
@@ -68,7 +69,7 @@ function ruban(couleur,k){
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array((N+1)*6),3));
   const idx=[];for(let i=0;i<N;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}g.setIndex(idx);
   const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:new THREE.Color(couleur).multiplyScalar(k),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false,side:THREE.DoubleSide}));
-  m.frustumCulled=false;m.renderOrder=6;scene.add(m);return m; // dans la scène dès le départ : shader compilé au chargement
+  m.frustumCulled=false;m.renderOrder=6;scene.add(m);globaux.push(m);return m; // préparé avec chaque lieu (compilation.js)
 }
 for(let i=0;i<3;i++)arcs.push({coeur:ruban(0xeaffff,2.2),halo:ruban(0x58e6ff,1.4),a:new V3(),b:new V3(),t:0});
 const _p=new V3(),_q=new V3(),_s=new V3(),_cam=new V3();
@@ -99,7 +100,7 @@ function couper(){
 on('couper',couper);
 function frapper(c,depuis,rebonds,deja){
   deja.add(c.o);lancerArc(depuis,_v.set(c.x,c.y,c.z));
-  setTimeout(()=>{if(state!=='play'&&state!=='caught')return;appliquer(c);
+  setTimeout(()=>{if(state!=='play')return;appliquer(c);
     if(rebonds>0){const n=voisin(c,deja);if(n){arcSound(.6);frapper(n,new V3(c.x,c.y,c.z),rebonds-1,deja)}}},110);
 }
 function voisin(c,deja){let b=null,bd=7;for(const o of cibles(zone())){if(deja.has(o.o))continue;const d=Math.hypot(o.x-c.x,o.z-c.z);if(d<bd&&los(c.x,c.z,o.x,o.z)){b=o;bd=d}}return b}
@@ -108,7 +109,7 @@ function appliquer(c){
   if(c.k==='drone'){killDrone(c.o);return}
   if(c.k==='camera'){detruireCamera(c.o);return}
   const g=c.o;if(g.neutre)return;
-  const discret=g.s<.25&&g.etat!=='enquete'&&g.etat!=='fouille';
+  const discret=g.s<.25&&g.etat!=='enquete'&&g.etat!=='fouille'&&g.etat!=='combat';
   // il tombe à l'opposé d'Ash
   const sens=Math.sin(g.yaw)*(g.pos.x-P.pos.x)+Math.cos(g.yaw)*(g.pos.z-P.pos.z)>0?1:-1;
   neutraliser(g,sens);bruitDeChute(Z,g,val('discretion'));

@@ -2,11 +2,11 @@
 // Le QR code ouvre le jeu avec « #import=<code> » : la partie est proposée à l'import dès le chargement.
 import qrcode from '../lib/qrcode/qrcode.mjs';
 import {$,state,emit} from './core.js';
-import {lire,exportCode,importCode,remplacer,decrire,showSaveInfo} from './sauvegarde.js';
+import {lire,exportCode,importCode,remplacer,decrire,showSaveInfo,saveGame} from './sauvegarde.js';
 import {ask,toast,ouvrirEcran,fermerEcran} from './interface.js';
 
 export async function ouvrirTransfert(depuis){
-  if(state==='paused')emit('save');
+  if(state==='paused')saveGame();
   ouvrirEcran('transfer',depuis);$('transferMsg').textContent='';$('codeIn').value='';
   const d=lire(),rien=!d.partie&&!Object.keys(d.saisons).length;
   $('transferOut').hidden=rien;$('transferNone').hidden=!rien;if(rien)return;

@@ -129,7 +129,7 @@ constructeurs.toits=()=>{
   const sid={key:'sid',name:'SID',x:-14,z:-30.2,yaw:Math.PI*.8,h:1.76};
   sid.g=new THREE.Group();sid.g.position.set(sid.x,0,sid.z);sid.g.rotation.y=sid.yaw;add(sid.g);
   sid.tag=nameTag(sid.name);sid.tag.position.set(sid.x,sid.h+.55,sid.z);add(sid.tag);
-  pushCol({x0:sid.x-.3,x1:sid.x+.3,z0:sid.z-.3,z1:sid.z+.3,los:false,off:false});
+  pushCol({x0:sid.x-.3,x1:sid.x+.3,z0:sid.z-.3,z1:sid.z+.3,los:false,off:false,pnj:true});
   if(MODELES.sid){mountChar(sid,THREE.SkeletonUtils.clone(MODELES.sid.scene),{},{env:.7});habillerSid(sid);try{cyberize(sid,{arm:'Left',r1:.052,r2:.045,col:0xffa040,head:-1,neck:true})}catch(e){}}
   else{const f=figure({coat:0x3b3426,skin:0xb0846a,beanie:0x6a2a1a,hunch:true,mech:true});sid.g.add(f);sid.root=f}
   Z.npcs.push(sid);Z.inter.push({p:new V3(sid.x,0,sid.z),r:2.6,label:()=>'Parler à Sid',act:()=>Z.talk&&Z.talk('sidToits')});

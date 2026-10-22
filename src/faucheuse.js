@@ -1,6 +1,7 @@
 // La Faucheuse : l'appareil de combat d'Helix. Elle tourne au-dessus de la zone et balaie le sol avec son projecteur.
-// Rester dans le cercle de lumière à découvert (pas sous un auvent, une citerne, un abri) déclenche l'alerte.
-import {THREE,V3,P,G,T,clamp,emit,on} from './core.js';
+// Rester dans le cercle de lumière à découvert (pas sous un auvent, une citerne, un abri) : son projecteur s'accroche à toi
+// et sa mitrailleuse tire par rafales (combat.js) tant que tu restes dans la lumière.
+import {THREE,V3,P,G,T,DIFF,clamp,emit,on} from './core.js';
 import {add,glow,shaftMat,M} from './construire.js';
 import {zone} from './zones.js';
 
@@ -45,7 +46,7 @@ function poser(f,dt){
   f.cone.position.copy(src);f.cone.scale.set(f.R*1.0,L,f.R*1.0);f.cone.quaternion.setFromUnitVectors(_up,dir.normalize().negate());
   f.cone.scale.x=f.cone.scale.z=Math.max(.6,Math.tan(f.light.angle)*L*.95);
 }
-export function resetFaucheuses(z){for(const f of z.faucheuses){f.s=0;f.verrou=0}}
+export function resetFaucheuses(z){for(const f of z.faucheuses){f.s=0;f.verrou=0;f.combat=false;f.balles=0}}
 on('apresCapture',()=>{const z=zone();if(z&&z.faucheuses)resetFaucheuses(z)});
 // Renvoie le niveau de détection (0..1).
 export function updateFaucheuses(dt,active,z){
@@ -54,9 +55,12 @@ export function updateFaucheuses(dt,active,z){
     f.t+=dt*f.v;for(const r of f.rotors)r.rotation.y+=dt*30;f.bal.visible=Math.sin(T*4)>0;
     poser(f,dt);
     if(active&&f.actif){
-      const dans=Math.hypot(P.pos.x-f.cible.x,P.pos.z-f.cible.z)<f.R&&!couvert(z,P.pos)&&G.grace<=0;
+      const dans=Math.hypot(P.pos.x-f.cible.x,P.pos.z-f.cible.z)<f.R&&!couvert(z,P.pos)&&G.grace<=0,D=DIFF.faucheuse;
       if(dans){f.s+=dt*1.6;f.verrou=1.2}else{f.s=Math.max(0,f.s-dt*.35);f.verrou=Math.max(0,f.verrou-dt)}
-      if(f.s>=1){emit('caught');return 1}
+      if(f.s>=1){f.s=1;if(!f.combat){f.combat=true;f.tir=D.reaction;f.balles=0;emit('engagement',f)}}
+      // une rafale tant que tu restes dans la lumière ; à couvert, elle te perd au bout d'un moment
+      if(f.combat){if(dans){f.tir-=dt;if(f.tir<=0&&!(f.balles>0)){f.tir=D.cadence;f.balles=D.balles;f.entre=0}}else if(f.verrou<=0)f.combat=false}
+      if(f.balles>0){f.entre-=dt;if(f.entre<=0){f.balles--;f.entre=D.entre;emit('tirFaucheuse',f,dans)}}
     }
     f.light.color.setHex(f.s>.3?0xff6050:0xd8e8ff);
     maxS=Math.max(maxS,f.s);
