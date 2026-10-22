@@ -27,9 +27,10 @@ await g.p.click('#pauseTransfer');await g.p.waitForFunction(()=>document.getElem
 verifier(await g.pn(()=>!document.getElementById('qrImg').hidden&&document.getElementById('qrImg').naturalWidth>100),'QR code affiché');
 if(sortie)await g.capture(sortie+'/transfert.png');
 // Touché, le QR code prend tout l'écran ; touché encore, il revient
-await g.p.click('#qrImg');verifier(await g.pn(()=>document.querySelector('.qr').classList.contains('grand')&&document.getElementById('qrImg').getBoundingClientRect().width>400),'QR code agrandi en plein écran');
+const toucherQR=()=>g.pn(()=>document.getElementById('qrImg').click()); // clic direct : en rendu logiciel, Playwright attend parfois trop longtemps une image « stable »
+await toucherQR();verifier(await g.pn(()=>document.querySelector('.qr').classList.contains('grand')&&document.getElementById('qrImg').getBoundingClientRect().width>400),'QR code agrandi en plein écran');
 if(sortie)await g.capture(sortie+'/transfert-qr.png');
-await g.p.click('#qrImg');verifier(await g.pn(()=>!document.querySelector('.qr').classList.contains('grand')),'QR code revenu à sa place');
+await toucherQR();verifier(await g.pn(()=>!document.querySelector('.qr').classList.contains('grand')),'QR code revenu à sa place');
 await g.p.click('#closeTransfer');
 verifier(await g.pn(()=>!document.getElementById('pauseMenu').hidden),'retour au menu pause');
 verifier(!g.erreurs.length,'aucune erreur'+(g.erreurs.length?' : '+g.erreurs.join(' | '):''));

@@ -82,6 +82,8 @@ verifier(await g.pn(()=>/Vaise, 2036/.test(document.getElementById('dtxt').textC
 s=await S();verifier(s.quetes.sid,'quête de Sid faite');
 
 // Les radios des Gardiens : à moins de 9 m d'un Gardien qui ne t'a pas vu, on entend son canal, jusqu'au bout
+// (le dialogue de Sid, resté ouvert, se ferme d'abord : en dialogue, le temps des radios s'arrête)
+await g.pn(async()=>{const {closeDialog}=await import('/src/histoire/dialogue.js');closeDialog()});
 await g.pn(()=>{const pn=window.__pn;Object.assign(pn.S,{chapter:4});pn.allerZone('traboules',null,{fondu:false});pn.G.grace=1e6;pn.G.danger=0});await g.avancer(2);
 const suivre=()=>g.pn(()=>{const pn=window.__pn,d=pn.zone().gardiens[0];pn.P.pos.set(d.pos.x+2.5,0,d.pos.z+2.5);pn.G.danger=0});
 const r0=(await S()).radios.length;
