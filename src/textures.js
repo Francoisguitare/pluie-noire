@@ -3,6 +3,27 @@ import {THREE,rnd,mulberry32} from './core.js';
 
 export function canvasTex(c,rep,linear){const t=new THREE.CanvasTexture(c);if(!linear)t.encoding=THREE.sRGBEncoding;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping}t.anisotropy=8;return t}
 export function mk(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return[c,c.getContext('2d')]}
+// Ce qu'on devine derrière une fenêtre allumée : des stores, des rideaux à moitié tirés, un plafonnier et des meubles,
+// une télé dans une pièce sombre, une rampe de néon au-dessus de plantes. Personne : les silhouettes, ce sont les
+// fenêtres vivantes (fenetres.js), animées.
+function interieur(ge,r,wx,wy,ww,wh,odd){
+  const t=r(),ombre=a=>`rgba(10,6,4,${a})`;
+  if(t<.28){ge.fillStyle='rgba(0,0,0,.55)';for(let k=0;k<wh;k+=4)ge.fillRect(wx,wy+k,ww,2)} // stores
+  else if(t<.52){ // rideaux tirés à moitié, avec leurs plis
+    const a=5+r()*11,b=5+r()*11;ge.fillStyle=ombre(.55);ge.fillRect(wx,wy,a,wh);ge.fillRect(wx+ww-b,wy,b,wh);
+    ge.fillStyle='rgba(0,0,0,.28)';for(let k=wx+2;k<wx+a;k+=3)ge.fillRect(k,wy,1,wh);for(let k=wx+ww-b+1;k<wx+ww;k+=3)ge.fillRect(k,wy,1,wh)}
+  else if(t<.76){ // une pièce : le plafonnier, un dossier de canapé, une étagère, parfois une plante
+    ge.fillStyle='rgba(255,240,210,.55)';ge.beginPath();ge.arc(wx+ww*(.3+r()*.4),wy+4,4,0,7);ge.fill();
+    ge.fillStyle=ombre(.7);ge.fillRect(wx+2,wy+wh-9,ww*(.35+r()*.2),9);ge.fillRect(wx+ww-9,wy+7,7,wh-7);
+    ge.fillStyle=ombre(.45);for(let k=0;k<3;k++)ge.fillRect(wx+ww-9,wy+11+k*7,7,1);
+    if(r()<.5){ge.fillStyle=ombre(.6);ge.beginPath();ge.arc(wx+ww*.62,wy+wh-12,4,0,7);ge.fill();ge.fillRect(wx+ww*.62-1,wy+wh-9,2,9)}}
+  else if(t<.9){ // une télé allumée dans le noir
+    ge.fillStyle='rgba(0,0,0,.62)';ge.fillRect(wx,wy,ww,wh);ge.fillStyle='#8ab4ff';ge.globalAlpha=.85;ge.fillRect(wx+ww*.3,wy+wh*.42,ww*.36,wh*.28);
+    ge.globalAlpha=.22;ge.fillRect(wx+ww*.12,wy+wh*.25,ww*.76,wh*.65);ge.globalAlpha=1}
+  else{ // une rampe de néon, des plantes en culture
+    ge.fillStyle=odd[Math.floor(r()*odd.length)];ge.fillRect(wx+3,wy+2,ww-6,2);ge.fillStyle='rgba(0,0,0,.5)';for(let k=0;k<5;k++)ge.fillRect(wx+4+k*7,wy+wh-7-r()*8,3,14)}
+  if(r()<.25){ge.fillStyle='rgba(0,0,0,.7)';ge.fillRect(wx,wy,ww*(.2+r()*.3),wh)}
+}
 function facade(seed,density){
   const r=mulberry32(seed),S=512,cell=64;
   const[ce,ge]=mk(S,S),[cd,gd]=mk(S,S);
@@ -21,9 +42,7 @@ function facade(seed,density){
         const pal=r()<.62?warm:r()<.8?cool:odd,col=pal[Math.floor(r()*pal.length)];
         const gr=ge.createLinearGradient(0,wy,0,wy+wh);gr.addColorStop(0,col);gr.addColorStop(1,'rgba(40,20,10,1)');
         ge.globalAlpha=.55+r()*.45;ge.fillStyle=gr;ge.fillRect(wx,wy,ww,wh);ge.globalAlpha=1;
-        if(r()<.35){ge.fillStyle='rgba(0,0,0,.55)';for(let k=0;k<wh;k+=4)ge.fillRect(wx,wy+k,ww,2)}
-        if(r()<.18){ge.fillStyle='rgba(0,0,0,.85)';const px=wx+6+r()*22;ge.fillRect(px,wy+wh-20,9,20);ge.beginPath();ge.arc(px+4.5,wy+wh-23,5,0,7);ge.fill()}
-        if(r()<.3){ge.fillStyle='rgba(0,0,0,.7)';ge.fillRect(wx,wy,ww*(.2+r()*.3),wh)}
+        interieur(ge,r,wx,wy,ww,wh,odd);
       }else if(r()<.25){ge.fillStyle='rgba(30,40,70,.35)';ge.fillRect(wx,wy,ww,wh)}
       ge.fillStyle='#000';ge.fillRect(wx+ww/2-1,wy,2,wh);
     }

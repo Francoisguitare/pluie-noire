@@ -257,6 +257,7 @@ function remplirDossiers(){
       for(const[qui,t]of r.lignes){const p=document.createElement('p');p.className='ligne';const b=document.createElement('b');b.textContent=qui+' : ';p.appendChild(b);p.appendChild(document.createTextNode(t));e.appendChild(p)}det.appendChild(e)}
     else{const p=document.createElement('p');p.className='manque';p.textContent=`??? · près d'un Gardien : ${NOMS_LIEUX[r.zone]}`;det.appendChild(p)}}
   L.appendChild(det);
+  emit('remplirDossiers',L,NOMS_LIEUX); // d'autres sections (curiosites.js)
 }
 export function ouvrirDossiers(){if(state==='play')emit('pause');if(state!=='paused')return;remplirDossiers();ouvrirEcran('dossiers','pauseMenu');$('dosRetour').focus()}
 on('ouvrirDossiers',ouvrirDossiers);

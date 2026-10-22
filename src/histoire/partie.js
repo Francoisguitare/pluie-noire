@@ -36,7 +36,9 @@ export const S0=()=>({chapter:1,heure:192,quest:false,code:false,credits:80,vent
   // Faucheuses abattues (« lieu:rang », voir faucheuse.js)
   faucheuses:[],
   // écoutes radio entendues jusqu'au bout (voir radios.js)
-  radios:[]});
+  radios:[],
+  // curiosités remarquées, appels décrochés à la cabine (voir curiosites.js)
+  curiosites:[],appels:0});
 // Un point de pouvoir par niveau ; chaque niveau coûte 50 XP de plus que le précédent (100, 150, 200…).
 export const seuilNiveau=n=>100*n+25*n*(n-1);
 // L'histoire dans le pourcentage de la partie : les cinq chapitres, le dernier compte à la fin choisie.
