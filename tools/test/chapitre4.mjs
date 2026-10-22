@@ -86,8 +86,9 @@ verifier(s.boitier==='ash'&&s.maraTrab,'Mara donne le boîtier');
 // Chute dans le long passage : retour au dernier point de sauvegarde, pris en passant dans l'alcôve (point sûr du chapitre)
 await g.pn(()=>{window.__pn.S.canuts=false;window.__pn.G.grace=1e6});await g.placer(-15.4,-32.3,Math.PI);await g.avancer(20);
 verifier(await g.pn(()=>{const p=window.__pn.lire().point;return p&&Math.abs(p.p[0]+15.4)<.3&&Math.abs(p.p[1]+32.3)<.3}),"point de sauvegarde pris dans l'alcôve");
-await g.placer(-20,-29.8,Math.PI/2);await g.avancer(2);
-verifier(await g.pn(()=>window.__pn.state==='play'),'en jeu avant la chute');await g.pn(()=>window.__pn.combat.blesser(999,-25,-29.8));
+// (plus loin dans le passage, hors du lieu « passage aux alcôves », qui créerait lui-même un point de sauvegarde)
+await g.placer(-25.5,-29.8,Math.PI/2);await g.avancer(2);
+verifier(await g.pn(()=>window.__pn.state==='play'),'en jeu avant la chute');await g.pn(()=>window.__pn.combat.blesser(999,-28,-29.8));
 verifier(await g.pn(()=>window.__pn.state==='mort'),'à terre');
 await g.p.waitForFunction(()=>window.__pn.state==='play',null,{timeout:60000});
 const p=await g.pn(()=>[window.__pn.P.pos.x,window.__pn.P.pos.z,window.__pn.P.vie]);verifier(Math.abs(p[0]+15.4)<.5&&p[1]<-31.5&&p[2]===100,`retour dans l'alcôve, santé pleine (${p.map(v=>v.toFixed(1))})`);
