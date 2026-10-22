@@ -2,7 +2,7 @@
 import {THREE,$,V3,P,G,T,camera,MOBILE,state,on,emit,rnd} from './core.js';
 import {glow,eteindre} from './construire.js';
 import {softDot} from './textures.js';
-import {keys,TC} from './controles.js';
+import {keys,TC,accroupir} from './controles.js';
 import {collide,los} from './physique.js';
 import {zone} from './zones.js';
 import {footstep,shotSound,lockSound,unlockSound,verreSound} from './son.js';
@@ -114,7 +114,8 @@ export function updatePlayer(dt){
   let f=0,s=0;
   if(TC.on){f=-TC.y;s=TC.x}
   if(keys.KeyW||keys.ArrowUp)f+=1;if(keys.KeyS||keys.ArrowDown)f-=1;if(keys.KeyD||keys.ArrowRight)s+=1;if(keys.KeyA||keys.ArrowLeft)s-=1;
-  const cr=!!keys.KeyC||TC.crouch;P.crouch+=((cr?1:0)-P.crouch)*Math.min(1,dt*10);
+  if(TC.crouch&&(keys.ShiftLeft||keys.ShiftRight)&&f>0)accroupir(false); // courir relève
+  const cr=TC.crouch;P.crouch+=((cr?1:0)-P.crouch)*Math.min(1,dt*10);
   const sprint=(keys.ShiftLeft||keys.ShiftRight||TC.run)&&!cr&&f>0;const sp=cr?2.1:sprint?6.4:4.0;
   const raw=Math.hypot(f,s),len=raw||1,mag=TC.on&&!keys.KeyW&&!keys.KeyS&&!keys.KeyA&&!keys.KeyD?Math.min(1,raw):1;f/=len;s/=len;
   const sy=Math.sin(P.yaw),cy=Math.cos(P.yaw);

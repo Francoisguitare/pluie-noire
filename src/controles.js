@@ -10,6 +10,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyG'&&!e.repeat&&state!=='puzzle')emit('cycleQuality'); // G est aussi une carte du métier Jacquard
   if(state==='play'&&e.code==='KeyF'&&!e.repeat)emit('shoot');
   if(state==='play'&&e.code==='KeyR'&&!e.repeat)emit('couper');
+  if(state==='play'&&e.code==='KeyC'&&!e.repeat)accroupir(!TC.crouch); // C : s'accroupir, C encore : se relever
   if(e.code==='Tab'){e.preventDefault();if(state==='play'&&!e.repeat)emit('ouvrirPouvoirs')}
   if(e.code==='KeyJ'&&state==='play'&&!e.repeat)emit('ouvrirDossiers');
   if(state==='play'&&(e.code==='KeyP'||e.code==='Escape')&&!e.repeat)emit('pause');
@@ -76,6 +77,8 @@ for(const b of document.querySelectorAll('.pleinBtn'))b.onclick=()=>pleinEcran()
 
 /* ---------- Commandes tactiles ---------- */
 export const TC={on:false,x:0,y:0,id:null,ox:0,oy:0,look:null,lx:0,ly:0,crouch:false,run:false};
+// Accroupi : on le reste jusqu'à se relever (touche C ou bouton « Accroupi »), ou jusqu'à courir.
+export function accroupir(v){TC.crouch=!!v;$('tCrouch').classList.toggle('on',TC.crouch);document.body.classList.toggle('accroupi',TC.crouch);if(TC.crouch&&TC.run){TC.run=false;$('tRun').classList.remove('on')}}
 const stick=$('stick'),knob=$('knob');
 function placeStick(x,y){stick.style.left=x+'px';stick.style.top=y+'px'}
 function restStick(){placeStick(Math.max(90,innerWidth*.12),innerHeight-Math.max(90,innerHeight*.2));knob.style.transform='';stick.classList.remove('on')}
@@ -106,8 +109,8 @@ if(MOBILE){
   const tap=(el,fn)=>el.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();fn()},{passive:false});
   tap($('tAct'),()=>{if(state==='play'&&G.curInter)G.curInter.act()});
   tap($('prompt'),()=>{if(state==='play'&&G.curInter)G.curInter.act()});
-  tap($('tCrouch'),()=>{TC.crouch=!TC.crouch;$('tCrouch').classList.toggle('on',TC.crouch);if(TC.crouch){TC.run=false;$('tRun').classList.remove('on')}});
-  tap($('tRun'),()=>{TC.run=!TC.run;$('tRun').classList.toggle('on',TC.run);if(TC.run){TC.crouch=false;$('tCrouch').classList.remove('on')}});
+  tap($('tCrouch'),()=>accroupir(!TC.crouch));
+  tap($('tRun'),()=>{TC.run=!TC.run;$('tRun').classList.toggle('on',TC.run);if(TC.run)accroupir(false)});
   tap($('tFire'),()=>emit('shoot'));
   tap($('tCoupe'),()=>emit('couper'));
   tap($('tMenu'),()=>{if(state==='play')emit('pause')});

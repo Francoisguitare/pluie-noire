@@ -18,13 +18,18 @@ await g.pn(()=>window.__pn.emit('shoot'));await g.avancer(5);m=await stable(m,'u
 await g.pn(()=>{const pn=window.__pn;Object.assign(pn.S,{battery:true,decoded:true,gate:true});pn.emit('chapitre3')});
 for(let i=0;i<4;i++){await g.avancer(150);m=await stable(m,`black-out, ${(i+1)*5} s de cinématique`)}
 await g.pn(()=>window.__pn.passerCine());await g.avancer(5);m=await stable(m,'fin du black-out, Gardiens en ronde');
+// Un échange de tirs : canon d'épaule et son éclair, traînées (Gardien, Faucheuse), blessure
+await g.pn(()=>{const pn=window.__pn,z=pn.zone();pn.G.grace=0;pn.emit('tirGardien',z.gardiens[0],true);pn.emit('tirGardien',z.gardiens[1],false);pn.emit('tirFaucheuse',z.faucheuses[0],true);pn.combat.blesser(1,0,0);pn.G.grace=1e6});await g.avancer(1);
+m=await stable(m,'un échange de tirs');
 // La Coupure
 await g.pn(()=>window.__pn.emit('couper'));await g.avancer(5);m=await stable(m,'la Coupure');
 // Chaque nouveau lieu est préparé à l'arrivée : ensuite, plus rien à compiler
 for(const z of['toits','traboules','quais','tour','sommet']){
   await g.pn(z=>{const pn=window.__pn;pn.allerZone(z,null,{fondu:false});pn.G.grace=1e6},z);await g.avancer(3);
   const apresCompil=await mesure();
-  await g.avancer(60);await stable(apresCompil,`${z} : après la préparation du lieu`);
+  await g.avancer(60);let ap=await stable(apresCompil,`${z} : après la préparation du lieu`);
+  await g.pn(()=>{const pn=window.__pn,V=pn.P.pos.constructor;pn.combat.trace(new V(pn.P.pos.x+3,1.5,pn.P.pos.z-6),new V(pn.P.pos.x,1.2,pn.P.pos.z-1),0xffd08a)});
+  await stable(ap,`${z} : un tir`);
 }
 verifier(!g.erreurs.length,'aucune erreur'+(g.erreurs.length?' : '+g.erreurs.join(' | '):''));
 await g.fermer();console.log('Rendu : terminé.');

@@ -245,7 +245,7 @@ for(const n of NPCS){
   n.g=new THREE.Group();n.g.position.set(n.x,0,n.z);n.g.rotation.y=n.yaw;n.g.userData.pnj=true;add(n.g);
   const blob=new THREE.Mesh(new THREE.PlaneGeometry(1.3,1.3),new THREE.MeshBasicMaterial({map:blobTex,transparent:true,depthWrite:false}));blob.rotation.x=-Math.PI/2;blob.position.y=.02;n.g.add(blob);
   n.tag=nameTag(n.name);n.tag.position.set(n.x,n.h+.55,n.z);n.tag.userData.pnj=true;add(n.tag);
-  if(n.key!=='kovac')pushCol({x0:n.x-.32,x1:n.x+.32,z0:n.z-.32,z1:n.z+.32,los:false,off:false});
+  if(n.key!=='kovac')pushCol({x0:n.x-.32,x1:n.x+.32,z0:n.z-.32,z1:n.z+.32,los:false,off:false,pnj:true});
   Z.inter.push({p:new V3(n.x,0,n.z),r:2.7,on:()=>!n.absent,label:()=>'Parler à '+n.name.charAt(0)+n.name.slice(1).toLowerCase(),act:()=>Z.talk(n.key)});
   Z.npcs.push(n);
 }

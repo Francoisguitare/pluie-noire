@@ -152,3 +152,45 @@ export function niveauSound(){if(!AC)return;[523,659,784,1047].forEach((f,i)=>se
 // Le signal de la main K7 près d'une archive : un bip bref, plus aigu quand on s'approche (k de 0 à 1).
 export function bipSignal(k){if(!AC)return;tone(700+k*700,.05,'sine',.012+k*.012)}
 export function archiveSound(){if(!AC)return;tone(1320,.5,'sine',.04,1760);setTimeout(()=>tone(1980,.6,'sine',.025),110)}
+
+/* ---------- Combat ---------- */
+// Un tir ennemi, pas silencieux : claquement, corps, grondement ; plus faible au loin (d en mètres). lourd : la Faucheuse.
+export function tirEnnemi(d,lourd){
+  if(!AC)return;const t=AC.currentTime+Math.min(.12,d/340),k=1/(1+d/9);
+  nz(t,'highpass',lourd?1800:2600,.6,.3*k,.001,.04);
+  const f=nz(t,'lowpass',lourd?2400:3800,.5,.55*k,.002,lourd?.16:.11);f.frequency.setValueAtTime(lourd?2400:3800,t);f.frequency.exponentialRampToValueAtTime(lourd?260:420,t+(lourd?.16:.11));
+  const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.setValueAtTime(lourd?90:120,t);o.frequency.exponentialRampToValueAtTime(38,t+.14);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.35*k,t+.004);g.gain.exponentialRampToValueAtTime(.0001,t+(lourd?.22:.14));o.connect(g);g.connect(out);o.start(t);o.stop(t+.25);
+  if(room&&d>6)nz(t+.02,'lowpass',900,.6,.12*k,.01,.35,undefined,room); // l'écho dans la rue
+}
+// Une balle qui passe tout près.
+export function sifflement(){if(!AC)return;const t=AC.currentTime,f=nz(t,'bandpass',4200,7,.09,.004,.11);f.frequency.setValueAtTime(4200,t);f.frequency.exponentialRampToValueAtTime(1300,t+.12)}
+// Une balle qui frappe le sol à côté.
+export function ricochet(){if(!AC)return;const t=AC.currentTime;click(t,1900+Math.random()*900,.05);tone(2600+Math.random()*800,.09,'sine',.012,1500)}
+// Un coup encaissé : un choc sourd.
+export function impactJoueur(){
+  if(!AC)return;const t=AC.currentTime;nz(t,'lowpass',160,.7,.7,.003,.22);click(t+.005,700,.06);
+  const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.setValueAtTime(85,t);o.frequency.exponentialRampToValueAtTime(36,t+.25);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+.3);o.connect(g);g.connect(out);o.start(t);o.stop(t+.32);
+}
+// La fléchette d'un drone : décharge électrique.
+export function taserSon(){
+  if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.frequency.value=62;
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.07,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+.45);o.connect(g);g.connect(out);o.start(t);o.stop(t+.5);
+  for(let i=0;i<10;i++)nz(t+i*.035+Math.random()*.02,'bandpass',2500+Math.random()*4500,5,.12,.001,.018);
+}
+// Une grille laser qui brûle.
+export function brulure(){if(!AC)return;const t=AC.currentTime;nz(t,'highpass',4800,.7,.25,.002,.3);tone(1500,.25,'square',.02,500);impactJoueur()}
+// Le cœur qui cogne quand la santé est basse.
+export function coeur(k){if(!AC)return;const t=AC.currentTime;for(const[d,v]of[[0,1],[.17,.6]]){const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.setValueAtTime(58,t+d);o.frequency.exponentialRampToValueAtTime(40,t+d+.12);
+  g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.2*k*v,t+d+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d+.16);o.connect(g);g.connect(out);o.start(t+d);o.stop(t+d+.2)}}
+// À terre : le choc, puis un sifflement d'oreilles qui s'éteint.
+export function chuteJoueur(){
+  if(!AC)return;const t=AC.currentTime;nz(t,'lowpass',200,.7,.8,.004,.5);nz(t+.12,'lowpass',260,.8,.4,.004,.3);
+  const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=3300;g.gain.setValueAtTime(.0001,t+.1);g.gain.exponentialRampToValueAtTime(.02,t+.4);g.gain.exponentialRampToValueAtTime(.0001,t+2.6);
+  o.connect(g);g.connect(out);o.start(t);o.stop(t+2.7);
+}
+// Un Gardien arme son canon d'épaule : deux déclics et un servomoteur.
+export function armement(d){if(!AC)return;const t=AC.currentTime,k=1/(1+d/8);click(t,1300,.07*k);click(t+.09,1800,.06*k);const f=nz(t+.03,'bandpass',900,3,.08*k,.02,.25);f.frequency.setValueAtTime(700,t+.03);f.frequency.linearRampToValueAtTime(1500,t+.28)}
+// L'alarme d'une caméra.
+export function alarme(){if(!AC)return;for(let i=0;i<4;i++)setTimeout(()=>tone(i%2?700:940,.2,'square',.022),i*210)}

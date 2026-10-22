@@ -195,7 +195,7 @@ constructeurs.traboules=()=>{
 
   /* ---------- Personnages ---------- */
   const pnj=(def,look)=>{const n=Object.assign({h:1.72,yaw:0},def);n.g=new THREE.Group();n.g.position.set(n.x,0,n.z);n.g.rotation.y=n.yaw;n.g.userData.pnj=true;add(n.g);
-    n.tag=nameTag(n.name);n.tag.position.set(n.x,n.h+.55,n.z);add(n.tag);n.col=pushCol({x0:n.x-.3,x1:n.x+.3,z0:n.z-.3,z1:n.z+.3,los:false,off:false});
+    n.tag=nameTag(n.name);n.tag.position.set(n.x,n.h+.55,n.z);add(n.tag);n.col=pushCol({x0:n.x-.3,x1:n.x+.3,z0:n.z-.3,z1:n.z+.3,los:false,off:false,pnj:true});
     habiller(n,look);Z.npcs.push(n);
     n.inter={p:new V3(n.x,0,n.z),r:2.6,on:()=>!n.absent,label:()=>'Parler à '+n.nom,act:()=>Z.talk&&Z.talk(n.dlg||n.key)};Z.inter.push(n.inter);return n};
   H.sid=pnj({key:'sid',name:'SID',nom:'Sid',x:.4,z:-4.5,yaw:Math.PI,h:1.76,dlg:'sidTrab'},'sid');
@@ -205,7 +205,7 @@ constructeurs.traboules=()=>{
   H.varga=pnj({key:'varga',name:'DR ILSE VARGA',nom:'Varga',x:-37,z:-59.6,yaw:0,h:1.7,dlg:'varga'},'varga');
   // Deux canuts au travail, devant les métiers
   for(const[x,z,ry]of[[-46,-56.35,Math.PI],[-44.3,-50.4,-Math.PI/2]]){const n={h:1.7,g:new THREE.Group()};n.g.position.set(x,0,z);n.g.rotation.y=ry;add(n.g);habiller(n,'canut');Z.figurants.push(n);
-    pushCol({x0:x-.3,x1:x+.3,z0:z-.3,z1:z+.3,los:false,off:false})}
+    pushCol({x0:x-.3,x1:x+.3,z0:z-.3,z1:z+.3,los:false,off:false,pnj:true})}
 
   flushLedges();
   Z.root.traverse(o=>{if(o.isMesh&&o.material&&o.material.isMeshStandardMaterial)o.receiveShadow=true});

@@ -20,6 +20,9 @@ export function stabiliserLumieres(z){
 // À chaque image : les lumières rattachées suivent leur repère (la racine d'un lieu est à l'origine).
 export function suivreLumieres(z){if(z&&z.lumAncrees)for(const l of z.lumAncrees)l.userData.ancre.getWorldPosition(l.position)}
 
+// Effets communs à tous les lieux, cachés la plupart du temps (traînées des tirs, arcs de la Coupure) : préparés avec
+// chaque lieu, comme ses propres objets cachés.
+export const globaux=[];
 // Prépare tous les shaders du lieu tel qu'il sera joué (mêmes lumières, même environnement), objets cachés et
 // objets portés par la caméra (arme, main K7) compris.
 export function compilerZone(z){
@@ -27,7 +30,7 @@ export function compilerZone(z){
   const caches=[],montrer=o=>{if(!o.visible){o.visible=true;caches.push(o)}};
   const autres=[];for(const id in zones){const r=zones[id].root;if(zones[id]!==z&&r.visible){r.visible=false;autres.push(r)}}
   const v0=z.root.visible;z.root.visible=true;
-  z.root.traverse(o=>{if(o!==z.root)montrer(o)});camera.traverse(o=>{if(o!==camera)montrer(o)});
+  z.root.traverse(o=>{if(o!==z.root)montrer(o)});camera.traverse(o=>{if(o!==camera)montrer(o)});for(const g of globaux)g.traverse(montrer);
   try{renderer.compile(scene,camera)}catch(e){console.warn('compilation',e)}
   for(const o of caches)o.visible=false;for(const r of autres)r.visible=true;z.root.visible=v0;
   z.compilee=true;

@@ -20,3 +20,12 @@ export function segHits(ax,az,bx,bz,c){
   }return true;
 }
 export function los(ax,az,bx,bz){for(const c of zone().colliders){if(c.off||!c.los)continue;if(segHits(ax,az,bx,bz,c))return false}return true}
+// Un obstacle bas (caisse, comptoir, muret : il ne cache pas la vue debout) entre a et b, à moins de r de b.
+// Accroupi derrière, on n'est plus vu par un Gardien ; debout, on est plus dur à toucher.
+export function couvertBas(ax,az,bx,bz,r=1.7){
+  for(const c of zone().colliders){
+    if(c.off||c.los||c.pnj||c.x1-c.x0<.5||c.z1-c.z0<.5)continue;
+    const cx=clamp(bx,c.x0,c.x1),cz=clamp(bz,c.z0,c.z1);if((bx-cx)**2+(bz-cz)**2>r*r)continue;
+    if(segHits(ax,az,bx,bz,c))return true;
+  }return false;
+}

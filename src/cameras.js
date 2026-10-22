@@ -1,6 +1,7 @@
 // Caméras de surveillance d'Helix (chapitre 5) : fixées à un mât ou à un mur, elles balaient un angle et voient comme
 // un Gardien (cône, portée réduite dans le noir ou accroupi, ligne de vue), sans rien entendre. Une balle de P-9 dans
-// l'objectif les éteint pour de bon. Quand elles repèrent quelqu'un, elles s'arrêtent de balayer et le suivent.
+// l'objectif les éteint pour de bon. Quand elles repèrent quelqu'un, elles s'arrêtent de balayer, le suivent et sonnent
+// l'alarme : les Gardiens du coin accourent (combat.js).
 import {THREE,V3,P,G,T,clamp,lerpAng,emit,on} from './core.js';
 import {add,glow,shaftMat,M} from './construire.js';
 import {los} from './physique.js';
@@ -31,7 +32,7 @@ export function detruireCamera(c,instant){
   emit('cameraDetruite',c,!!instant);
 }
 export function reparerCamera(c){c.mort=false;c.cone.visible=true;c.led.visible=true;c.pivot.rotation.set(.38,0,0);c.yaw=c.base;c.g.rotation.y=c.yaw}
-export function resetCameras(z){for(const c of z.cameras)c.s=0}
+export function resetCameras(z){for(const c of z.cameras){c.s=0;c.alarme=false}}
 on('apresCapture',()=>{const z=zone();if(z&&z.cameras)resetCameras(z)});
 // Renvoie le niveau de détection le plus haut (0..1).
 export function updateCameras(dt,active,z){
@@ -46,7 +47,8 @@ export function updateCameras(dt,active,z){
     }
     if(voit){c.s+=dt*(.45+1.4*(1-dist/c.portee));c.yaw=lerpAng(c.yaw,Math.atan2(dx,dz),dt*2.5)}
     else{c.s=Math.max(0,c.s-dt*.3);if(c.s<.2)c.yaw=lerpAng(c.yaw,c.base+Math.sin(T*c.vitesse+c.ph)*c.amp,dt*1.5)}
-    if(active&&c.s>=1){emit('caught');return 1}
+    if(active&&c.s>=1){c.s=1;if(!c.alarme){c.alarme=true;emit('alarmeCamera',c)}}
+    if(c.alarme&&c.s<.3)c.alarme=false;
     c.g.rotation.y=c.yaw;c.led.visible=c.s>.1?Math.sin(T*14)>0:Math.sin(T*2+c.idx)>.6;
     tmp.copy(C_IDLE).lerp(C_ALERT,clamp(c.s*1.4,0,1));c.coneMat.uniforms.color.value.copy(tmp);c.coneMat.uniforms.opacity.value=.14+c.s*.3;c.lensMat.color.copy(tmp).multiplyScalar(2.2);
     maxS=Math.max(maxS,c.s);

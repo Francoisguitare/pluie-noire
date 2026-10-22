@@ -14,11 +14,20 @@ const handlers={};
 export const on=(e,f)=>{(handlers[e]||(handlers[e]=[])).push(f)};
 export const emit=(e,...a)=>{for(const f of handlers[e]||[])f(...a)};
 
-/* État courant. state : title, play, dialogue, puzzle, paused, caught, cine, end */
+/* État courant. state : title, play, dialogue, puzzle, paused, lecture, mort, cine, end */
 export let state='title';export const setState=v=>{state=v};
 export let T=0;export const tick=dt=>{T+=dt};
-export const G={grace:0,flash:0,alertLvl:0,curInter:null};
-export const P={pos:new V3(0,0,26),yaw:0,pitch:0,vx:0,vz:0,crouch:0,stepPh:0,stepIdx:0,fov:72};
+// danger : secondes depuis le dernier échange de tirs (pas de point de sauvegarde tant qu'il reste du danger) ; choc : décharge de taser
+export const G={grace:0,flash:0,alertLvl:0,curInter:null,danger:0,choc:0};
+export const P={pos:new V3(0,0,26),yaw:0,pitch:0,vx:0,vz:0,crouch:0,stepPh:0,stepIdx:0,fov:72,vie:100};
+/* Difficulté des combats (voir combat.js) : « tendu mais juste ». Cinq balles de Gardien pour tomber, une rafale toutes les
+   1,4 s environ après un temps de réaction ; chance : probabilité de toucher de près, debout, immobile, en pleine lumière.
+   La santé remonte de regen points par seconde après regenDelai secondes sans blessure. */
+export const DIFF={vie:100,regenDelai:4.5,regen:10,
+  gardien:{degats:21,chance:.62,rafale:2,entre:.12,cadence:1.4,reaction:.75,portee:24},
+  drone:{degats:12,chance:.65,cadence:1.3,reaction:.6,portee:14},
+  faucheuse:{degats:11,chance:.24,balles:5,entre:.07,cadence:1.7,reaction:.9,portee:40},
+  laser:{degats:34,delai:.8}};
 
 const TOUCH=('ontouchstart' in window)||navigator.maxTouchPoints>0;
 if(TOUCH&&matchMedia('(pointer:coarse)').matches)document.body.classList.add('touch');

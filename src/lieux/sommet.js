@@ -83,7 +83,7 @@ constructeurs.sommet=()=>{
   H.faucheuse=makeFaucheuse(Z,{cx:0,cz:0,rx:15,rz:15,h:10,v:.07,R:3.4,t0:2.4,lum:7});
   // Saal et son escorte, au pied de l'antenne
   const pnj=(def,look)=>{const n=Object.assign({h:1.8,yaw:0},def);n.g=new THREE.Group();n.g.position.set(n.x,0,n.z);n.g.rotation.y=n.yaw;n.g.userData.pnj=true;add(n.g);
-    n.tag=nameTag(n.name);n.tag.position.set(n.x,n.h+.55,n.z);add(n.tag);n.col=pushCol({x0:n.x-.3,x1:n.x+.3,z0:n.z-.3,z1:n.z+.3,los:false,off:false});
+    n.tag=nameTag(n.name);n.tag.position.set(n.x,n.h+.55,n.z);add(n.tag);n.col=pushCol({x0:n.x-.3,x1:n.x+.3,z0:n.z-.3,z1:n.z+.3,los:false,off:false,pnj:true});
     habiller(n,look);Z.npcs.push(n);return n};
   H.saal=pnj({key:'saal',name:'VICTOR SAAL',x:1.6,z:-6.4,yaw:0,h:1.82},'saal');
   H.mara=pnj({key:'mara',name:'MARA',x:-3.6,z:-6.8,yaw:.3,h:1.72},'mara');

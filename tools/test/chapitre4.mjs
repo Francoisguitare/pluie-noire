@@ -83,10 +83,13 @@ verifier(s.vargaTestifies===false&&s.badge&&await g.pn(()=>window.__pn.zone().ga
 // Mara, si elle avait forcé la main d'Ash : elle peut lui donner le boîtier
 await g.pn(()=>{window.__pn.S.forced=true});await g.pn(()=>window.__pn.openDialog('maraTrab'));await g.choisir(0,0,0);s=await S();
 verifier(s.boitier==='ash'&&s.maraTrab,'Mara donne le boîtier');
-// Capture dans le long passage : retour à une alcôve
-await g.pn(()=>{window.__pn.S.canuts=false;window.__pn.G.grace=1e6});await g.placer(-20,-29.8,Math.PI/2);
-verifier(await g.pn(()=>window.__pn.state==='play'),'en jeu avant la capture');await g.pn(()=>window.__pn.emit('caught'));
-await g.p.waitForFunction(()=>window.__pn.state==='play',null,{timeout:30000});
-const p=await g.pn(()=>[window.__pn.P.pos.x,window.__pn.P.pos.z]);verifier(Math.abs(p[0]+15.4)<.5&&p[1]<-31.5,`repli dans l'alcôve (${p.map(v=>v.toFixed(1))})`);
+// Chute dans le long passage : retour au dernier point de sauvegarde, pris en passant dans l'alcôve (point sûr du chapitre)
+await g.pn(()=>{window.__pn.S.canuts=false;window.__pn.G.grace=1e6});await g.placer(-15.4,-32.3,Math.PI);await g.avancer(20);
+verifier(await g.pn(()=>{const p=window.__pn.lire().point;return p&&Math.abs(p.p[0]+15.4)<.3&&Math.abs(p.p[1]+32.3)<.3}),"point de sauvegarde pris dans l'alcôve");
+await g.placer(-20,-29.8,Math.PI/2);await g.avancer(2);
+verifier(await g.pn(()=>window.__pn.state==='play'),'en jeu avant la chute');await g.pn(()=>window.__pn.combat.blesser(999,-25,-29.8));
+verifier(await g.pn(()=>window.__pn.state==='mort'),'à terre');
+await g.p.waitForFunction(()=>window.__pn.state==='play',null,{timeout:60000});
+const p=await g.pn(()=>[window.__pn.P.pos.x,window.__pn.P.pos.z,window.__pn.P.vie]);verifier(Math.abs(p[0]+15.4)<.5&&p[1]<-31.5&&p[2]===100,`retour dans l'alcôve, santé pleine (${p.map(v=>v.toFixed(1))})`);
 verifier(!g.erreurs.length,'aucune erreur'+(g.erreurs.length?' : '+g.erreurs.join(' | '):''));
 await g.fermer();console.log('Chapitre 4 : terminé.');

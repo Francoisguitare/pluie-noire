@@ -1,5 +1,5 @@
 // Affichage par-dessus la 3D : messages, objectifs, crédits, jauge de détection, impacts.
-import {$,MOBILE} from './core.js';
+import {$,MOBILE,on} from './core.js';
 import {tone} from './son.js';
 
 if(MOBILE)$('note').textContent='Une nuit en cinq chapitres, environ une heure et demie. Joue en mode paysage. Ta partie est sauvegardée automatiquement.';
@@ -12,7 +12,7 @@ export function setObjectives(L){$('objs').innerHTML=L.map(([t,c])=>`<li class="
 let beepT=0;
 // Jauge, vignette rouge et bips selon le niveau de détection le plus haut (0..1).
 export function detectionHud(dt,maxS){
-  $('detbar').style.width=(maxS*100).toFixed(1)+'%';$('det').classList.toggle('hot',maxS>.5);$('vig').style.opacity=Math.max(0,maxS-.15)*1.1;
+  $('detbar').style.width=(maxS*100).toFixed(1)+'%';$('det').classList.toggle('hot',maxS>.5);$('vig').style.opacity=Math.min(.5,Math.max(0,maxS-.15)*.9); // le voile du combat est celui des blessures (combat.js)
   beepT-=dt;if(maxS>.12&&beepT<=0){tone(760+maxS*700,.07,'square',.025);beepT=.6-maxS*.45}
 }
 export function fade(on){$('fade').classList.toggle('on',on)}
@@ -28,3 +28,6 @@ export function ask(titre,texte,oui='Oui',non='Annuler'){return new Promise(res=
 const pile=[];
 export function ouvrirEcran(id,depuis){if(depuis){$(depuis).hidden=true;pile.push(depuis)}$(id).hidden=false}
 export function fermerEcran(id){$(id).hidden=true;const r=pile.pop();if(r)$(r).hidden=false}
+// Le témoin « Sauvegarde automatique », quelques secondes en bas de l'écran, à chaque point de sauvegarde.
+let autoT=null;
+on('pointSauve',()=>{const a=$('autosave');a.classList.add('on');clearTimeout(autoT);autoT=setTimeout(()=>a.classList.remove('on'),2600)});

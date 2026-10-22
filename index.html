@@ -113,10 +113,29 @@ h2{margin:0;font:700 clamp(44px,7vw,72px)/.9 var(--f-display);text-transform:upp
 .go:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 .note{font:400 12px/1.4 var(--f-mono);color:var(--ink-dim)}
 .statsline{font:500 14px/1.4 var(--f-mono);color:var(--amber);font-variant-numeric:tabular-nums}
-#caught{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at center,rgba(60,0,0,.25),rgba(80,0,0,.75));pointer-events:none}
-#caught div{text-align:center;display:grid;gap:10px}
-#caught b{font:700 clamp(64px,12vw,140px)/.85 var(--f-display);color:var(--alert);letter-spacing:.04em}
-#caught span{font:500 13px/1 var(--f-mono);letter-spacing:.2em;color:var(--ink)}
+/* Combat : santé, voile rouge, direction des coups, chute, sauvegarde automatique, posture */
+.det.vie .bar{background:rgba(236,229,214,.14)}
+.det.vie .bar i{background:var(--ink);width:100%;transition:width .15s}
+.det.vie.bas .lbl{color:var(--alert)}
+.det.vie.bas .bar i{background:var(--alert)}
+#sang{position:fixed;inset:0;pointer-events:none;opacity:0;box-shadow:inset 0 0 220px 80px rgba(150,0,0,.85);background:radial-gradient(ellipse at center,transparent 50%,rgba(90,0,0,.5))}
+#coups i{position:fixed;left:50%;top:50%;width:270px;height:270px;margin:-135px 0 0 -135px;border-radius:50%;border:5px solid transparent;border-top-color:rgba(255,70,55,.95);box-sizing:border-box;opacity:0;pointer-events:none}
+#coups i.on{animation:coup 1.4s ease-out forwards}
+@keyframes coup{0%,20%{opacity:1}100%{opacity:0}}
+#mort{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at center,rgba(40,0,0,.35),rgba(8,0,0,.92));pointer-events:none;animation:mortEntre 1.1s ease-out}
+#mort div{text-align:center;display:grid;gap:12px}
+#mort b{font:700 clamp(64px,12vw,140px)/.85 var(--f-display);color:var(--alert);letter-spacing:.04em;text-transform:uppercase}
+#mort span{font:500 13px/1.3 var(--f-mono);letter-spacing:.2em;color:var(--ink);text-transform:uppercase}
+@keyframes mortEntre{from{opacity:0}to{opacity:1}}
+body.mort #hud{display:none}
+#autosave{position:fixed;left:calc(20px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;align-items:center;
+  font:500 12px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--amber);opacity:0;transition:opacity .5s;pointer-events:none}
+#autosave.on{opacity:1}
+#autosave i{width:9px;height:9px;border:1.5px solid var(--amber);transform:rotate(45deg);animation:tourne 1.4s linear infinite}
+@keyframes tourne{to{transform:rotate(405deg)}}
+body.touch #autosave{left:50%;transform:translateX(-50%);bottom:calc(8px + env(safe-area-inset-bottom,0px));font-size:10px}
+#posture{position:fixed;left:calc(20px + env(safe-area-inset-left,0px));bottom:calc(46px + env(safe-area-inset-bottom,0px));display:none}
+body.accroupi:not(.touch) #posture{display:block}
 #err,#lerr{color:var(--alert)}
 @media (max-width:600px){
   #objs li{font-size:16px} #objs li.sub{font-size:14px}
@@ -365,6 +384,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
   <div class="stats">
     <div class="cred clock"><span class="lbl">Heure</span><b id="heure">03:12</b></div>
     <div class="cred"><span class="lbl">Crédits</span><b id="cred">80</b></div>
+    <div class="det vie" id="vie"><div class="lbl">Santé</div><div class="bar"><i id="vieBar"></i></div></div>
     <div class="det" id="det"><div class="lbl">Détection</div><div class="bar"><i id="detbar"></i></div></div>
     <div class="det xp"><div class="lbl">Niveau <b id="xpNiv">0</b><span id="xpPts"></span></div><div class="bar"><i id="xpBar"></i></div></div>
   </div>
@@ -374,13 +394,17 @@ body.touch .carte{min-height:36px;padding:4px 10px}
   <div id="coupe"><span class="lbl">Coupure · R</span><div class="bar"><i id="coupeBar"></i></div></div>
   <div id="signal" hidden><i></i><i></i><i></i><i></i><span>Signal K7</span></div>
   <div id="annonce" hidden><div class="kicker">Haut-parleurs Helix</div><p id="annonceTxt"></p></div>
+  <div id="coups"><i></i><i></i><i></i><i></i></div>
   <div id="cross"></div>
   <div id="hit"></div>
+  <div id="posture"><span class="lbl">Accroupi · C pour te relever</span></div>
+  <div id="autosave"><i></i><span>Sauvegarde automatique</span></div>
   <div id="weap"><span class="lbl">P-9 · silencieux</span><b>∞</b></div>
   <div id="prompt" hidden></div>
   <div id="toast"></div>
 </div>
 <div id="vig"></div>
+<div id="sang"></div>
 <div id="curseur" hidden></div>
 
 <div id="lecture" hidden><div class="lecCarte"><div class="kicker" id="lecKick"></div><h3 id="lecTitre"></h3><p id="lecTexte"></p><div class="note" id="lecPied"></div></div></div>
@@ -409,7 +433,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
       <dt>ZQSD / WASD</dt><dd>Se déplacer</dd>
       <dt>Souris</dt><dd>Regarder (clic pour verrouiller)</dd>
       <dt>E</dt><dd>Parler, interagir</dd>
-      <dt>C</dt><dd>S'accroupir : moins visible, sans bruit</dd>
+      <dt>C</dt><dd>S'accroupir (C encore : se relever) : moins visible, sans bruit</dd>
       <dt>Maj</dt><dd>Courir</dd>
       <dt>1 · 2 · 3</dt><dd>Choisir une réplique</dd>
       <dt>Clic · F</dt><dd>Tirer, quand tu es armé</dd>
@@ -421,7 +445,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
       <dt>Pouce gauche</dt><dd>Se déplacer (joystick)</dd>
       <dt>Pouce droit</dt><dd>Glisser pour regarder</dd>
       <dt>Agir</dt><dd>Parler, interagir</dd>
-      <dt>Accroupi</dt><dd>Moins visible, sans bruit</dd>
+      <dt>Accroupi</dt><dd>Moins visible, sans bruit ; derrière un obstacle bas, à couvert</dd>
       <dt>Courir</dt><dd>Aller plus vite</dd>
       <dt>Tirer</dt><dd>Quand tu es armé</dd>
       <dt>Couper</dt><dd>Neutraliser un Gardien, un drone, une caméra</dd>
@@ -450,9 +474,10 @@ body.touch .carte{min-height:36px;padding:4px 10px}
   <div class="card">
     <div class="kicker">Pause</div>
     <h2>Partie sauvegardée</h2>
-    <p class="pitch">Ta progression est enregistrée automatiquement sur cet appareil.</p>
+    <p class="pitch">Ta partie est enregistrée sur cet appareil. Si tu tombes, tu repars du dernier point de sauvegarde.</p>
+    <p class="savehint" id="pointInfo" hidden></p>
     <p class="note" id="pleinAide" hidden>Pour jouer en plein écran sur iPhone : bouton Partager, puis « Sur l'écran d'accueil ». Le jeu s'ouvrira alors sans les barres du navigateur.</p>
-    <div class="btns"><button class="go" id="resume">Reprendre</button><button class="go alt" id="pausePouvoirs">Pouvoirs<span id="pvBadge" hidden></span></button><button class="go alt" id="pauseDossiers">Dossiers</button><button class="go alt" id="toTitle">Écran titre</button></div>
+    <div class="btns"><button class="go" id="resume">Reprendre</button><button class="go alt" id="pausePouvoirs">Pouvoirs<span id="pvBadge" hidden></span></button><button class="go alt" id="pauseDossiers">Dossiers</button><button class="go alt" id="pausePoint">Dernier point de sauvegarde</button><button class="go alt" id="toTitle">Écran titre</button></div>
     <div class="liens"><button class="lien" id="pauseMusique">Musique : oui</button><button class="lien pleinBtn" id="pausePlein">Plein écran</button><button class="lien" id="pauseTransfer">Transférer ma partie</button><button class="lien" id="pauseCompte" hidden>Mon compte</button></div>
   </div>
 </div>
@@ -478,7 +503,7 @@ body.touch .carte{min-height:36px;padding:4px 10px}
   </div>
 </div>
 <div id="rotate">Tourne ton téléphone en mode paysage</div>
-<div id="caught" hidden><div><b>Cible repérée</b><span>Retour au dernier point sûr</span></div></div>
+<div id="mort" hidden><div><b>À terre</b><span>Retour au dernier point de sauvegarde</span></div></div>
 
 <div id="end" class="screen" hidden>
   <div class="card">

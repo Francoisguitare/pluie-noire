@@ -1,5 +1,5 @@
-// Déroulé d'une partie : état de l'histoire S, chapitres, objectifs, retour au point sûr, fin, nouvelle partie.
-import {$,P,G,state,setState,on,emit} from '../core.js';
+// Déroulé d'une partie : état de l'histoire S, chapitres, objectifs, fin, nouvelle partie, reprise, changement de lieu.
+import {$,P,G,DIFF,state,setState,on,emit} from '../core.js';
 import {setCredits,setObjectives} from '../interface.js';
 import {tone} from '../son.js';
 import {stopDialog} from './dialogue.js';
@@ -13,6 +13,7 @@ import {fade,chargement,finChargement} from '../interface.js';
 import {resetDrones} from '../drones.js';
 import {collide} from '../physique.js';
 import {setArmed,resetHand} from '../joueur.js';
+import {accroupir} from '../controles.js';
 
 // Tous les drapeaux de l'histoire (voir docs/histoire.md). Ajouter les nouveaux ici, avec leur valeur de départ.
 export const S0=()=>({chapter:1,heure:192,quest:false,code:false,credits:80,ventTip:false,chip:false,door:false,spotted:0,t0:0,noxPaid:false,ch2:false,armed:false,dd:[false,false,false],gate:false,battery:false,decoded:false,forced:false,
@@ -28,13 +29,16 @@ export const S0=()=>({chapter:1,heure:192,quest:false,code:false,credits:80,vent
   // dernière étape de l'histoire déjà payée en XP, tutoriel de la Coupure vu
   xp:0,ameli:{portee:0,recharge:0,discretion:0,arc:0,echo:0},neutres:[],archives:[],xpChap:1,coupureVue:false,
   // exploration (voir exploration.js) : lieux découverts, premières rencontres, dossiers complets, quêtes (sid, rosa, casier), signal déjà expliqué
-  lieux:[],rencontres:[],dossiersFinis:[],quetes:{},signalVu:false});
+  lieux:[],rencontres:[],dossiersFinis:[],quetes:{},signalVu:false,
+  // combat (voir combat.js) : chutes (retours au dernier point de sauvegarde), premier échange de tirs déjà expliqué
+  morts:0,combatVu:false});
 // Un point de pouvoir par niveau ; chaque niveau coûte 50 XP de plus que le précédent (100, 150, 200…).
 export const seuilNiveau=n=>100*n+25*n*(n-1);
 export const niveauDe=xp=>{let n=0;while(seuilNiveau(n+1)<=xp)n++;return n};
 export let S=S0();
 
-/* Un chapitre : {zone, objectives(S,L), checkpoint(S) → [x,z,yaw], reset(), apply(S), describe(S), ends} */
+/* Un chapitre : {zone, objectives(S,L), checkpoint(S) → [x,z,yaw] (point sûr : y passer crée un point de sauvegarde),
+   reset(), apply(S), describe(S), ends} */
 const chapters={};
 export function defineChapter(n,c){chapters[n]=c}
 export const chap=n=>chapters[n??S.chapter]||chapters[1];
@@ -46,25 +50,19 @@ export const defineEnds=e=>Object.assign(ENDS,e);
 export function refreshHud(){setCredits(S.credits);$('heure').textContent=fmtHeure(S.heure);const L=[];chap().objectives(S,L);setObjectives(L);emit('hudRafraichi')}
 on('hud',refreshHud);
 
-export function caught(){
-  if(state!=='play')return;setState('caught');S.spotted++;$('caught').hidden=false;tone(300,.6,'sawtooth',.08,90);
-  setTimeout(()=>{const[x,z,y]=chap().checkpoint(S);P.pos.set(x,0,z);P.yaw=y;P.pitch=0;P.vx=P.vz=0;resetDrones(zone());emit('apresCapture');G.grace=2.5;$('caught').hidden=true;if(state==='caught')setState('play')},1500);
-}
-on('caught',caught);
-
 // o.kicker : sur-titre (« Fin de la saison 1 ») ; o.saison : note sur la suite.
 export function finish(k,o={}){
   stopDialog();setState('end');if(document.pointerLockElement)document.exitPointerLock();
   const sec=Math.round((performance.now()-S.t0)/1000),e=ENDS[k];
   $('endKicker').textContent=o.kicker||'Fin de mission';$('endSaison').textContent=o.saison||'';$('endSaison').hidden=!o.saison;
   $('endTitle').textContent=e[0];$('endText').textContent=typeof e[1]==='function'?e[1]():e[1];
-  $('endStats').textContent=`Temps ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}  ·  Repérages : ${S.spotted}  ·  ${S.credits} crédits restants  ·  Niveau ${niveauDe(S.xp)}  ·  Archives : ${S.archives.length}`;
+  $('endStats').textContent=`Temps ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}  ·  Repérages : ${S.spotted}  ·  Chutes : ${S.morts}  ·  ${S.credits} crédits restants  ·  Niveau ${niveauDe(S.xp)}  ·  Archives : ${S.archives.length}`;
   $('hud').hidden=true;$('touch').hidden=true;document.body.classList.remove('playing');emit('clearSave');$('end').hidden=false;tone(220,1.2,'sine',.05,330);
 }
 
 // Nouvelle partie : état neuf, décors remis à zéro par chaque chapitre, joueur au départ.
 export function newGame(){
-  S=S0();S.t0=performance.now();P.pos.set(0,0,26);P.yaw=0;P.pitch=0;P.vx=P.vz=0;
+  S=S0();S.t0=performance.now();P.pos.set(0,0,26);P.yaw=0;P.pitch=0;P.vx=P.vz=0;P.vie=DIFF.vie;accroupir(false);emit('nouvellePartie');
   for(const k in chapters)chapters[k].reset&&chapters[k].reset();
   allerZone(zoneDe(chap()),null,{fondu:false});setArmed(false);resetHand();
   resetDrones(zone());G.grace=1;refreshHud();
@@ -74,7 +72,7 @@ export function applySave(d){
   newGame();const el=d.S.elapsed||0;Object.assign(S,d.S);delete S.elapsed;S.t0=performance.now()-el;
   for(const k in chapters)chapters[k].avantZone&&chapters[k].avantZone(S);
   allerZone(d.zone||zoneDe(chap()),null,{fondu:false});
-  P.pos.set(d.p[0],0,d.p[1]);P.yaw=d.p[2];collide(P.pos,.38);
+  P.pos.set(d.p[0],0,d.p[1]);P.yaw=d.p[2];collide(P.pos,.38);P.vie=d.vie??DIFF.vie;
   for(const k in chapters)chapters[k].apply&&chapters[k].apply(S);
   emit('partieAppliquee'); // les chapitres ont pu ajouter des Gardiens : pouvoirs.js remet à terre les neutralisés
   if(S.armed)setArmed(true);

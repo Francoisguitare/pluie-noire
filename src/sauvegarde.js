@@ -1,14 +1,17 @@
 // Sauvegardes, version 2. Un seul enregistrement dans le navigateur :
-//   {v:2, partie:{S,p,zone,at}|null, saisons:{'1':{fin,…,at}}}
-// La partie en cours s'écrit toutes les 4 s en jeu, à la fermeture et à chaque étape (emit('save')).
+//   {v:2, partie:{S,p,zone,vie,at}|null, point:{S,p,zone,at}|null, saisons:{'1':{fin,…,at}}}
+// point : le dernier point de sauvegarde. Chaque étape en demande un (emit('save') : histoire, fin d'un dialogue, archive lue,
+// lieu découvert…), passer près d'un point sûr d'un chapitre aussi ; il n'est pris qu'en jeu et hors de danger (personne
+// ne te tire dessus ni ne te cherche). Après une chute (combat.js), ou depuis le menu pause, on y revient.
+// partie : là où tu as quitté (pause, écran titre, fermeture de la page) ; « Continuer » la reprend. Chaque point l'écrit aussi.
 // Les saisons terminées restent même quand on recommence : la saison suivante les relira.
 // L'ancien format (pluie-noire-save-v1) est converti au premier chargement.
-import {$,P,state,on,emit} from './core.js';
+import {$,P,G,state,on,emit} from './core.js';
 import {S,chap} from './histoire/partie.js';
 import {zone} from './zones.js';
 
 const KEY='pluie-noire-v2',OLD='pluie-noire-save-v1';
-const vide=()=>({v:2,partie:null,saisons:{}});
+const vide=()=>({v:2,partie:null,point:null,saisons:{}});
 export function lire(){
   try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&d.v===2)return Object.assign(vide(),d)}catch(e){}
   try{const o=JSON.parse(localStorage.getItem(OLD)||'null');
@@ -16,30 +19,53 @@ export function lire(){
   return vide();
 }
 function ecrire(d,silent){try{localStorage.setItem(KEY,JSON.stringify(d))}catch(e){}if(!silent)emit('saved',d)}
-export function saveGame(){if(state!=='play'&&state!=='dialogue'&&state!=='paused')return; // en pause : points de pouvoir dépensés
-  const d=lire(),s=Object.assign({},S,{elapsed:Math.round(performance.now()-S.t0)});delete s.t0;
-  d.partie={S:s,p:[+P.pos.x.toFixed(2),+P.pos.z.toFixed(2),+P.yaw.toFixed(3)],zone:zone().id,at:Date.now()};ecrire(d)}
+function instantane(){const s=Object.assign({},S,{elapsed:Math.round(performance.now()-S.t0)});delete s.t0;
+  return{S:s,p:[+P.pos.x.toFixed(2),+P.pos.z.toFixed(2),+P.yaw.toFixed(3)],zone:zone().id,at:Date.now()}}
+// La partie là où on la quitte (avec la santé du moment).
+export function saveGame(){if(state!=='play'&&state!=='dialogue'&&state!=='paused')return;
+  const d=lire();d.partie=Object.assign(instantane(),{vie:Math.round(P.vie)});ecrire(d)}
 export function readSave(){return lire().partie}
-export function clearSave(){const d=lire();d.partie=null;ecrire(d)}
+export function clearSave(){const d=lire();d.partie=null;d.point=null;ecrire(d)}
+
+/* ---------- Points de sauvegarde ---------- */
+let attente=false,annonceT=-1e9,lieuSur='',verif=0;
+// Écrit un point de sauvegarde ici et maintenant (santé pleine au retour), et l'annonce (au plus une fois toutes les 9 s).
+export function pointDeSauvegarde(){
+  const d=lire(),i=instantane();d.point=i;d.partie=Object.assign({},i,{vie:Math.round(P.vie)});ecrire(d);
+  const t=performance.now();if(t-annonceT>9000){annonceT=t;emit('pointSauve')}
+}
+// À chaque image : un point demandé est pris dès qu'on est en jeu et hors de danger.
+export function majPoints(dt){
+  if(state!=='play')return;
+  if((verif-=dt)<=0){verif=.5;const c=chap().checkpoint(S),k=zone().id+':'+c[0]+':'+c[1];
+    if(k!==lieuSur&&Math.hypot(P.pos.x-c[0],P.pos.z-c[1])<2.2){lieuSur=k;attente=true}} // les points sûrs des chapitres
+  if(attente&&G.danger<=0&&G.alertLvl<.3){attente=false;pointDeSauvegarde()}
+}
+// Le point où l'on revient : le dernier point de sauvegarde, sinon la partie enregistrée (importée d'un code, ancienne version).
+export const dernierPoint=()=>{const d=lire();return d.point||d.partie};
+on('save',()=>{attente=true});
+on('nouvellePartie',()=>{attente=false;lieuSur=''});
 // Enregistre la fin d'une saison (choix et statistiques), pour la saison suivante.
 export function finSaison(n,rec){const d=lire();d.saisons[n]=Object.assign({at:Date.now()},rec);ecrire(d)}
 export const saisons=()=>lire().saisons;
 // Remplace tout (import d'un code ou d'une sauvegarde en ligne).
 export function remplacer(d){ecrire(Object.assign(vide(),d))}
-on('save',saveGame);on('clearSave',clearSave);
+on('clearSave',clearSave);
 
 // Les fins de la saison 1, telles qu'on les nomme au joueur.
 export const NOMS_FINS={diffuser:'« La ville a vu »',saboter:"« Le silence de l'antenne »",negocier:"« Le prix d'une main »",mara:'« La main de Mara »',maraForce:'« La main de Mara »'};
+// « à l'instant », « il y a 3 min »…
+export function ilYa(at){const min=Math.round((Date.now()-at)/60000);return min<1?"à l'instant":min<60?`il y a ${min} min`:min<1440?`il y a ${Math.round(min/60)} h`:`il y a ${Math.round(min/1440)} j`}
+// Résumé lisible d'un enregistrement (partie ou point de sauvegarde).
+export const resume=p=>`${ilYa(p.at)} · ${chap(p.S.chapter).describe(p.S)}`;
 // Résumé lisible d'une sauvegarde (écran titre, import).
 export function decrire(d){
   if(!d||!d.partie)return d&&d.saisons&&d.saisons['1']?`Saison 1 terminée · ${NOMS_FINS[d.saisons['1'].fin]||''}`:'Aucune partie en cours';
-  const min=Math.round((Date.now()-d.partie.at)/60000),ago=min<1?"à l'instant":min<60?`il y a ${min} min`:min<1440?`il y a ${Math.round(min/60)} h`:`il y a ${Math.round(min/1440)} j`;
-  return`Sauvegarde ${ago} · ${chap(d.partie.S.chapter).describe(d.partie.S)}`;
+  return`Sauvegarde ${resume(d.partie)}`;
 }
 export function showSaveInfo(){const d=lire(),p=d.partie;$('cont').hidden=!p;$('play').textContent=p?'Nouvelle partie':'Entrer dans la nuit';$('play').classList.toggle('alt',!!p);
   if(!p){const f=d.saisons['1'];$('saveInfo').hidden=!f;if(f)$('saveInfo').textContent=`Saison 1 terminée · ${NOMS_FINS[f.fin]||f.fin}. Ta fin est gardée pour la saison 2.`;return}
   $('saveInfo').textContent=decrire(d);$('saveInfo').hidden=false}
-setInterval(()=>{if(state==='play')saveGame()},4000);
 addEventListener('pagehide',saveGame);document.addEventListener('visibilitychange',()=>{if(document.hidden)saveGame()});
 
 /* ---------- Code de transfert ----------
