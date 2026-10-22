@@ -31,6 +31,13 @@ Référence pour tout ce qui s'écrit dans le jeu : personnages, lieux, chronolo
 - **Elias** — le frère de Mara, tombé d'un échafaudage de la tour Helix le 9 mai 2037, jour de grève : Helix avait coupé les jambes K7 des grévistes. L'enseigne Échos est pour lui.
 - **Hugo Brun** — technicien d'Helix : il a aidé Varga à cacher l'override dans un tissu, puis a démissionné ; il a vendu à Mara la copie du kill-switch (2039, trente mille crédits).
 - **Nina** — sept ans, rue des Tanneurs, un bras Helix Junior (sa mère ne peut pas payer la mise à jour de taille). C'est la petite fille de l'enregistrement de Nox. Elle est sur la liste de la K7.2.
+- **Lou** — treize ans, la grande sœur de Nina. Fait le guet pour Mara (deux crédits la nuit), connaît les drones. Au black-out, elle s'abrite sous l'abribus.
+- **Josette Delorme** — la grande sœur de Rosa, marchande de bugnes au coin de la rue des Tanneurs, main gauche K7. Ses bugnes remettent d'aplomb (santé). Au black-out, elle confie à Ash un message pour Rosa (quête `josette`).
+- **Mme Ferro** — vieille dame aux pigeons, sur les toits depuis cinquante-deux ans. Ses pigeons n'osent plus voler sous la Faucheuse : si Ash abat celle des toits, elle ouvre la cage (quête `pigeons`).
+- **Léa Ferrand** — la sœur du Gardien 12, réfugiée chez les Canuts. Elle demande à Ash de chercher son frère dans la tour : le plan de l'étage -3 (ou l'ordre de transfert) le dit, et Rosa la prévient par l'oreillette (quête `lea`).
+- **Gaspard** — le vieux canut, ses mains à lui. Son arrière-arrière-grand-père a fait 1834 avec un Delorme. Il raconte les révoltes et prévient : le métier lit les cartes à l'envers.
+- **Marius** — passeur sur la Saône, sa péniche *Rhodanie*, un bras K7. Il a ouvert une caisse d'Aster (des yeux), connaît les caméras du quai et le point faible des Faucheuses.
+- **Claire** — agente d'entretien de nuit dans la tour depuis neuf ans. Elle sait les quatorze costumes de Saal, le boîtier des grilles laser, et elle est descendue une fois à l'étage -3 : quatorze armures debout, dont une qui frappait de l'intérieur.
 - **Aster** — le consortium de Genève au-dessus d'Helix (étoile à huit branches) : yeux K9 à Marseille, colonnes K11 à Turin, toutes avec le même interrupteur. La K7.2 est leur essai.
 
 ## La nuit (saison 1 : « Avant l'aube »)
@@ -106,6 +113,7 @@ Ash donne la puce à Mara (ou refuse : Mara verrouille sa main K7 avec son boît
   - **Petites mains** : Helix Junior, des prothèses qui grandissent à crédit ; une comptine de cour d'école ; l'essai de la K7.2 sur quarante bras d'enfants, une nuit, il y a dix jours ; Nina sur la liste.
   - **Aster** : l'organigramme, le message de Genève à Saal (« Si elle fait du bruit, Lyon n'aura jamais existé »), un conteneur de modules K9 pour Marseille, une carte noire sans nom.
 - **Écoutes radio** : dix-neuf conversations sur le canal des Gardiens, à entendre en s'approchant sans être vu. Elles racontent la nuit d'en face (la tour, Faucheuse 2, Saal qui se trahit sur le « métier »), et soufflent parfois un conseil (l'angle mort sous le pont, la pluie qui ne s'arrête pas quand on s'arrête).
+- **Ce que les archives changent aussi dans la rue** : avec l'avis de décès ou la facture de l'enseigne, Ash peut parler d'Elias à Mara ; avec la carte de partenaire, Kovac avoue ses années d'indic (si Ash garde le secret, il ouvre son arrière-boutique au black-out) ; avec la carte postale, il parle de Nadia ; avec le fichier 0412, Nox raconte le premier jour d'Ash ; avec le journal du labo, Varga parle de la patiente 31, Sophie Arnaud. Kovac, Nox, Sid et Lou ont d'autres répliques au chapitre 2.
 - **Ce que les archives changent** : le ticket de Kovac le convainc (code au chapitre 1, arrière-boutique au chapitre 3) ; la lettre de Varga la décide à témoigner comme le mail du labo ; Sid récupère sa photo sur les toits ; Rosa, la carte de Jean Delorme ; le casier donne 80 crédits ; à la fin « Diffuser », Nox diffuse aussi les dossiers complets.
 - **La ville réagit** : les haut-parleurs d'Helix annoncent la quarantaine, la récompense pour la personne à la K7 qui neutralise les agents, la fuite de Mara (ou son transfert), Varga recherchée, la K7.2.
 

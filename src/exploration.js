@@ -120,7 +120,7 @@ function ramasser(a){
   const d=dossier(a.dossier),L=deDossier(a.dossier),n=L.filter(x=>trouvee(x.id)).length;
   const lot=[{kicker:`Archive ${S.archives.length} / ${ARCHIVES.length} · ${d.titre} (${n}/${L.length})`,titre:a.titre,texte:a.texte}];
   if(n===L.length&&!S.dossiersFinis.includes(d.id)){S.dossiersFinis.push(d.id);lot.push({kicker:`Dossier complet · ${d.titre}`,titre:'Ce que le dossier révèle',texte:d.revelation,revelation:true})}
-  lot[lot.length-1].relire=true;lire(lot);gagner(50,'archive trouvée');
+  lot[lot.length-1].relire=true;lire(lot);gagner(50,'archive trouvée');emit('archiveLue',a);
   if(lot.length>1)setTimeout(()=>gagner(150,'dossier complet'),700);
 }
 
@@ -173,9 +173,12 @@ export const LIEUX=[
 function lieux(Z){for(const l of LIEUX){if(l.zone!==Z.id||S.lieux.includes(l.id))continue;
   if(Math.hypot(P.pos.x-l.x,P.pos.z-l.z)<l.r){S.lieux.push(l.id);gagner(25,'lieu découvert : '+l.nom.replace(/^./,c=>c.toLowerCase()));emit('save')}}}
 // Première conversation avec chaque personnage
-const PERSONNES={mara:'Mara',nox:'NOX-7',kovac:'Kovac',sid:'Sid',rosa:'Rosa Delorme',varga:'Ilse Varga',saal:'Victor Saal'};
-// Les quêtes (S.quetes) : la photo de Sid, la carte de Jean Delorme pour Rosa, le casier des quais.
-export const QUETES=[{id:'sid',nom:'La photo de Sid'},{id:'rosa',nom:'La carte de Jean Delorme'},{id:'casier',nom:'Le casier 7 des quais'}];
+const PERSONNES={mara:'Mara',nox:'NOX-7',kovac:'Kovac',sid:'Sid',rosa:'Rosa Delorme',varga:'Ilse Varga',saal:'Victor Saal',
+  lou:'Lou',josette:'Josette',ferro:'Mme Ferro',léa:'Léa Ferrand',gaspard:'Gaspard',marius:'Marius',claire:'Claire'};
+// Les quêtes (S.quetes) : la photo de Sid, la carte de Jean Delorme pour Rosa, le casier des quais ; et celles des habitants
+// (habitants.js) : le message de Josette pour Rosa, les pigeons de Mme Ferro, ce que Léa cherche dans la tour.
+export const QUETES=[{id:'sid',nom:'La photo de Sid'},{id:'rosa',nom:'La carte de Jean Delorme'},{id:'casier',nom:'Le casier 7 des quais'},
+  {id:'josette',nom:'Le message de Josette'},{id:'pigeons',nom:'Les pigeons de Mme Ferro'},{id:'lea',nom:'Ce que Léa cherche'}];
 // Ce que l'exploration compte dans le pourcentage de la partie
 categorie({id:'archives',nom:'Archives',poids:30,fait:()=>S.archives.filter(id=>ARCHIVES.some(a=>a.id===id)).length,total:()=>ARCHIVES.length});
 categorie({id:'dossiers',nom:'Dossiers complets',poids:10,fait:()=>S.dossiersFinis.length,total:()=>DOSSIERS.length});

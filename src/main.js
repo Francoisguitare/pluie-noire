@@ -28,6 +28,7 @@ import {toast,detectionHud,fade,chargement,finChargement,ask} from './interface.
 import {updateCombat,chargerPoint,blesser,trace} from './combat.js';
 import {completion,texteCompletion} from './completion.js';
 import {updateRadios} from './radios.js';
+import {installerHabitantsRue} from './habitants.js';
 import {initAudio,toggleMute,setIndoor} from './son.js';
 import {keys,lock,pleinEcran} from './controles.js';
 import {enterZone,zone,zones} from './zones.js';
@@ -136,7 +137,7 @@ fonts.catch(()=>{}).then(async()=>{
   await loadRueCharacters(v=>etape('Arrivée des personnages…',.3+v*.6)).catch(e=>{console.warn('Personnages :',e);rueFallback()});
   etape('Préparation des lumières…',.94);await souffle();
   // les Gardiens et la Faucheuse du black-out existent dès maintenant (cachés), puis toute la rue est préparée
-  prechargerRue3();compilerZone(zones.rue);
+  prechargerRue3();installerHabitantsRue();compilerZone(zones.rue);
   // la boucle ne démarre qu'ici : pendant le chargement, rien ne se dessine derrière l'écran
   loop();etape('Premières images…',.98);
   // les deux premières images (ombres, textures, post-traitement) sont les plus lourdes : on les dessine sous l'écran de chargement
