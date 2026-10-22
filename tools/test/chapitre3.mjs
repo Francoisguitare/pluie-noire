@@ -27,7 +27,7 @@ await g.choisir(0);s=await S();verifier(s.kovacAide,'arrière-boutique ouverte')
 await g.pn(()=>window.__pn.allerZone('toits',[1.9,8.4,0],{fondu:false}));await g.pn(()=>{window.__pn.S.toits=true});await g.avancer(5);
 verifier(await g.pn(()=>window.__pn.zone().id==='toits'),'sur les toits');
 const t=await g.pn(()=>{const z=window.__pn.zone();return{g:z.gardiens.length,d:z.drones.length,f:z.faucheuses.length,npcs:z.npcs.length}});
-verifier(t.g===2&&t.d===2&&t.f===1&&t.npcs===1,`toits peuplés (${JSON.stringify(t)})`);
+verifier(t.g===2&&t.d===2&&t.f===1&&t.npcs===2,`toits peuplés, Sid et Mme Ferro (${JSON.stringify(t)})`);
 if(sortie){await g.placer(1.9,8.4,0,-.05);await g.avancer(30);await g.capture(sortie+'/c3-toit1.png')}
 // Le bord au-dessus de la rue : Mara
 await g.pn(()=>{window.__pn.G.grace=60});

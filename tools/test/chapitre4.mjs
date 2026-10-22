@@ -13,8 +13,8 @@ await g.pn(()=>Object.assign(window.__pn.S,{chapter:3,quest:true,code:true,chip:
 await g.pn(()=>window.__pn.emit('chapitre4'));await attendre(900);await g.avancer(3);
 let s=await S();verifier(s.chapter===4&&await g.pn(()=>window.__pn.zone().id==='traboules'),'chapitre 4, dans les traboules');
 const t=await g.pn(()=>{const z=window.__pn.zone();return{gardiens:z.gardiens.length,pnj:z.npcs.length,visibles:z.npcs.filter(n=>!n.absent).map(n=>n.key).join(',')}});
-verifier(t.gardiens===6&&t.pnj===5,`traboules peuplées (${JSON.stringify(t)})`);
-verifier(t.visibles==='sid,rosa,mara,nox,varga','Sid, Rosa, Mara, Nox et Varga présents');
+verifier(t.gardiens===6&&t.pnj===7,`traboules peuplées (${JSON.stringify(t)})`);
+verifier(t.visibles==='sid,rosa,mara,nox,varga,lea,gaspard','Sid, Rosa, Mara, Nox et Varga présents, avec Léa et Gaspard');
 await g.pn(()=>{window.__pn.G.grace=1e6});
 // Les lieux
 await voir('c4-arrivee',0,-1,0,.05);

@@ -124,7 +124,7 @@ Object.assign(DLG.nox.nodes,{
 const sidE1=DLG.sid.entry;
 DLG.sid.entry=()=>S.ch2?'ch2s':S.chip?'puceS':sidE1();
 Object.assign(DLG.sid.nodes,{
-  puceS:{t:"T'es passé par ma grille ? (Il rit, puis tousse.) Trente ans que j'attendais que quelqu'un s'en serve. Allez, file. Ça sent le drone énervé.",c:partir},
+  puceS:{t:"Ma grille t'a servi ? (Il rit, puis tousse.) Trente ans que j'attendais que quelqu'un s'en serve. Allez, file. Ça sent le drone énervé.",c:partir},
   ch2s:{t:"J'ai vu tomber un drone, tout à l'heure. Je l'ai regardé longtemps, par terre, qui clignotait. On croit que c'est éternel, ces machins-là. (Il tend les mains vers le feu.) Rien n'est éternel. Même pas Helix.",c:partir},
 });
 
