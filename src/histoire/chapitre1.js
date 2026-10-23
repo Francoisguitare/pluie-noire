@@ -19,7 +19,9 @@ function takeChip(){S.chip=true;heure(3*60+40);H.chip.visible=false;H.chipShaft.
   toast('Puce récupérée. Alerte silencieuse : les drones accélèrent.');refreshHud();emit('save')}
 function takeBattery(){S.battery=true;H.battery.visible=false;H.batLight.intensity=0;tone(500,.1,'triangle',.05);setTimeout(()=>tone(750,.12,'triangle',.05),90);toast('Batterie récupérée. Rapporte-la au décodeur de Mara.');refreshHud();emit('save')}
 function plugBattery(){S.decoded=true;H.decLumiere.intensity=1.1;H.decLed.material.color.setHex(0x4dff9a).multiplyScalar(2.2);H.decScreen.material.color.setHex(0x58e6ff).multiplyScalar(1.6);
-  tone(200,1.2,'sawtooth',.04,900);setTimeout(()=>tone(1200,.15,'triangle',.05),1100);setTimeout(()=>{if(state==='play')openDialog('mara','end2')},1500)}
+  tone(200,1.2,'sawtooth',.04,900);setTimeout(()=>tone(1200,.15,'triangle',.05),1100);emit('save');
+  // Mara réagit dès qu'on est libre (pas pendant une lecture, une pause ou un autre dialogue) ; sinon, lui parler suffit
+  const reagir=()=>{if(S.decoded&&state==='play'&&S.chapter<3)openDialog('mara','end2');else if(state!=='play')setTimeout(reagir,500)};setTimeout(reagir,1500)}
 function giveWeapon(){if(S.armed)return;S.ch2=true;S.armed=true;setArmed(true);tone(600,.08,'square',.03);setTimeout(()=>tone(900,.06,'square',.03),70);refreshHud()}
 function openGate(silent){S.gate=true;H.gateCol.off=true;for(const l of H.gateLasers)l.visible=false;H.gateLight.intensity=0;
   if(!silent){tone(320,.9,'sawtooth',.06,40);toast('Le réseau de drones est tombé : la grille laser du dépôt est coupée.');refreshHud();emit('save')}}
@@ -51,7 +53,7 @@ Z.inter.push({p:new V3(4,0,-50.4),r:2.2,label:()=>'Lire le terminal',act:()=>ope
 const backMara=()=>[{l:"Qu'est-ce qu'elle fait, cette puce ?",go:'what'},{l:"Comment j'entre dans le labo ?",go:'how'},{l:"Combien tu payes ?",go:'pay'},{l:"D'accord. J'y vais.",go:'accept'}];
 const kovacPrice=()=>[{l:'Payer 60 crédits',if:()=>S.credits>=60,go:'paid'},{l:"Mara te le revaudra.",go:'p1'},{l:"Donne-le-moi, ou je repeins le comptoir avec toi.",go:'threat'},{l:"Je repasserai. (Partir)",go:null}];
 Object.assign(DLG,{
- mara:{name:'Mara',entry:()=>S.ch2?(S.battery?'batReady':'ch2'):S.chip?'final':S.quest?'remind':'start',nodes:{
+ mara:{name:'Mara',entry:()=>S.ch2?(S.decoded&&S.chapter<3?'end2':S.battery?'batReady':'ch2'):S.chip?'final':S.quest?'remind':'start',nodes:{
   start:{t:"T'es en retard, Ash. Helix a sorti un prototype de son labo cette nuit : une puce neurale. Je la veux avant l'aube.",c:backMara},
   what:{t:"Officiellement, elle corrige les tremblements des augmentés. Officieusement, elle permet à Helix de couper une prothèse à distance. La tienne, par exemple.",c:backMara},
   how:{t:"La porte a un code. Kovac, au bar à nouilles sur ta droite, vend ce genre d'information. Et les drones de patrouille n'aiment pas les curieux : reste dans leur dos.",c:backMara},
@@ -113,7 +115,8 @@ const chapitre={zone:'rue',
     if(S.ch2){const k=kills();
       if(k<3){L.push([`Détruis les drones du quartier (${k}/3)`,'']);L.push(S.dd[2]?['Les deux autres patrouillent au nord : reste dans leur dos','sub']:['Le premier est en veille, au-dessus de la rue','sub'])}
       else if(!S.battery){L.push(['Drones détruits (3/3)','done']);L.push(['Récupère la batterie au dépôt Helix, au fond du parvis à droite',''])}
-      else L.push(['Branche la batterie sur le décodeur de Mara',''])}
+      else if(!S.decoded)L.push(['Branche la batterie sur le décodeur de Mara',''])
+      else L.push(['Parle à Mara, près du décodeur',''])}
     else if(!S.quest){L.push(["Parle à Mara, sous l'enseigne Échos",'']);if(S.code)L.push(['Code de la porte : 0451','sub done'])}
     else if(!S.chip){L.push(['Récupère la puce dans le labo Helix, au nord','']);
       L.push(S.code?['Code de la porte : 0451','sub done']:['Trouve le code (Kovac, bar à nouilles)','sub']);

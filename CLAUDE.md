@@ -75,6 +75,7 @@ Repères :
 ```
 NODE_PATH=$(npm root -g) node tools/test/parcours.mjs /chemin/captures   # chapitres 1-2, deux branches, captures
 NODE_PATH=$(npm root -g) node tools/test/mobile.mjs /chemin/captures     # démarrage en mode téléphone
+NODE_PATH=$(npm root -g) node tools/test/decodeur.mjs                    # brancher la batterie avant de parler à Mara ne bloque plus la suite
 NODE_PATH=$(npm root -g) node tools/test/pivot.mjs /chemin/captures      # écran de chargement, PNJ qui pivotent en faisant des pas
 NODE_PATH=$(npm root -g) node tools/test/pouvoirs.mjs /chemin/captures   # Coupure, XP, améliorations
 NODE_PATH=$(npm root -g) node tools/test/combat.mjs /chemin/captures     # accroupi, santé, tirs (Gardien, drone, Faucheuse), laser, alarme, chute, points de sauvegarde
